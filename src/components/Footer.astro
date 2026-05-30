@@ -2,50 +2,47 @@
 const year = new Date().getFullYear()
 ---
 
-<footer class="border-t border-white/[0.06] mt-24">
+<footer class="border-t border-line mt-28">
   <div class="container-main py-16">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
-      <!-- Brand -->
-      <div>
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-10">
+      <!-- Colophon -->
+      <div class="md:col-span-6">
         <div class="flex items-center gap-2.5 mb-4">
-          <div class="w-7 h-7 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center">
-            <svg class="w-3.5 h-3.5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
-          </div>
-          <span class="font-bold font-display text-text-primary">OpenRadar</span>
+          <svg class="w-5 h-5 text-ink" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6">
+            <circle cx="16" cy="16" r="13.5" />
+            <circle cx="16" cy="16" r="7" />
+            <line x1="16" y1="16" x2="27" y2="9" />
+          </svg>
+          <span class="font-display text-lg leading-none">Open<span class="italic">Radar</span></span>
         </div>
-        <p class="text-sm text-text-muted max-w-xs" style="line-height: 1.6;">
-          Curated open-source project discovery. Find the tools that matter, skip the noise.
+        <p class="text-sm text-ink-2 max-w-sm">
+          An independent, hand-curated index of open-source projects worth your
+          attention. No rankings to game, no sponsored slots — just the work.
         </p>
       </div>
 
-      <!-- Navigation -->
-      <div>
-        <h4 class="text-sm font-semibold text-text-secondary mb-4">Explore</h4>
-        <ul class="space-y-3">
-          <li><a href="/" class="text-sm text-text-muted hover:text-accent transition-colors">Home</a></li>
-          <li><a href="/tags" class="text-sm text-text-muted hover:text-accent transition-colors">Browse Tags</a></li>
+      <!-- Explore -->
+      <div class="md:col-span-3">
+        <p class="label mb-4">Explore</p>
+        <ul class="space-y-2.5">
+          <li><a href="/" class="text-sm ulink">Index</a></li>
+          <li><a href="/tags" class="text-sm ulink">Browse tags</a></li>
         </ul>
       </div>
 
       <!-- Resources -->
-      <div>
-        <h4 class="text-sm font-semibold text-text-secondary mb-4">Resources</h4>
-        <ul class="space-y-3">
-          <li><a href="/sitemap-index.xml" class="text-sm text-text-muted hover:text-accent transition-colors">Sitemap</a></li>
-          <li><a href="https://github.com" class="text-sm text-text-muted hover:text-accent transition-colors" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+      <div class="md:col-span-3">
+        <p class="label mb-4">Resources</p>
+        <ul class="space-y-2.5">
+          <li><a href="/sitemap-index.xml" class="text-sm ulink">Sitemap</a></li>
+          <li><a href="https://github.com" target="_blank" rel="noopener noreferrer" class="text-sm ulink">GitHub</a></li>
         </ul>
       </div>
     </div>
 
-    <div class="pt-8 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-3">
-      <p class="text-xs text-text-muted">
-        © {year} OpenRadar. Built with open-source tools.
-      </p>
-      <p class="text-xs text-text-muted">
-        Crafted with <span class="text-accent">♥</span> for the developer community
-      </p>
+    <div class="mt-14 pt-6 border-t border-line flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <p class="label">&copy; {year} OpenRadar</p>
+      <p class="label">Set in Fraunces &amp; JetBrains Mono</p>
     </div>
   </div>
 </footer>
