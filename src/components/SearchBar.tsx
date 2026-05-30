@@ -26,33 +26,48 @@ export default function SearchBar({ projects }: SearchBarProps) {
   }, [projects])
 
   const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
     return projects.filter((p) => {
       const matchesQuery =
-        !query ||
-        p.name.toLowerCase().includes(query.toLowerCase()) ||
-        p.description.toLowerCase().includes(query.toLowerCase())
+        !q ||
+        p.name.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q) ||
+        p.tags.some((t) => t.toLowerCase().includes(q))
       const matchesTag = !selectedTag || p.tags.includes(selectedTag)
       return matchesQuery && matchesTag
     })
   }, [projects, query, selectedTag])
 
-  // Expose filtered results to the page via a custom event
+  // Broadcast the filtered slugs so the statically-rendered grid can sync.
   useEffect(() => {
     const event = new CustomEvent('search-results', {
-      detail: { filtered, query, selectedTag },
+      detail: {
+        slugs: filtered.map((p) => p.slug),
+        total: projects.length,
+        count: filtered.length,
+        query: query.trim(),
+        selectedTag,
+      },
     })
     window.dispatchEvent(event)
-  }, [filtered, query, selectedTag])
+  }, [filtered, projects.length, query, selectedTag])
+
+  const chip = (active: boolean) =>
+    `font-mono text-[0.7rem] px-2.5 py-1.5 border transition-colors cursor-pointer ${
+      active
+        ? 'bg-accent border-accent text-[#f8f4ec]'
+        : 'bg-paper border-line text-ink-2 hover:border-ink'
+    }`
 
   return (
     <div className="space-y-5">
-      {/* Search Input */}
+      {/* Search input */}
       <div className="relative">
         <svg
-          className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted"
+          className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-3"
+          viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          viewBox="0 0 24 24"
           strokeWidth="2"
         >
           <path
@@ -63,60 +78,49 @@ export default function SearchBar({ projects }: SearchBarProps) {
         </svg>
         <input
           type="text"
-          placeholder="Search projects..."
+          placeholder="Search by name, description or tag…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full pl-12 pr-12 h-12 bg-surface-1 border border-white/[0.06] rounded-xl
-                     text-text-primary placeholder:text-text-muted text-sm
-                     focus:outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/20
-                     transition-all duration-200"
+          className="w-full pl-11 pr-11 h-12 bg-card border border-ink
+                     text-ink placeholder:text-ink-3 placeholder:font-mono placeholder:text-sm
+                     focus:outline-none focus:ring-2 focus:ring-accent/40
+                     transition-shadow"
         />
         {query && (
           <button
             onClick={() => setQuery('')}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-3 hover:text-accent transition-colors p-1"
             aria-label="Clear search"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         )}
       </div>
 
-      {/* Tag Filters */}
-      <div className="flex flex-wrap gap-2.5">
-        <button
-          onClick={() => setSelectedTag(null)}
-          className={`px-3.5 py-1.5 text-xs rounded-full border transition-all duration-200 cursor-pointer font-medium ${
-            !selectedTag
-              ? 'bg-accent/15 border-accent/30 text-accent'
-              : 'bg-surface-2/60 border-white/[0.06] text-text-muted hover:border-accent/20 hover:text-text-secondary'
-          }`}
-        >
+      {/* Tag filters */}
+      <div className="flex flex-wrap gap-2">
+        <button onClick={() => setSelectedTag(null)} className={chip(!selectedTag)}>
           All
         </button>
         {allTags.map(([tag, count]) => (
           <button
             key={tag}
             onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-            className={`px-3.5 py-1.5 text-xs rounded-full border transition-all duration-200 cursor-pointer font-medium ${
-              selectedTag === tag
-                ? 'bg-accent/15 border-accent/30 text-accent'
-                : 'bg-surface-2/60 border-white/[0.06] text-text-muted hover:border-accent/20 hover:text-text-secondary'
-            }`}
+            className={chip(selectedTag === tag)}
           >
-            {tag}
-            <span className="ml-1 opacity-50">({count})</span>
+            #{tag}
+            <span className="ml-1 opacity-60">{count}</span>
           </button>
         ))}
       </div>
 
       {/* Result count */}
-      <p className="text-xs text-text-muted pt-1">
-        Showing {filtered.length} of {projects.length} projects
-        {query && <span> matching &ldquo;{query}&rdquo;</span>}
-        {selectedTag && <span> tagged <span className="text-accent">{selectedTag}</span></span>}
+      <p className="label">
+        {filtered.length} / {projects.length} projects
+        {query && <span> · &ldquo;{query.trim()}&rdquo;</span>}
+        {selectedTag && <span> · #{selectedTag}</span>}
       </p>
     </div>
   )

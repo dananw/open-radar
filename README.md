@@ -1,43 +1,58 @@
-# Astro Starter Kit: Minimal
+# OpenRadar
 
-```sh
-npm create astro@latest -- --template minimal
-```
+A hand-curated index of trending open-source projects, built with [Astro](https://astro.build).
+The design is deliberately editorial — warm paper, ink, hairline rules, a single
+vermilion signal colour, set in Fraunces (display) and JetBrains Mono (labels).
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Stack
 
-## 🚀 Project Structure
+- **Astro** — static site generation
+- **Tailwind CSS v4** — styling (via `@tailwindcss/vite`)
+- **React** — interactive search/filter island
+- **Content Collections** — projects authored as Markdown in `src/content/projects`
 
-Inside of your Astro project, you'll see the following folders and files:
+## Project structure
 
 ```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
+src/
+├── components/      # Header, Footer, ProjectCard, TagBadge, SearchBar (React)
+├── content/
+│   └── projects/    # one Markdown file per project (frontmatter + write-up)
+├── layouts/         # Layout.astro — <head>, SEO, fonts
+├── pages/           # index, projects/[slug], tags/[tag], tags/index
+└── styles/          # global.css — theme tokens + editorial helpers
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Adding a project
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+Create `src/content/projects/<slug>.md`:
 
-Any static assets, like images, can be placed in the `public/` directory.
+```md
+---
+name: my-project
+description: "One-sentence summary."
+url: https://github.com/owner/repo
+stars: 1200
+forks: 80
+language: TypeScript
+tags: ["cli", "devtools"]
+featured: false
+publishedAt: 2025-01-01
+---
 
-## 🧞 Commands
+## my-project
 
-All commands are run from the root of the project, from a terminal:
+Long-form write-up in Markdown…
+```
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+Required fields: `name`, `description`, `url`, `tags`, `publishedAt`.
+Optional: `stars`, `forks`, `language`, `featured`. See `src/content.config.ts` for the schema.
 
-## 👀 Want to learn more?
+## Commands
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+| Command           | Action                                       |
+| :---------------- | :------------------------------------------- |
+| `npm install`     | Install dependencies                         |
+| `npm run dev`     | Start the dev server at `localhost:4321`     |
+| `npm run build`   | Build the production site to `./dist/`       |
+| `npm run preview` | Preview the production build locally         |

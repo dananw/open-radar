@@ -7,9 +7,9 @@ const { name } = Astro.props
 ---
 
 <span
-  class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
-         bg-surface-3/60 text-text-secondary border border-white/[0.06]
-         hover:border-accent/30 hover:text-accent transition-all duration-200"
+  class="inline-flex items-center gap-0.5 font-mono text-[0.7rem] leading-none
+         px-2 py-1 border border-line bg-paper text-ink-2
+         transition-colors group-hover:border-line-strong"
 >
-  {name}
+  <span class="text-accent">#</span>{name}
 </span>
