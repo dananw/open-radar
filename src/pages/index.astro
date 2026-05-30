@@ -1,0 +1,148 @@
+---
+import Layout from '../layouts/Layout.astro'
+import Header from '../components/Header.astro'
+import Footer from '../components/Footer.astro'
+import ProjectCard from '../components/ProjectCard.astro'
+import SearchBar from '../components/SearchBar'
+import { getCollection } from 'astro:content'
+
+const allProjects = await getCollection('projects')
+const featured = allProjects.filter((p) => p.data.featured)
+const sorted = allProjects.sort(
+  (a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime()
+)
+
+const searchData = sorted.map((p) => ({
+  name: p.data.name,
+  description: p.data.description,
+  slug: p.id,
+  tags: p.data.tags,
+  stars: p.data.stars,
+  language: p.data.language,
+}))
+
+const totalStars = allProjects.reduce((sum, p) => sum + (p.data.stars ?? 0), 0)
+const uniqueTags = new Set(allProjects.flatMap((p) => p.data.tags)).size
+---
+
+<Layout>
+  <Header />
+
+  <main>
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden">
+      <!-- Background glow -->
+      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-accent/[0.04] rounded-full blur-[140px] pointer-events-none" />
+
+      <div class="container-main pt-32 pb-20 relative">
+        <div class="max-w-3xl">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-xs font-medium mb-8">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+            Open-source project discovery
+          </div>
+
+          <h1 class="font-extrabold font-display mb-6" style="line-height: 1.1; letter-spacing: -0.03em;">
+            Find your next<br />
+            <span class="text-gradient">favorite tool</span>
+          </h1>
+
+          <p class="text-lg text-text-secondary max-w-xl mb-12" style="line-height: 1.7;">
+            A curated collection of trending open-source projects. No noise, no paywalls — just the tools developers actually use.
+          </p>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-3 gap-8 max-w-md">
+          <div>
+            <div class="text-2xl font-bold font-display text-text-primary">{allProjects.length}</div>
+            <div class="text-xs text-text-muted mt-1">Projects</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold font-display text-text-primary">{uniqueTags}</div>
+            <div class="text-xs text-text-muted mt-1">Categories</div>
+          </div>
+          <div>
+            <div class="text-2xl font-bold font-display text-text-primary">
+              {(totalStars / 1000).toFixed(0)}k+
+            </div>
+            <div class="text-xs text-text-muted mt-1">Total Stars</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Search Section -->
+    <section class="container-main pb-12">
+      <div class="glass-card p-6">
+        <SearchBar client:load projects={searchData} />
+      </div>
+    </section>
+
+    <!-- Featured Projects -->
+    {featured.length > 0 && (
+      <section class="container-main pb-20">
+        <div class="flex items-center gap-3 mb-8">
+          <div class="w-1.5 h-6 rounded-full bg-accent" />
+          <h2 class="font-bold font-display">Featured Projects</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {featured.map((project) => (
+            <ProjectCard
+              name={project.data.name}
+              description={project.data.description}
+              url={project.data.url}
+              stars={project.data.stars}
+              forks={project.data.forks}
+              language={project.data.language}
+              tags={project.data.tags}
+              slug={project.id}
+            />
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- All Projects -->
+    <section class="container-main pb-24" id="all-projects">
+      <div class="flex items-center gap-3 mb-8">
+        <div class="w-1.5 h-6 rounded-full bg-text-muted" />
+        <h2 class="font-bold font-display">All Projects</h2>
+      </div>
+      <div
+        id="projects-grid"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      >
+        {sorted.map((project) => (
+          <div class="project-item" data-tags={project.data.tags.join(',')} data-name={project.data.name.toLowerCase()}>
+            <ProjectCard
+              name={project.data.name}
+              description={project.data.description}
+              url={project.data.url}
+              stars={project.data.stars}
+              forks={project.data.forks}
+              language={project.data.language}
+              tags={project.data.tags}
+              slug={project.id}
+            />
+          </div>
+        ))}
+      </div>
+    </section>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  // Listen for search results from the React island
+  window.addEventListener('search-results', ((e: CustomEvent) => {
+    const { filtered } = e.detail
+    const slugs = new Set(filtered.map((p: { slug: string }) => p.slug))
+    document.querySelectorAll('.project-item').forEach((el) => {
+      const name = el.getAttribute('data-name') ?? ''
+      // Match by name (simple client-side filter sync)
+      // In production, we'd pass slugs from the search component
+      el.style.display = ''
+    })
+  }) as EventListener)
+</script>

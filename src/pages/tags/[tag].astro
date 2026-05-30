@@ -1,0 +1,81 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import Header from '../../components/Header.astro'
+import Footer from '../../components/Footer.astro'
+import ProjectCard from '../../components/ProjectCard.astro'
+import { getCollection } from 'astro:content'
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects')
+  const tagSet = new Set<string>()
+  projects.forEach((p) => p.data.tags.forEach((t) => tagSet.add(t)))
+
+  return Array.from(tagSet).map((tag) => ({
+    params: { tag },
+    props: {
+      tag,
+      projects: projects.filter((p) => p.data.tags.includes(tag)),
+    },
+  }))
+}
+
+const { tag, projects } = Astro.props
+const siteURL = Astro.site?.toString() ?? 'https://example.pages.dev'
+
+const tagSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: `${tag} — Open-Source Projects`,
+  description: `Discover the best open-source projects tagged with ${tag}.`,
+  url: new URL(`/tags/${tag}`, siteURL).toString(),
+}
+---
+
+<Layout
+  title={`${tag} Projects — OpenRadar`}
+  description={`Discover the best open-source projects tagged with ${tag}. ${projects.length} projects found.`}
+>
+  <Header />
+
+  <script type="application/ld+json" set:html={JSON.stringify(tagSchema)} />
+
+  <main class="container-main py-16">
+    <!-- Breadcrumb -->
+    <nav class="mb-10" aria-label="Breadcrumb">
+      <ol class="flex items-center gap-2 text-sm text-text-muted">
+        <li><a href="/" class="hover:text-accent transition-colors">Home</a></li>
+        <li class="text-text-muted/40">/</li>
+        <li><a href="/tags" class="hover:text-accent transition-colors">Tags</a></li>
+        <li class="text-text-muted/40">/</li>
+        <li class="text-text-secondary">{tag}</li>
+      </ol>
+    </nav>
+
+    <div class="mb-12">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-accent text-xs font-medium mb-5">
+        Tag
+      </div>
+      <h1 class="font-extrabold font-display mb-4">{tag}</h1>
+      <p class="text-text-secondary text-lg" style="line-height: 1.7;">
+        {projects.length} open-source project{projects.length !== 1 ? 's' : ''} tagged with &ldquo;{tag}&rdquo;
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {projects.map((project) => (
+        <ProjectCard
+          name={project.data.name}
+          description={project.data.description}
+          url={project.data.url}
+          stars={project.data.stars}
+          forks={project.data.forks}
+          language={project.data.language}
+          tags={project.data.tags}
+          slug={project.id}
+        />
+      ))}
+    </div>
+  </main>
+
+  <Footer />
+</Layout>

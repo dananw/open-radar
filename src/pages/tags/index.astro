@@ -1,0 +1,47 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import Header from '../../components/Header.astro'
+import Footer from '../../components/Footer.astro'
+import { getCollection } from 'astro:content'
+
+const projects = await getCollection('projects')
+const tagMap = new Map<string, number>()
+projects.forEach((p) =>
+  p.data.tags.forEach((t) => tagMap.set(t, (tagMap.get(t) ?? 0) + 1))
+)
+const tags = Array.from(tagMap.entries()).sort((a, b) => b[1] - a[1])
+---
+
+<Layout
+  title="Browse Tags — OpenRadar"
+  description="Explore open-source projects by category. Find tools by tags like AI, Python, CLI, and more."
+>
+  <Header />
+
+  <main class="container-main py-16">
+    <div class="mb-12">
+      <h1 class="font-extrabold font-display mb-4">Browse by Tag</h1>
+      <p class="text-text-secondary text-lg" style="line-height: 1.7;">
+        Explore {tags.length} categories across {projects.length} projects.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+      {tags.map(([tag, count]) => (
+        <a
+          href={`/tags/${tag}`}
+          class="glass-card p-6 text-center no-underline group"
+        >
+          <div class="text-lg font-bold font-display text-text-primary group-hover:text-accent transition-colors mb-2">
+            {tag}
+          </div>
+          <div class="text-xs text-text-muted">
+            {count} project{count !== 1 ? 's' : ''}
+          </div>
+        </a>
+      ))}
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
