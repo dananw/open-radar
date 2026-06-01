@@ -1,14 +1,14 @@
-import { defineConfig } from 'astro/config';
-import react from '@astrojs/react';
-import sitemap from '@astrojs/sitemap';
-import tailwindcss from '@tailwindcss/vite';
+import { defineConfig } from "astro/config";
+import react from "@astrojs/react";
+import sitemap from "@astrojs/sitemap";
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  site: 'https://example.pages.dev',
+  site: "https://open-radar.pages.dev",
   integrations: [react(), sitemap()],
   markdown: {
     shikiConfig: {
-      theme: 'github-light',
+      theme: "github-light",
     },
   },
   vite: {

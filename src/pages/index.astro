@@ -1,17 +1,24 @@
 ---
-import Layout from '../layouts/Layout.astro'
-import Header from '../components/Header.astro'
-import Footer from '../components/Footer.astro'
-import ProjectCard from '../components/ProjectCard.astro'
-import SearchBar from '../components/SearchBar'
-import { getCollection } from 'astro:content'
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import ProjectCard from "../components/ProjectCard.astro";
+import SearchBar from "../components/SearchBar";
+import { getCollection } from "astro:content";
+import { computeStats, sortByPublishedDesc } from "../lib/projects";
+import { formatNumber } from "../lib/format";
 
-const allProjects = await getCollection('projects')
-const featured = allProjects.filter((p) => p.data.featured)
-const sorted = allProjects.sort(
-  (a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime()
-)
+const allProjects = await getCollection("projects");
+const featured = allProjects.filter((p) => p.data.featured);
 
+// Order the index by publish date (most recent first) via the shared helper.
+// Collection entries carry the date at `.data.publishedAt`, so project a
+// `publishedAt` onto each entry, sort, then unwrap back to the entries.
+const sorted = sortByPublishedDesc(
+  allProjects.map((entry) => ({ entry, publishedAt: entry.data.publishedAt })),
+).map((p) => p.entry);
+
+// Search island data — same order as the rendered grid (Req 3.4, 8.5).
 const searchData = sorted.map((p) => ({
   name: p.data.name,
   description: p.data.description,
@@ -19,20 +26,23 @@ const searchData = sorted.map((p) => ({
   tags: p.data.tags,
   stars: p.data.stars,
   language: p.data.language,
-}))
+}));
 
-const totalStars = allProjects.reduce((sum, p) => sum + (p.data.stars ?? 0), 0)
-const uniqueTags = new Set(allProjects.flatMap((p) => p.data.tags)).size
-const lastUpdated = sorted[0]?.data.publishedAt.toLocaleDateString('en-US', {
-  month: 'short',
-  year: 'numeric',
-})
+// Stats strip values — derived via computeStats so zeros are correct (Req 3.2).
+const { projectCount, categoryCount, totalStars } = computeStats(
+  allProjects.map((p) => p.data),
+);
+
+const lastUpdated = sorted[0]?.data.publishedAt.toLocaleDateString("en-US", {
+  month: "short",
+  year: "numeric",
+});
 
 const stats = [
-  { value: String(allProjects.length).padStart(2, '0'), label: 'Projects indexed' },
-  { value: String(uniqueTags), label: 'Categories' },
-  { value: `${(totalStars / 1000).toFixed(0)}k`, label: 'Combined stars' },
-]
+  { value: String(projectCount).padStart(2, "0"), label: "Projects indexed" },
+  { value: String(categoryCount), label: "Categories" },
+  { value: formatNumber(totalStars), label: "Combined stars" },
+];
 ---
 
 <Layout>
@@ -40,19 +50,39 @@ const stats = [
 
   <main>
     <!-- Hero -->
-    <section class="border-b border-line">
-      <div class="container-main pt-20 pb-16">
-        <p class="label flex items-center gap-3 mb-9">
-          <span class="tick"></span>
-          The open-source index{lastUpdated && <span class="text-ink-2">· Updated {lastUpdated}</span>}
+    <section class="relative overflow-hidden border-b border-line">
+      <div
+        class="pointer-events-none absolute inset-0 -z-10"
+        aria-hidden="true"
+        style="background: radial-gradient(70% 70% at 50% -10%, var(--accent-soft), transparent 70%);"
+      >
+      </div>
+
+      <div
+        class="container-main pt-[var(--space-7)] pb-[var(--space-6)] reveal-up"
+      >
+        <p
+          class="label flex items-center gap-[var(--space-3)] mb-[var(--space-6)]"
+        >
+          <span class="inline-block w-7 h-px bg-accent"></span>
+          The open-source index
+          {
+            lastUpdated && (
+              <span class="text-text-2 normal-case tracking-normal">
+                · Updated {lastUpdated}
+              </span>
+            )
+          }
         </p>
 
-        <h1 class="font-display max-w-4xl mb-8" style="line-height: 1.0;">
+        <h1
+          class="font-display text-display max-w-4xl mb-[var(--space-5)] text-text"
+        >
           The open-source projects<br />
           worth your <span class="italic text-accent">attention</span>.
         </h1>
 
-        <p class="text-lg text-ink-2 max-w-2xl">
+        <p class="text-lead text-text-2 max-w-2xl">
           A hand-curated field guide to trending tools and libraries. No vanity
           rankings, no sponsored slots — just honest field notes on software
           people actually reach for.
@@ -61,80 +91,107 @@ const stats = [
     </section>
 
     <!-- Stats strip -->
-    <section class="border-b border-line">
-      <div class="container-main grid grid-cols-3">
-        {stats.map((s, i) => (
-          <div class={`py-8 ${i > 0 ? 'pl-6 sm:pl-10 border-l border-line' : 'pr-6'}`}>
-            <div class="font-display text-3xl sm:text-5xl leading-none mb-2">{s.value}</div>
-            <div class="label">{s.label}</div>
-          </div>
-        ))}
+    <section class="container-main pt-[var(--space-6)]">
+      <div
+        class="grid grid-cols-1 sm:grid-cols-3 gap-[var(--space-5)] reveal-stagger"
+        style="--reveal-step: 90ms;"
+      >
+        {
+          stats.map((s) => (
+            <div class="surface p-[var(--space-5)] sm:p-[var(--space-6)]">
+              <div class="font-display text-4xl sm:text-5xl leading-none mb-[var(--space-3)] text-text">
+                {s.value}
+              </div>
+              <div class="label">{s.label}</div>
+            </div>
+          ))
+        }
       </div>
     </section>
 
     <!-- Featured -->
-    {featured.length > 0 && (
-      <section class="container-main pt-20">
-        <div class="flex items-baseline justify-between gap-4 mb-10 pb-4 border-b border-ink">
-          <h2 class="font-display text-3xl flex items-center gap-3">
-            <span class="tick"></span>Featured
-          </h2>
-          <span class="label">{String(featured.length).padStart(2, '0')} selected</span>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {featured.map((project, i) => (
-            <ProjectCard
-              name={project.data.name}
-              description={project.data.description}
-              url={project.data.url}
-              stars={project.data.stars}
-              forks={project.data.forks}
-              language={project.data.language}
-              tags={project.data.tags}
-              slug={project.id}
-              index={i + 1}
-            />
-          ))}
-        </div>
-      </section>
-    )}
+    {
+      featured.length > 0 && (
+        <section class="container-main pt-[var(--space-9)]">
+          <div class="section-head reveal-up">
+            <h2 class="font-display text-h2 flex items-center gap-[var(--space-3)] text-text">
+              <span class="inline-block w-7 h-px bg-accent" />
+              Featured
+            </h2>
+            <span class="label">
+              {String(featured.length).padStart(2, "0")} selected
+            </span>
+          </div>
+          <div
+            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[var(--space-5)] reveal-stagger"
+            style="--reveal-step: 70ms;"
+          >
+            {featured.map((project, i) => (
+              <div class="flex">
+                <ProjectCard
+                  name={project.data.name}
+                  description={project.data.description}
+                  url={project.data.url}
+                  stars={project.data.stars}
+                  forks={project.data.forks}
+                  language={project.data.language}
+                  tags={project.data.tags}
+                  slug={project.id}
+                  index={i + 1}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      )
+    }
 
     <!-- All projects + search -->
-    <section class="container-main pt-20 pb-8" id="all-projects">
-      <div class="flex items-baseline justify-between gap-4 mb-10 pb-4 border-b border-ink">
-        <h2 class="font-display text-3xl flex items-center gap-3">
-          <span class="tick"></span>The index
+    <section
+      class="container-main pt-[var(--space-9)] section-b"
+      id="all-projects"
+    >
+      <div class="section-head reveal-up">
+        <h2
+          class="font-display text-h2 flex items-center gap-[var(--space-3)] text-text"
+        >
+          <span class="inline-block w-7 h-px bg-accent"></span>The index
         </h2>
-        <span class="label">A–Z by recency</span>
+        <span class="label">By recency</span>
       </div>
 
-      <div class="mb-12">
+      <div class="mb-[var(--space-5)] reveal-up" style="--reveal-delay: 60ms;">
         <SearchBar client:load projects={searchData} />
       </div>
 
       <div
         id="projects-grid"
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[var(--space-5)] reveal-stagger"
+        style="--reveal-step: 60ms;"
       >
-        {sorted.map((project, i) => (
-          <div class="project-item flex" data-slug={project.id}>
-            <ProjectCard
-              name={project.data.name}
-              description={project.data.description}
-              url={project.data.url}
-              stars={project.data.stars}
-              forks={project.data.forks}
-              language={project.data.language}
-              tags={project.data.tags}
-              slug={project.id}
-              index={i + 1}
-            />
-          </div>
-        ))}
+        {
+          sorted.map((project, i) => (
+            <div class="project-item flex" data-slug={project.id}>
+              <ProjectCard
+                name={project.data.name}
+                description={project.data.description}
+                url={project.data.url}
+                stars={project.data.stars}
+                forks={project.data.forks}
+                language={project.data.language}
+                tags={project.data.tags}
+                slug={project.id}
+                index={i + 1}
+              />
+            </div>
+          ))
+        }
       </div>
 
-      <div id="projects-empty" class="hidden py-20 text-center">
-        <p class="font-display text-2xl mb-2">Nothing on the radar.</p>
+      <div id="projects-empty" class="hidden py-[var(--space-9)] text-center">
+        <p class="font-display text-2xl mb-[var(--space-2)] text-text">
+          Nothing on the radar.
+        </p>
         <p class="label">Try a different keyword or clear the filters</p>
       </div>
     </section>
@@ -145,19 +202,19 @@ const stats = [
 
 <script>
   const items = Array.from(
-    document.querySelectorAll<HTMLElement>('.project-item')
-  )
-  const empty = document.getElementById('projects-empty')
+    document.querySelectorAll<HTMLElement>(".project-item"),
+  );
+  const empty = document.getElementById("projects-empty");
 
-  window.addEventListener('search-results', ((e: Event) => {
+  window.addEventListener("search-results", ((e: Event) => {
     const { slugs, count } = (e as CustomEvent).detail as {
-      slugs: string[]
-      count: number
-    }
-    const visible = new Set(slugs)
+      slugs: string[];
+      count: number;
+    };
+    const visible = new Set(slugs);
     items.forEach((el) => {
-      el.style.display = visible.has(el.dataset.slug ?? '') ? '' : 'none'
-    })
-    empty?.classList.toggle('hidden', count !== 0)
-  }) as EventListener)
+      el.style.display = visible.has(el.dataset.slug ?? "") ? "" : "none";
+    });
+    empty?.classList.toggle("hidden", count !== 0);
+  }) as EventListener);
 </script>

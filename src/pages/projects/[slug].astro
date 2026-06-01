@@ -1,88 +1,113 @@
 ---
-import Layout from '../../layouts/Layout.astro'
-import Header from '../../components/Header.astro'
-import Footer from '../../components/Footer.astro'
-import ProjectCard from '../../components/ProjectCard.astro'
-import TagBadge from '../../components/TagBadge.astro'
-import { getCollection, render } from 'astro:content'
+import Layout from "../../layouts/Layout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import ProjectCard from "../../components/ProjectCard.astro";
+import TagBadge from "../../components/TagBadge.astro";
+import { relatedProjects } from "../../lib/projects";
+import { getCollection, render } from "astro:content";
 
 export async function getStaticPaths() {
-  const projects = await getCollection('projects')
+  const projects = await getCollection("projects");
   return projects.map((project) => ({
     params: { slug: project.id },
     props: { project },
-  }))
+  }));
 }
 
-const { project } = Astro.props
-const { Content } = await render(project)
+const { project } = Astro.props;
+const { Content } = await render(project);
 
-const allProjects = await getCollection('projects')
-const related = allProjects
-  .filter((p) => p.id !== project.id && p.data.tags.some((t) => project.data.tags.includes(t)))
-  .slice(0, 3)
+const allProjects = await getCollection("projects");
+// Project the content entries onto the shape `relatedProjects` expects
+// (identity on `slug`, tags read directly), keeping the original entry so the
+// related cards still render from real collection data.
+const related = relatedProjects(
+  { slug: project.id, tags: project.data.tags },
+  allProjects.map((p) => ({ slug: p.id, tags: p.data.tags, entry: p })),
+).map((r) => r.entry);
 
-const published = project.data.publishedAt.toLocaleDateString('en-US', {
-  month: 'long',
-  day: 'numeric',
-  year: 'numeric',
-})
+const published = project.data.publishedAt.toLocaleDateString("en-US", {
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+});
 ---
 
-<Layout title={`${project.data.name} — OpenRadar`} description={project.data.description}>
+<Layout
+  title={`${project.data.name} — OpenRadar`}
+  description={project.data.description}
+>
   <Header />
 
-  <main class="container-main py-14">
+  <main class="container-main py-[var(--space-7)]">
     <!-- Breadcrumb -->
-    <nav class="flex items-center gap-2 label mb-12" aria-label="Breadcrumb">
+    <nav
+      class="flex items-center gap-[var(--space-2)] label mb-[var(--space-7)]"
+      aria-label="Breadcrumb"
+    >
       <a href="/" class="hover:text-accent transition-colors">Index</a>
-      <span class="text-line-strong">/</span>
-      <span class="text-ink">{project.data.name}</span>
+      <span class="text-muted">/</span>
+      <span class="text-text">{project.data.name}</span>
     </nav>
 
     <!-- Project header -->
-    <header class="border-b border-ink pb-12 mb-12">
-      <p class="label mb-5">
-        Project<span class="text-line-strong"> · </span>{project.data.language ?? 'Open source'}
-        <span class="text-line-strong"> · </span>Added {published}
+    <header
+      class="border-b border-line-strong pb-[var(--space-7)] mb-[var(--space-7)]"
+    >
+      <p class="label mb-[var(--space-5)]">
+        Project<span class="text-muted"> · </span>{
+          project.data.language ?? "Open source"
+        }
+        <span class="text-muted"> · </span>Added {published}
       </p>
 
-      <h1 class="font-display mb-7" style="font-size: clamp(2.5rem, 6vw, 4.5rem); line-height: 1.0;">
+      <h1 class="font-display mb-[var(--space-5)]" style="line-height: 1.0;">
         {project.data.name}
       </h1>
 
-      <p class="text-xl text-ink-2 max-w-3xl mb-8" style="line-height: 1.5;">
+      <p
+        class="text-lead text-text-2 max-w-3xl mb-[var(--space-6)]"
+        style="line-height: 1.5;"
+      >
         {project.data.description}
       </p>
 
-      <div class="flex flex-wrap gap-1.5 mb-9">
-        {project.data.tags.map((tag) => (
-          <a href={`/tags/${tag}`} class="group inline-flex">
-            <TagBadge name={tag} />
-          </a>
-        ))}
+      <div class="flex flex-wrap gap-[var(--space-2)] mb-[var(--space-6)]">
+        {
+          project.data.tags.map((tag) => (
+            <a href={`/tags/${tag}`} class="group inline-flex">
+              <TagBadge name={tag} />
+            </a>
+          ))
+        }
       </div>
 
-      <div class="flex flex-wrap items-center gap-x-7 gap-y-4">
-        {project.data.stars !== undefined && (
-          <span class="font-mono text-sm text-ink-2 flex items-center gap-1.5">
-            <span class="text-gold">★</span>{project.data.stars.toLocaleString()}
-            <span class="text-ink-3">stars</span>
-          </span>
-        )}
-        {project.data.forks !== undefined && (
-          <span class="font-mono text-sm text-ink-2 flex items-center gap-1.5">
-            {project.data.forks.toLocaleString()}
-            <span class="text-ink-3">forks</span>
-          </span>
-        )}
+      <div
+        class="flex flex-wrap items-center gap-x-[var(--space-7)] gap-y-[var(--space-4)]"
+      >
+        {
+          project.data.stars !== undefined && (
+            <span class="font-mono text-sm text-text-2 flex items-center gap-1.5">
+              <span class="text-gold">★</span>
+              {project.data.stars.toLocaleString()}
+              <span class="text-muted">stars</span>
+            </span>
+          )
+        }
+        {
+          project.data.forks !== undefined && (
+            <span class="font-mono text-sm text-text-2 flex items-center gap-1.5">
+              {project.data.forks.toLocaleString()}
+              <span class="text-muted">forks</span>
+            </span>
+          )
+        }
         <a
           href={project.data.url}
           target="_blank"
           rel="noopener noreferrer"
-          class="sm:ml-auto inline-flex items-center gap-2 border border-ink px-5 py-2.5
-                 font-mono text-[0.7rem] tracking-widest uppercase
-                 hover:bg-ink hover:text-paper transition-colors"
+          class="btn btn-primary sm:ml-auto"
         >
           View on GitHub
           <span aria-hidden="true">&rarr;</span>
@@ -91,35 +116,41 @@ const published = project.data.publishedAt.toLocaleDateString('en-US', {
     </header>
 
     <!-- Content -->
-    <article class="prose mb-24">
+    <article class="prose mb-[var(--space-9)]">
       <Content />
     </article>
 
     <!-- Related -->
-    {related.length > 0 && (
-      <section>
-        <div class="flex items-baseline justify-between gap-4 mb-10 pb-4 border-b border-ink">
-          <h2 class="font-display text-3xl flex items-center gap-3">
-            <span class="tick"></span>Related
-          </h2>
-          <span class="label">Shared tags</span>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {related.map((p) => (
-            <ProjectCard
-              name={p.data.name}
-              description={p.data.description}
-              url={p.data.url}
-              stars={p.data.stars}
-              forks={p.data.forks}
-              language={p.data.language}
-              tags={p.data.tags}
-              slug={p.id}
-            />
-          ))}
-        </div>
-      </section>
-    )}
+    {
+      related.length > 0 && (
+        <section>
+          <div class="section-head">
+            <h2 class="font-display text-3xl flex items-center gap-[var(--space-3)]">
+              <span
+                class="inline-block w-2 h-2 rounded-full bg-accent"
+                aria-hidden="true"
+              />
+              Related
+            </h2>
+            <span class="label">Shared tags</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-5)]">
+            {related.map((p) => (
+              <ProjectCard
+                name={p.data.name}
+                description={p.data.description}
+                url={p.data.url}
+                stars={p.data.stars}
+                forks={p.data.forks}
+                language={p.data.language}
+                tags={p.data.tags}
+                slug={p.id}
+              />
+            ))}
+          </div>
+        </section>
+      )
+    }
   </main>
 
   <Footer />

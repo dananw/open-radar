@@ -1,21 +1,29 @@
 ---
-const year = new Date().getFullYear()
+const year = new Date().getFullYear();
 ---
 
-<footer class="border-t border-line mt-28">
-  <div class="container-main py-16">
-    <div class="grid grid-cols-1 md:grid-cols-12 gap-10">
+<footer class="border-t border-line mt-[var(--space-10)]">
+  <div class="container-main py-[var(--space-8)]">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-[var(--space-7)]">
       <!-- Colophon -->
       <div class="md:col-span-6">
-        <div class="flex items-center gap-2.5 mb-4">
-          <svg class="w-5 h-5 text-ink" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6">
-            <circle cx="16" cy="16" r="13.5" />
-            <circle cx="16" cy="16" r="7" />
-            <line x1="16" y1="16" x2="27" y2="9" />
+        <div class="flex items-center gap-[var(--space-2)] mb-[var(--space-4)]">
+          <svg
+            class="w-5 h-5 text-accent"
+            viewBox="0 0 32 32"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+          >
+            <circle cx="16" cy="16" r="13.5"></circle>
+            <circle cx="16" cy="16" r="7"></circle>
+            <line x1="16" y1="16" x2="27" y2="9"></line>
           </svg>
-          <span class="font-display text-lg leading-none">Open<span class="italic">Radar</span></span>
+          <span class="font-display text-lg leading-none text-text"
+            >Open<span class="italic">Radar</span></span
+          >
         </div>
-        <p class="text-sm text-ink-2 max-w-sm">
+        <p class="text-sm text-text-2 max-w-sm">
           An independent, hand-curated index of open-source projects worth your
           attention. No rankings to game, no sponsored slots — just the work.
         </p>
@@ -23,8 +31,8 @@ const year = new Date().getFullYear()
 
       <!-- Explore -->
       <div class="md:col-span-3">
-        <p class="label mb-4">Explore</p>
-        <ul class="space-y-2.5">
+        <p class="label mb-[var(--space-4)]">Explore</p>
+        <ul class="space-y-[var(--space-3)]">
           <li><a href="/" class="text-sm ulink">Index</a></li>
           <li><a href="/tags" class="text-sm ulink">Browse tags</a></li>
         </ul>
@@ -32,15 +40,18 @@ const year = new Date().getFullYear()
 
       <!-- Resources -->
       <div class="md:col-span-3">
-        <p class="label mb-4">Resources</p>
-        <ul class="space-y-2.5">
-          <li><a href="/sitemap-index.xml" class="text-sm ulink">Sitemap</a></li>
-          <li><a href="https://github.com" target="_blank" rel="noopener noreferrer" class="text-sm ulink">GitHub</a></li>
+        <p class="label mb-[var(--space-4)]">Resources</p>
+        <ul class="space-y-[var(--space-3)]">
+          <li>
+            <a href="/sitemap-index.xml" class="text-sm ulink">Sitemap</a>
+          </li>
         </ul>
       </div>
     </div>
 
-    <div class="mt-14 pt-6 border-t border-line flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+    <div
+      class="mt-[var(--space-7)] pt-[var(--space-5)] border-t border-line flex flex-col sm:flex-row items-start sm:items-center justify-between gap-[var(--space-3)]"
+    >
       <p class="label">&copy; {year} OpenRadar</p>
       <p class="label">Set in Fraunces &amp; JetBrains Mono</p>
     </div>

@@ -1,21 +1,22 @@
 import { useState, useMemo, useEffect } from 'react'
-
-interface Project {
-  name: string
-  description: string
-  slug: string
-  tags: string[]
-  stars?: number
-  language?: string
-}
+import {
+  filterProjects,
+  buildSearchEventDetail,
+  type SearchProject,
+} from './search-logic'
 
 interface SearchBarProps {
-  projects: Project[]
+  projects: SearchProject[]
 }
 
 export default function SearchBar({ projects }: SearchBarProps) {
   const [query, setQuery] = useState('')
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
+  const [tagsExpanded, setTagsExpanded] = useState(false)
+
+  // Number of tags shown before the list collapses behind "+N more".
+  // Tags are sorted by frequency, so the visible slice is the most useful set.
+  const VISIBLE_TAG_LIMIT = 10
 
   const allTags = useMemo(() => {
     const tagMap = new Map<string, number>()
@@ -25,46 +26,39 @@ export default function SearchBar({ projects }: SearchBarProps) {
     return Array.from(tagMap.entries()).sort((a, b) => b[1] - a[1])
   }, [projects])
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    return projects.filter((p) => {
-      const matchesQuery =
-        !q ||
-        p.name.toLowerCase().includes(q) ||
-        p.description.toLowerCase().includes(q) ||
-        p.tags.some((t) => t.toLowerCase().includes(q))
-      const matchesTag = !selectedTag || p.tags.includes(selectedTag)
-      return matchesQuery && matchesTag
-    })
-  }, [projects, query, selectedTag])
+  // Collapsed view: show the top tags, but always keep the active tag visible
+  // (pin it in) so selecting a long-tail tag never makes it vanish on collapse.
+  const visibleTags = useMemo(() => {
+    if (tagsExpanded) return allTags
+    const top = allTags.slice(0, VISIBLE_TAG_LIMIT)
+    if (selectedTag && !top.some(([t]) => t === selectedTag)) {
+      const active = allTags.find(([t]) => t === selectedTag)
+      if (active) return [...top, active]
+    }
+    return top
+  }, [allTags, tagsExpanded, selectedTag])
+
+  const hiddenCount = allTags.length - Math.min(VISIBLE_TAG_LIMIT, allTags.length)
+
+  const filtered = useMemo(
+    () => filterProjects(projects, query, selectedTag),
+    [projects, query, selectedTag]
+  )
 
   // Broadcast the filtered slugs so the statically-rendered grid can sync.
   useEffect(() => {
     const event = new CustomEvent('search-results', {
-      detail: {
-        slugs: filtered.map((p) => p.slug),
-        total: projects.length,
-        count: filtered.length,
-        query: query.trim(),
-        selectedTag,
-      },
+      detail: buildSearchEventDetail(projects, filtered, query, selectedTag),
     })
     window.dispatchEvent(event)
-  }, [filtered, projects.length, query, selectedTag])
-
-  const chip = (active: boolean) =>
-    `font-mono text-[0.7rem] px-2.5 py-1.5 border transition-colors cursor-pointer ${
-      active
-        ? 'bg-accent border-accent text-[#f8f4ec]'
-        : 'bg-paper border-line text-ink-2 hover:border-ink'
-    }`
+  }, [filtered, projects, query, selectedTag])
 
   return (
-    <div className="space-y-5">
+    <div>
       {/* Search input */}
       <div className="relative">
         <svg
-          className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-3"
+          className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -81,15 +75,18 @@ export default function SearchBar({ projects }: SearchBarProps) {
           placeholder="Search by name, description or tag…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full pl-11 pr-11 h-12 bg-card border border-ink
-                     text-ink placeholder:text-ink-3 placeholder:font-mono placeholder:text-sm
-                     focus:outline-none focus:ring-2 focus:ring-accent/40
+          className="w-full pl-11 pr-11 h-12 rounded-md bg-surface border border-line-strong
+                     text-text placeholder:text-muted placeholder:font-mono placeholder:text-sm
+                     focus:outline-none focus:ring-2 focus:ring-focus
                      transition-shadow"
         />
         {query && (
           <button
             onClick={() => setQuery('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-3 hover:text-accent transition-colors p-1"
+            className="absolute right-2 top-1/2 -translate-y-1/2 grid place-items-center
+                       w-9 h-9 rounded-full text-muted hover:text-accent
+                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus
+                       transition-colors"
             aria-label="Clear search"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -99,25 +96,47 @@ export default function SearchBar({ projects }: SearchBarProps) {
         )}
       </div>
 
-      {/* Tag filters */}
-      <div className="flex flex-wrap gap-2">
-        <button onClick={() => setSelectedTag(null)} className={chip(!selectedTag)}>
+      {/* Tag filters — 16px below the search input (Search → Tags) */}
+      <div className="flex flex-wrap gap-[var(--space-2)] mt-[var(--space-4)]">
+        <button
+          type="button"
+          onClick={() => setSelectedTag(null)}
+          className="chip"
+          aria-pressed={!selectedTag}
+        >
           All
         </button>
-        {allTags.map(([tag, count]) => (
+        {visibleTags.map(([tag, count]) => (
           <button
             key={tag}
+            type="button"
             onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-            className={chip(selectedTag === tag)}
+            className="chip"
+            aria-pressed={selectedTag === tag}
           >
             #{tag}
-            <span className="ml-1 opacity-60">{count}</span>
+            <span className="opacity-60">{count}</span>
           </button>
         ))}
+        {hiddenCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setTagsExpanded((v) => !v)}
+            className="chip"
+            aria-expanded={tagsExpanded}
+            aria-label={
+              tagsExpanded
+                ? 'Show fewer tags'
+                : `Show ${hiddenCount} more tags`
+            }
+          >
+            {tagsExpanded ? 'Show less' : `+${hiddenCount} more`}
+          </button>
+        )}
       </div>
 
-      {/* Result count */}
-      <p className="label">
+      {/* Result count — 24px below the tag filters (Tags → Results) */}
+      <p className="label mt-[var(--space-5)]">
         {filtered.length} / {projects.length} projects
         {query && <span> · &ldquo;{query.trim()}&rdquo;</span>}
         {selectedTag && <span> · #{selectedTag}</span>}

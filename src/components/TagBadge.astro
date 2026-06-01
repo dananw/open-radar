@@ -1,15 +1,23 @@
 ---
 interface Props {
-  name: string
+  name: string;
+  /** "chip" = interactive filter pill (default); "mini" = compact flat card tag. */
+  variant?: "chip" | "mini";
 }
 
-const { name } = Astro.props
+const { name, variant = "chip" } = Astro.props;
 ---
 
-<span
-  class="inline-flex items-center gap-0.5 font-mono text-[0.7rem] leading-none
-         px-2 py-1 border border-line bg-paper text-ink-2
-         transition-colors group-hover:border-line-strong"
->
-  <span class="text-accent">#</span>{name}
-</span>
+{
+  variant === "mini" ? (
+    <span class="tag-mini">
+      <span class="tag-hash">#</span>
+      {name}
+    </span>
+  ) : (
+    <span class="chip">
+      <span class="text-accent">#</span>
+      {name}
+    </span>
+  )
+}

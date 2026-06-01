@@ -1,14 +1,15 @@
 ---
-import Layout from '../../layouts/Layout.astro'
-import Header from '../../components/Header.astro'
-import Footer from '../../components/Footer.astro'
-import ProjectCard from '../../components/ProjectCard.astro'
-import { getCollection } from 'astro:content'
+import Layout from "../../layouts/Layout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import ProjectCard from "../../components/ProjectCard.astro";
+import { projectsForTag } from "../../lib/tags";
+import { getCollection } from "astro:content";
 
 export async function getStaticPaths() {
-  const projects = await getCollection('projects')
-  const tagSet = new Set<string>()
-  projects.forEach((p) => p.data.tags.forEach((t) => tagSet.add(t)))
+  const projects = await getCollection("projects");
+  const tagSet = new Set<string>();
+  projects.forEach((p) => p.data.tags.forEach((t) => tagSet.add(t)));
 
   return Array.from(tagSet).map((tag) => ({
     params: { tag },
@@ -16,62 +17,91 @@ export async function getStaticPaths() {
       tag,
       projects: projects.filter((p) => p.data.tags.includes(tag)),
     },
-  }))
+  }));
 }
 
-const { tag, projects } = Astro.props
-const siteURL = Astro.site?.toString() ?? 'https://example.pages.dev'
+const { tag, projects } = Astro.props;
+const siteURL = Astro.site?.toString() ?? "https://open-radar.pages.dev";
+
+// Derive the project set/count via the shared helper so the page reflects
+// exactly those projects whose tags include the selected tag (Req 6.5).
+const taggedProjects = projectsForTag(
+  projects.map((p) => p.data),
+  tag,
+);
+const projectCount = taggedProjects.length;
 
 const tagSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'CollectionPage',
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
   name: `${tag} — Open-Source Projects`,
   description: `Discover the best open-source projects tagged with ${tag}.`,
   url: new URL(`/tags/${tag}`, siteURL).toString(),
-}
+};
 ---
 
 <Layout
   title={`#${tag} Projects — OpenRadar`}
-  description={`Discover the best open-source projects tagged with ${tag}. ${projects.length} projects found.`}
+  description={`Discover the best open-source projects tagged with ${tag}. ${projectCount} projects found.`}
 >
   <Header />
 
-  <script type="application/ld+json" set:html={JSON.stringify(tagSchema)} />
+  <script
+    type="application/ld+json"
+    is:inline
+    set:html={JSON.stringify(tagSchema)}
+  />
 
-  <main class="container-main py-14">
-    <nav class="flex items-center gap-2 label mb-12" aria-label="Breadcrumb">
+  <main class="container-main py-[var(--space-7)]">
+    <nav
+      class="flex items-center gap-[var(--space-2)] label mb-[var(--space-7)]"
+      aria-label="Breadcrumb"
+    >
       <a href="/" class="hover:text-accent transition-colors">Index</a>
-      <span class="text-line-strong">/</span>
+      <span class="text-muted">/</span>
       <a href="/tags" class="hover:text-accent transition-colors">Tags</a>
-      <span class="text-line-strong">/</span>
-      <span class="text-ink">{tag}</span>
+      <span class="text-muted">/</span>
+      <span class="text-text">{tag}</span>
     </nav>
 
-    <header class="border-b border-ink pb-12 mb-12">
-      <p class="label flex items-center gap-3 mb-6"><span class="tick"></span>Tag</p>
-      <h1 class="font-display mb-5" style="line-height: 1.0;">
-        <span class="text-ink-3">#</span>{tag}
+    <header
+      class="reveal-up border-b border-line-strong pb-[var(--space-7)] mb-[var(--space-7)]"
+    >
+      <p
+        class="label flex items-center gap-[var(--space-3)] mb-[var(--space-5)]"
+      >
+        <span
+          class="inline-block w-1.5 h-1.5 rounded-full bg-accent"
+          aria-hidden="true"></span>
+        Tag
+      </p>
+      <h1 class="font-display mb-[var(--space-5)]" style="line-height: 1.0;">
+        <span class="text-muted">#</span>{tag}
       </h1>
-      <p class="text-lg text-ink-2">
-        {projects.length} open-source project{projects.length !== 1 ? 's' : ''} filed under this tag.
+      <p class="text-lg text-text-2">
+        {projectCount} open-source project{projectCount !== 1 ? "s" : ""} filed under
+        this tag.
       </p>
     </header>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-      {projects.map((project, i) => (
-        <ProjectCard
-          name={project.data.name}
-          description={project.data.description}
-          url={project.data.url}
-          stars={project.data.stars}
-          forks={project.data.forks}
-          language={project.data.language}
-          tags={project.data.tags}
-          slug={project.id}
-          index={i + 1}
-        />
-      ))}
+    <div
+      class="reveal-stagger grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[var(--space-5)]"
+    >
+      {
+        projects.map((project, i) => (
+          <ProjectCard
+            name={project.data.name}
+            description={project.data.description}
+            url={project.data.url}
+            stars={project.data.stars}
+            forks={project.data.forks}
+            language={project.data.language}
+            tags={project.data.tags}
+            slug={project.id}
+            index={i + 1}
+          />
+        ))
+      }
     </div>
   </main>
 

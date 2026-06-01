@@ -1,41 +1,211 @@
 @import "tailwindcss";
 
 /* ──────────────────────────────────────────────────────────
-   OpenRadar — Editorial theme
-   A print / terminal inspired look: warm paper, ink, hairlines,
-   a single vermilion signal colour, serif display + mono labels.
+   OpenRadar — "Luminous Depth" design system
+   Token-driven dual-mode (light/dark) layer.
+
+   Mechanism (Tailwind v4 runtime theming):
+   • Raw, mode-specific values live on :root (light) and
+     :root[data-theme="dark"] (dark).
+   • @theme inline { --color-bg: var(--bg); … } makes the
+     generated utilities (bg-bg, text-text, …) reference the
+     raw variable BY REFERENCE rather than baking the value at
+     build time, so flipping data-theme recolors the whole site
+     instantly with no rebuild.
    ────────────────────────────────────────────────────────── */
-@theme {
-  /* Surfaces */
-  --color-paper: #f2ede2;
-  --color-card: #f8f4ec;
-  --color-ink: #1b1a17;
-  --color-ink-2: #54504a;
-  --color-ink-3: #8d877a;
 
-  /* Lines */
-  --color-line: #ddd5c5;
-  --color-line-strong: #c6bda8;
+/* Explicit dark variant for the rare dark-only rule beyond a token swap. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-  /* Signal */
-  --color-accent: #cb4124;
-  --color-accent-2: #a6311a;
-  --color-gold: #9a7b1f;
+/* ── Raw semantic tokens — Light (default) ─────────────────── */
+:root {
+  color-scheme: light;
+
+  /* Color — Editorial palette (warm paper, ink, vermilion signal) */
+  --bg: #f2ede2;
+  --surface: #f8f4ec;
+  --surface-2: #ece4d4;
+  --line: #ddd5c5;
+  --line-strong: #c6bda8;
+  --text: #1b1a17;
+  --text-2: #54504a;
+  --muted: #8d877a;
+  --accent: #cb4124;
+  --accent-strong: #a6311a;
+  --accent-soft: rgba(203, 65, 36, 0.1);
+  --on-accent: #f8f4ec;
+  --gold: #9a7b1f;
+  --focus: #cb4124;
+
+  /* Elevation / shadow (warm-tinted, soft) */
+  --shadow-sm: 0 1px 2px rgba(60, 45, 25, 0.05), 0 1px 3px rgba(60, 45, 25, 0.07);
+  --shadow-md: 0 4px 12px rgba(60, 45, 25, 0.08), 0 2px 4px rgba(60, 45, 25, 0.05);
+  --shadow-lg: 0 16px 40px rgba(60, 45, 25, 0.12);
+  --shadow-glow: 0 0 0 1px var(--accent-soft), 0 10px 30px rgba(203, 65, 36, 0.16);
 
   /* Fonts */
   --font-display: "Fraunces", Georgia, serif;
   --font-body: "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Type scale — fluid via clamp() so it scales mobile→desktop */
+  --fs-display: clamp(2.75rem, 7vw, 5.25rem);
+  --fs-h1: clamp(2.5rem, 6vw, 4.5rem);
+  --fs-h2: clamp(1.75rem, 3.5vw, 2.75rem);
+  --fs-h3: clamp(1.2rem, 2vw, 1.5rem);
+  --fs-lead: clamp(1.05rem, 1.4vw, 1.25rem);
+  --fs-base: 1rem;
+  --fs-sm: 0.875rem;
+  --fs-label: 0.6875rem;
+
+  /* Spacing scale — a single 4 → 96px rhythm used site-wide.
+     Every margin / padding / gap resolves to one of these steps so
+     spacing is consistent and auditable across all pages. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 80px;
+  --space-10: 96px;
+
+  /* Semantic section rhythm — composed from the scale above so the
+     vertical flow between major page sections has one source of truth. */
+  --space-section: var(--space-9); /* 80px — gap between major page sections */
+  --space-block: var(--space-7); /* 48px — sub-section spacing */
+  --container-max: 1180px;
+
+  /* Radius */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 360ms;
+  --dur-enter: 500ms;
+}
+
+/* ── Raw semantic tokens — Dark overrides ──────────────────── */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Color — warm dark variant of the editorial palette */
+  --bg: #16140f;
+  --surface: #1e1b15;
+  --surface-2: #272219;
+  --line: #393327;
+  --line-strong: #4d4636;
+  --text: #f1ece0;
+  --text-2: #c2bbab;
+  --muted: #8d877a;
+  --accent: #e3613f;
+  --accent-strong: #f0795a;
+  --accent-soft: rgba(227, 97, 63, 0.16);
+  --on-accent: #16140f;
+  --gold: #d4a73a;
+  --focus: #e3613f;
+
+  /* Elevation / shadow (deeper in dark) */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 0 1px var(--accent-soft), 0 10px 30px rgba(227, 97, 63, 0.22);
+}
+
+/* ── Expose every raw token to Tailwind (by reference) ─────── */
+@theme inline {
+  /* Color → bg-*, text-*, border-* utilities recolor on data-theme swap */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-gold: var(--gold);
+  --color-focus: var(--focus);
+
+  /* Elevation → shadow-sm/md/lg/glow follow the active theme */
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-glow: var(--shadow-glow);
+
+  /* Fonts → font-display, font-body, font-mono */
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+
+  /* Type scale → text-display, text-h1, text-h2, text-h3, text-lead, text-label */
+  --text-display: var(--fs-display);
+  --text-h1: var(--fs-h1);
+  --text-h2: var(--fs-h2);
+  --text-h3: var(--fs-h3);
+  --text-lead: var(--fs-lead);
+  --text-label: var(--fs-label);
+
+  /* Spacing rhythm → p-section, py-section, gap-block, … */
+  --spacing-section: var(--space-section);
+  --spacing-block: var(--space-block);
+
+  /* Radius → rounded-sm/md/lg/xl/full */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-full: var(--radius-full);
+
+  /* Motion easing → ease-out, ease-in-out */
+  --ease-out: var(--ease-out);
+  --ease-in-out: var(--ease-in-out);
+}
+
+/* ── Section rhythm — consistent vertical spacing between major
+   page sections (Req 1.x layout rhythm). Single source of truth
+   so sections never stack inconsistently. ─────────────────── */
+.section {
+  padding-block: var(--space-section); /* 80px */
+}
+.section-t {
+  padding-top: var(--space-section); /* 80px */
+}
+.section-b {
+  padding-bottom: var(--space-section); /* 80px */
+}
+
+/* Heading row shared by section headers (kicker line + title + meta).
+   Heading text → rule = 16px; rule → content = 24px. */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4); /* 16px */
+  margin-bottom: var(--space-5); /* 24px — heading row → content */
+  padding-bottom: var(--space-4); /* 16px — heading text → rule */
+  border-bottom: 1px solid var(--line-strong);
 }
 
 /* ── Reset ─────────────────────────────────────────────── */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* NOTE: Tailwind v4 preflight (in @layer base) already applies
+   box-sizing:border-box + margin:0 + padding:0 to every element.
+   A second *unlayered* universal reset here would override every
+   layered spacing utility (margin/padding/gap), collapsing them to
+   0 — so it is intentionally omitted. Only genuinely additive base
+   rules live below. */
 
 html {
   scroll-behavior: smooth;
@@ -46,55 +216,57 @@ html {
 
 body {
   font-family: var(--font-body);
-  background-color: var(--color-paper);
-  color: var(--color-ink);
+  background-color: var(--bg);
+  color: var(--text);
   line-height: 1.65;
-  font-size: 1rem;
+  font-size: var(--fs-base);
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
+  transition: background-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out);
 }
 
-/* ── Typography ────────────────────────────────────────── */
+/* ── Base element typography ───────────────────────────── */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
   font-weight: 500;
   line-height: 1.05;
   letter-spacing: -0.01em;
-  color: var(--color-ink);
+  color: var(--text);
 }
 
 h1 {
-  font-size: clamp(2.75rem, 7vw, 5.5rem);
+  font-size: var(--fs-h1);
   font-weight: 400;
   font-optical-sizing: auto;
 }
 
 h2 {
-  font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+  font-size: var(--fs-h2);
   font-weight: 500;
 }
 
 h3 {
-  font-size: clamp(1.2rem, 2vw, 1.5rem);
+  font-size: var(--fs-h3);
   font-weight: 500;
 }
 
 p {
-  color: var(--color-ink-2);
+  color: var(--text-2);
   max-width: 68ch;
 }
 
 a {
   color: inherit;
   text-decoration: none;
-  transition: color 0.18s ease;
+  transition: color var(--dur-fast) var(--ease-out);
 }
 
-/* ── Editorial helpers ─────────────────────────────────── */
+/* ── Layout container (max content width preserved) ────── */
 .container-main {
   width: 100%;
-  max-width: 1180px;
+  max-width: var(--container-max);
   margin: 0 auto;
   padding-inline: 1.75rem;
 }
@@ -105,149 +277,431 @@ a {
   }
 }
 
-/* Mono uppercase kicker / metadata label */
-.label {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--color-ink-3);
-}
-
-/* Framed panel — the editorial replacement for the glass card */
-.frame {
-  background: var(--color-card);
-  border: 1px solid var(--color-line);
-  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
-}
-
-.frame-hover:hover {
-  border-color: var(--color-ink);
-}
-
-/* Inline link with an animated underline */
-.ulink {
-  position: relative;
-  color: var(--color-ink);
-  background-image: linear-gradient(var(--color-accent), var(--color-accent));
-  background-position: 0 100%;
-  background-repeat: no-repeat;
-  background-size: 0% 1px;
-  transition: background-size 0.25s ease, color 0.18s ease;
-}
-.ulink:hover {
-  color: var(--color-accent);
-  background-size: 100% 1px;
-}
-
-/* Accent-bullet section heading marker */
-.tick {
-  display: inline-block;
-  width: 0.7rem;
-  height: 0.7rem;
-  background: var(--color-accent);
-}
-
-/* ── Prose (rendered markdown on project pages) ────────── */
-.prose {
-  color: var(--color-ink-2);
-  font-size: 1.0625rem;
-  line-height: 1.75;
-}
-.prose > * + * {
-  margin-top: 1.15rem;
-}
-.prose > :first-child {
-  margin-top: 0;
-}
-.prose h2 {
-  font-size: 1.6rem;
-  color: var(--color-ink);
-  margin-top: 2.4rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--color-line);
-}
-.prose h3 {
-  font-size: 1.2rem;
-  color: var(--color-ink);
-  margin-top: 1.9rem;
-  font-family: var(--font-body);
-  font-weight: 600;
-  letter-spacing: 0;
-}
-.prose p {
-  max-width: none;
-}
-.prose strong {
-  color: var(--color-ink);
-  font-weight: 600;
-}
-.prose a {
-  color: var(--color-accent);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-.prose ul,
-.prose ol {
-  padding-left: 1.25rem;
-}
-.prose li {
-  margin-top: 0.5rem;
-  padding-left: 0.35rem;
-}
-.prose ul li::marker {
-  color: var(--color-accent);
-  content: "▪  ";
-}
-.prose ol li::marker {
-  color: var(--color-ink-3);
-  font-family: var(--font-mono);
-  font-size: 0.85em;
-}
-.prose :not(pre) > code {
-  font-family: var(--font-mono);
-  font-size: 0.85em;
-  background: var(--color-paper);
-  border: 1px solid var(--color-line);
-  padding: 0.1em 0.4em;
-  color: var(--color-accent-2);
-}
-.prose pre {
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  padding: 1.1rem 1.25rem;
-  border: 1px solid var(--color-ink);
-  overflow-x: auto;
-  line-height: 1.6;
-}
-.prose pre code {
-  background: transparent;
-  border: 0;
-  padding: 0;
-}
-
 /* ── Scrollbar ─────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 11px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--color-paper);
+  background: var(--bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-line-strong);
-  border: 3px solid var(--color-paper);
+  background: var(--line-strong);
+  border: 3px solid var(--bg);
+  border-radius: var(--radius-full);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-ink-3);
+  background: var(--muted);
 }
 
 /* ── A11y / selection ──────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 ::selection {
-  background: var(--color-accent);
-  color: var(--color-card);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* ──────────────────────────────────────────────────────────
+   Reusable visual primitives (Req 1.5)
+
+   Single shared definition for any primitive used on more than
+   one page. All decorative effects are CSS-only — gradients,
+   shadows, blur — so no image assets are required (Req 13.5).
+   Every value resolves through the design tokens above; no
+   hard-coded colors live here.
+   ────────────────────────────────────────────────────────── */
+
+/* ── Surface — raised card / panel ─────────────────────── */
+.surface {
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Interactive surface: hover/focus lift using transform + opacity
+   only (GPU-friendly, Req 9.5). Glow + deeper shadow on raise. */
+.surface-interactive {
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+  will-change: transform;
+}
+
+.surface-interactive:hover,
+.surface-interactive:focus-within {
+  transform: translateY(-2px);
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-md), var(--shadow-glow);
+}
+
+/* ── Buttons & CTA links — ≥44px touch target (Req 10.4) ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.625rem 1.25rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  background: none;
+  color: var(--text);
+  transition: transform var(--dur-fast) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+/* Primary CTA — filled accent */
+.btn-primary {
+  background-color: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-strong);
+  border-color: var(--accent-strong);
+  box-shadow: var(--shadow-glow);
+}
+
+/* Ghost — bordered, transparent fill */
+.btn-ghost {
+  background-color: transparent;
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+
+.btn-ghost:hover {
+  background-color: var(--surface-2);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+/* ── Pill — language / metadata badge ──────────────────── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-full);
+  background-color: var(--surface-2);
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* ── Chip — tag / filter chip with selected state ──────── */
+/* Used by TagBadge.astro and SearchBar.tsx (Req 1.5). */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-full);
+  background-color: var(--surface);
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  line-height: 1.3;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform var(--dur-fast) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out);
+}
+
+.chip:hover {
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+/* Selected / active filter chip — accent fill */
+.chip[aria-pressed="true"],
+.chip[data-selected="true"],
+.chip.is-selected {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+/* ── Card tag — compact, flat metadata tag for ProjectCard ──
+   Unlike .chip (an interactive filter control), these are quiet
+   decorative labels inside a card that is itself a single link.
+   Flat fill, no pill border, tighter density → far less visual
+   noise when several appear in a row. */
+.tag-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-2);
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  line-height: 1.5;
+  white-space: nowrap;
+  transition: background-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out);
+}
+
+.tag-mini .tag-hash {
+  color: var(--accent);
+  opacity: 0.7;
+}
+
+/* When the card is hovered/focused, tags warm up slightly. */
+.surface-interactive:hover .tag-mini,
+.surface-interactive:focus-within .tag-mini {
+  background-color: var(--accent-soft);
+  color: var(--text);
+}
+
+/* ── Label — mono uppercase kicker ─────────────────────── */
+.label {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── Ulink — animated-underline inline link ────────────── */
+.ulink {
+  position: relative;
+  color: var(--accent-strong);
+  font-weight: 500;
+}
+
+.ulink::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background-color: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.ulink:hover::after,
+.ulink:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* ── Prose — markdown typography for project bodies ────── */
+.prose {
+  color: var(--text-2);
+  font-size: var(--fs-base);
+  line-height: 1.75;
+}
+
+.prose > * + * {
+  margin-top: 1.15em;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  color: var(--text);
+  margin-top: 2em;
+  margin-bottom: 0.6em;
+  line-height: 1.2;
+}
+
+.prose h1 { font-size: var(--fs-h2); }
+.prose h2 { font-size: var(--fs-h3); }
+.prose h3 { font-size: var(--fs-lead); }
+.prose h4 { font-size: var(--fs-base); font-weight: 600; }
+
+.prose p {
+  color: var(--text-2);
+  max-width: 72ch;
+}
+
+.prose a {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 1px;
+}
+
+.prose a:hover {
+  color: var(--accent);
+}
+
+.prose strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.5rem;
+  color: var(--text-2);
+}
+
+.prose ul { list-style: disc; }
+.prose ol { list-style: decimal; }
+
+.prose li + li {
+  margin-top: 0.4em;
+}
+
+.prose li::marker {
+  color: var(--muted);
+}
+
+.prose blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 1rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Inline code */
+.prose :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background-color: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.12em 0.4em;
+  color: var(--text);
+}
+
+/* Code blocks */
+.prose pre {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  background-color: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+}
+
+.prose pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  color: inherit;
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 2em 0;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Motion — entrance animation + reduced-motion guard (Req 9)
+
+   `reveal-up` animates transform + opacity only (Req 9.5) and
+   completes within --dur-enter (500ms, capped under 600ms —
+   Req 9.4). Staggering via --reveal-delay on a container's
+   children produces a cascading entrance (Req 9.1).
+   ────────────────────────────────────────────────────────── */
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal-up {
+  animation: reveal-up var(--dur-enter) var(--ease-out) both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+
+/* Optional stagger helper: set --reveal-step on a parent and
+   each child inherits an incremental delay via its own var. */
+.reveal-stagger > * {
+  animation: reveal-up var(--dur-enter) var(--ease-out) both;
+}
+.reveal-stagger > *:nth-child(1) { animation-delay: calc(var(--reveal-step, 70ms) * 0); }
+.reveal-stagger > *:nth-child(2) { animation-delay: calc(var(--reveal-step, 70ms) * 1); }
+.reveal-stagger > *:nth-child(3) { animation-delay: calc(var(--reveal-step, 70ms) * 2); }
+.reveal-stagger > *:nth-child(4) { animation-delay: calc(var(--reveal-step, 70ms) * 3); }
+.reveal-stagger > *:nth-child(5) { animation-delay: calc(var(--reveal-step, 70ms) * 4); }
+.reveal-stagger > *:nth-child(6) { animation-delay: calc(var(--reveal-step, 70ms) * 5); }
+.reveal-stagger > *:nth-child(7) { animation-delay: calc(var(--reveal-step, 70ms) * 6); }
+.reveal-stagger > *:nth-child(8) { animation-delay: calc(var(--reveal-step, 70ms) * 7); }
+.reveal-stagger > *:nth-child(n + 9) { animation-delay: calc(var(--reveal-step, 70ms) * 8); }
+
+/* ── Reduced-motion guard (Req 9.3) ────────────────────── */
+/* Disable/substantially reduce non-essential entrance and hover
+   motion site-wide when the visitor prefers reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Neutralize entrance transforms so content is immediately
+     visible and in its final position. */
+  .reveal-up,
+  .reveal-stagger > * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Suppress hover lift translation (visual emphasis remains
+     via border/shadow tokens). */
+  .surface-interactive:hover,
+  .surface-interactive:focus-within,
+  .btn:active {
+    transform: none !important;
+  }
 }

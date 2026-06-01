@@ -1,41 +1,71 @@
 ---
-import '../styles/global.css'
+import "../styles/global.css";
 
 interface Props {
-  title?: string
-  description?: string
-  image?: string
-  canonicalURL?: string
-  type?: string
+  title?: string;
+  description?: string;
+  image?: string;
+  canonicalURL?: string;
+  type?: string;
 }
 
 const {
-  title = 'OpenRadar — Discover Trending Open-Source Projects',
-  description = 'Curated collection of the most innovative and trending open-source tools. Find your next favorite dev tool.',
-  image = '/og-default.png',
+  title = "OpenRadar — Discover Trending Open-Source Projects",
+  description = "Curated collection of the most innovative and trending open-source tools. Find your next favorite dev tool.",
+  image = "/og-default.png",
   canonicalURL,
-  type = 'website',
-} = Astro.props
+  type = "website",
+} = Astro.props;
 
-const siteURL = Astro.site?.toString() ?? 'https://example.pages.dev'
-const resolvedCanonical = canonicalURL ?? new URL(Astro.url.pathname, siteURL).toString()
-const resolvedImage = new URL(image, siteURL).toString()
+const siteURL = Astro.site?.toString() ?? "https://open-radar.pages.dev";
+const resolvedCanonical =
+  canonicalURL ?? new URL(Astro.url.pathname, siteURL).toString();
+const resolvedImage = new URL(image, siteURL).toString();
+
+const fontsHref =
+  "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap";
 
 const orgSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'Organization',
-  name: 'OpenRadar',
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "OpenRadar",
   url: siteURL,
   description,
   sameAs: [],
-}
+};
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
+    <!-- Pre-paint theme resolution (FOUC-free): MUST be the first child of <head>.
+         Resolves stored preference, else system color-scheme, else 'light',
+         and applies it to <html data-theme> before first paint. -->
+    <script is:inline>
+      try {
+        var stored = localStorage.getItem("or-theme");
+        document.documentElement.dataset.theme = stored
+          ? stored
+          : window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+      } catch (e) {
+        try {
+          document.documentElement.dataset.theme = window.matchMedia(
+            "(prefers-color-scheme: dark)",
+          ).matches
+            ? "dark"
+            : "light";
+        } catch (e2) {
+          document.documentElement.dataset.theme = "light";
+        }
+      }
+    </script>
+
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f2ede2" />
     <meta name="generator" content={Astro.generator} />
 
     <!-- SEO -->
@@ -61,12 +91,18 @@ const orgSchema = {
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
     <!-- Google Fonts: Fraunces (display serif) + Inter (body) + JetBrains Mono (labels) -->
+    <!-- Non-blocking load: render as print (ignored for layout) then promote to all on load. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+      href={fontsHref}
     />
+    <noscript>
+      <link rel="stylesheet" href={fontsHref} />
+    </noscript>
 
     <!-- Structured Data -->
     <script type="application/ld+json" set:html={JSON.stringify(orgSchema)} />

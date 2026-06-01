@@ -1,15 +1,12 @@
 ---
-import Layout from '../../layouts/Layout.astro'
-import Header from '../../components/Header.astro'
-import Footer from '../../components/Footer.astro'
-import { getCollection } from 'astro:content'
+import Layout from "../../layouts/Layout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import { getCollection } from "astro:content";
+import { aggregateTags } from "../../lib/tags";
 
-const projects = await getCollection('projects')
-const tagMap = new Map<string, number>()
-projects.forEach((p) =>
-  p.data.tags.forEach((t) => tagMap.set(t, (tagMap.get(t) ?? 0) + 1))
-)
-const tags = Array.from(tagMap.entries()).sort((a, b) => b[1] - a[1])
+const projects = await getCollection("projects");
+const tags = aggregateTags(projects.map((p) => p.data));
 ---
 
 <Layout
@@ -18,41 +15,72 @@ const tags = Array.from(tagMap.entries()).sort((a, b) => b[1] - a[1])
 >
   <Header />
 
-  <main class="container-main py-14">
-    <nav class="flex items-center gap-2 label mb-12" aria-label="Breadcrumb">
+  <main class="container-main py-[var(--space-7)]">
+    <nav
+      class="flex items-center gap-[var(--space-2)] label mb-[var(--space-7)]"
+      aria-label="Breadcrumb"
+    >
       <a href="/" class="hover:text-accent transition-colors">Index</a>
-      <span class="text-line-strong">/</span>
-      <span class="text-ink">Tags</span>
+      <span class="text-muted">/</span>
+      <span class="text-text">Tags</span>
     </nav>
 
-    <header class="border-b border-ink pb-12 mb-4">
-      <p class="label flex items-center gap-3 mb-6"><span class="tick"></span>Catalog</p>
-      <h1 class="font-display mb-6" style="line-height: 1.0;">Browse by tag</h1>
-      <p class="text-lg text-ink-2 max-w-2xl">
-        {tags.length} categories across {projects.length} indexed projects.
-        Pick a thread and follow it.
+    <header
+      class="border-b border-line-strong pb-[var(--space-7)] mb-[var(--space-7)]"
+    >
+      <p
+        class="label flex items-center gap-[var(--space-3)] mb-[var(--space-5)]"
+      >
+        <span
+          class="inline-block w-1.5 h-1.5 rounded-full bg-accent"
+          aria-hidden="true"></span>
+        Catalog
+      </p>
+      <h1 class="font-display mb-[var(--space-5)]" style="line-height: 1.0;">
+        Browse by tag
+      </h1>
+      <p class="text-lg text-text-2 max-w-2xl">
+        {tags.length} categories across {projects.length} indexed projects. Pick a
+        thread and follow it.
       </p>
     </header>
 
-    <ul>
-      {tags.map(([tag, count], i) => (
-        <li>
-          <a
-            href={`/tags/${tag}`}
-            class="group grid grid-cols-[2.5rem_1fr_auto] items-baseline gap-4 sm:gap-6 py-5 border-b border-line transition-colors hover:bg-card"
-          >
-            <span class="label text-ink-3 tabular-nums">{String(i + 1).padStart(2, '0')}</span>
-            <span class="font-display text-2xl sm:text-3xl leading-none group-hover:text-accent transition-colors">
-              <span class="text-ink-3">#</span>{tag}
-            </span>
-            <span class="label whitespace-nowrap inline-flex items-center gap-2">
-              {count} project{count !== 1 ? 's' : ''}
-              <span class="inline-block transition-transform group-hover:translate-x-1 text-ink group-hover:text-accent" aria-hidden="true">&rarr;</span>
-            </span>
-          </a>
-        </li>
-      ))}
-    </ul>
+    {
+      tags.length > 0 ? (
+        <ul>
+          {tags.map(({ tag, count }, i) => (
+            <li>
+              <a
+                href={`/tags/${tag}`}
+                class="group grid grid-cols-[2.5rem_1fr_auto] items-baseline gap-[var(--space-4)] sm:gap-[var(--space-5)] py-[var(--space-5)] border-b border-line transition-colors hover:bg-surface"
+              >
+                <span class="label text-muted tabular-nums">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span class="font-display text-2xl sm:text-3xl leading-none group-hover:text-accent transition-colors">
+                  <span class="text-muted">#</span>
+                  {tag}
+                </span>
+                <span class="label whitespace-nowrap inline-flex items-center gap-[var(--space-2)]">
+                  {count} project{count !== 1 ? "s" : ""}
+                  <span
+                    class="inline-block transition-transform group-hover:translate-x-1 text-text group-hover:text-accent"
+                    aria-hidden="true"
+                  >
+                    &rarr;
+                  </span>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div class="py-[var(--space-9)] text-center">
+          <p class="font-display text-2xl mb-[var(--space-2)]">No tags yet.</p>
+          <p class="label">Projects haven't been filed under any categories</p>
+        </div>
+      )
+    }
   </main>
 
   <Footer />
