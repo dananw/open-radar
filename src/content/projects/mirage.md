@@ -18,15 +18,13 @@ Mirage is a unified virtual filesystem for AI agents, built by Strukto AI. The c
 
 The project provides both Python and TypeScript SDKs, a CLI daemon that plugs into coding agents like Claude Code and Codex, and integrations with major frameworks including OpenAI Agents SDK, Vercel AI SDK, LangChain, Pydantic AI, and OpenHands. The architecture is layered: a virtual filesystem layer handles mount points and resource abstraction, a dispatcher routes operations to the right backend with caching, and the infrastructure layer talks to actual APIs. Agents see one tree. The complexity stays hidden underneath.
 
-The problem Mirage solves is real. Every AI agent that needs to read from S3, check a GitHub repo, search Slack messages, and update a Google Sheet currently requires four separate SDK integrations, four sets of credentials, four different error handling patterns, and four distinct API vocabularies. LLMs already know bash — it's heavily represented in training data. Mirage exploits that by making every service accessible through `cat`, `ls`, `grep`, `cp`, and `wc`. No new abstractions to learn. No custom tool schemas to define per service.
+The problem Mirage solves is real. Every AI agent that needs to read from S3, check a GitHub repo, search Slack messages, and update a Google Sheet currently requires four separate SDK integrations, four sets of credentials, and four distinct API vocabularies. LLMs already know bash — it's heavily represented in training data. Mirage exploits that by making every service accessible through `cat`, `ls`, `grep`, `cp`, and `wc`. No new abstractions to learn.
 
 ### Why it matters
 
 The MCP (Model Context Protocol) ecosystem has been growing fast, but it has a fragmentation problem. Every MCP server defines its own tool schema, its own authentication flow, and its own response format. An agent that works with 10 MCP servers needs to understand 10 different interfaces. Mirage takes a different philosophical approach: instead of teaching agents new tools, make existing infrastructure accessible through the one interface every LLM already understands — the Unix filesystem.
 
-This matters more as agents get longer autonomy windows. A coding agent running for 30 minutes needs to pull configs from GitHub, check deployment logs in S3, message a team on Slack, and update a tracking doc. If each of those requires a different tool call with different parameters and different error semantics, the agent burns tokens on plumbing instead of the actual task. Mirage collapses that overhead to a handful of familiar commands.
-
-There's also a portability angle. Mirage workspaces can be cloned, snapshotted, and versioned. You can move an agent's entire working environment between machines without restarting or reconfiguring. For teams running agents in CI/CD or as scheduled jobs, that reproducibility is valuable. The workspace abstraction means agent state isn't trapped in a single process.
+This matters more as agents get longer autonomy windows. A coding agent running for 30 minutes needs to pull configs from GitHub, check deployment logs in S3, message a team on Slack, and update a tracking doc. If each of those requires a different tool call with different parameters, the agent burns tokens on plumbing instead of the actual task. Mirage collapses that overhead to a handful of familiar commands.
 
 ### Key Features
 
@@ -59,10 +57,9 @@ Pros:
 - Workspace portability (clone, snapshot, version) is a real differentiator for production agent deployments where reproducibility matters.
 
 Cons:
-- FUSE dependency for local mounts limits Windows support. macOS and Linux only for now, which excludes a chunk of the developer population.
-- The abstraction layer adds latency. Every `cat` on an S3 file goes through the mount layer, dispatcher, cache, and then the actual S3 API. For high-throughput scenarios, direct SDK calls will be faster.
-- The project is young (May 2026). The resource connector ecosystem will have rough edges. Expect breaking changes in the API as the project matures.
-- Documentation is still catching up to the feature set. The quickstart guides work, but advanced patterns like custom command overrides need more examples.
+- FUSE dependency for local mounts limits Windows support. macOS and Linux only.
+- The abstraction layer adds latency. Every `cat` on an S3 file goes through mount layer, dispatcher, cache, then S3 API. For high-throughput scenarios, direct SDK calls will be faster.
+- The project is young (May 2026). Expect breaking changes in the API as it matures.
 
 ### Getting Started
 
