@@ -1,118 +1,120 @@
 ---
 name: butterbase
-description: "Butterbase is an open-source, AI-native backend-as-a-service with Postgres, auth, storage, serverless functions, and a built-in MCP server for AI agents."
-url: https://github.com/butterbase-ai/butterbase-oss
-stars: 1018
-forks: 93
+description: "Butterbase is an open-source, AI-native backend-as-a-service with Postgres, auth, storage, serverless functions, and a built-in MCP server for agent-driven development."
+url: https://github.com/butterbase-ai/butterbase
+stars: 1199
+forks: 100
 language: TypeScript
-tags: ["baas", "postgres", "mcp", "ai-gateway", "supabase-alternative"]
+tags: ["baas", "postgres", "supabase-alternative", "mcp", "ai-gateway", "serverless"]
 featured: false
-publishedAt: 2026-06-02
+publishedAt: 2026-06-03
 ---
 
 ## Butterbase
 
 ### Overview
 
-Butterbase is an open-source backend-as-a-service that launched on May 20, 2026, and crossed 1,000 GitHub stars within its first two weeks. It packages Postgres with row-level security, authentication, file storage, serverless functions, realtime subscriptions, a key-value store, and an AI gateway into a single self-hostable platform. The twist: every capability is exposed as a Model Context Protocol (MCP) tool, so AI agents can operate your backend without custom glue code.
+Butterbase is an open-source, AI-native backend-as-a-service that gives you Postgres, authentication, file storage, serverless functions, an LLM gateway, realtime subscriptions, and a built-in MCP server — all self-hostable with Docker. It crossed 1,100 GitHub stars within two weeks of its May 2026 launch, which is a strong signal that developers are hungry for a Supabase alternative that takes AI agents seriously as first-class consumers of backend infrastructure.
 
-The project is built in TypeScript on a Fastify control API with a Deno runtime for serverless functions. It uses Docker Compose for local development with separate Postgres instances for the control plane, data plane, and runtime plane — a production-oriented architecture from day one. The team behind it runs a managed offering at butterbase.ai, and the open-source repo contains the full runtime data plane under Apache 2.0.
+The project is built by NetGPT Inc. and licensed under Apache 2.0. The architecture is polyglot by design: the main API runs on Node.js with Fastify, serverless functions execute in Deno isolates, long-running agent tasks run in a Python runtime, and frontend builds happen on Cloudflare Workers. That's a deliberate choice — each service picks the runtime that fits its job, rather than forcing everything through a single language.
 
-The pitch is direct: Supabase proved that developers want integrated backends, but the landscape has shifted. AI agents now need to interact with your backend programmatically — creating tables, managing auth, querying data, running functions. Butterbase builds that agent surface natively rather than bolting it on later. Every REST endpoint, every storage operation, every function invocation is available as an MCP tool at `/mcp`, accessible via HTTP or stdio.
+The core problem Butterbase solves is the gap between traditional BaaS platforms and the reality of building AI-powered applications in 2026. Supabase, Firebase, and Appwrite are excellent for CRUD apps, but none of them ship with an MCP server that lets Claude Code, Cursor, or any MCP-compatible agent operate your entire backend through tool calls. Butterbase does. Every capability — schema management, auth configuration, function deployment, storage operations — is exposed as MCP tools. For fullstack developers building agent-driven products, this changes the workflow fundamentally.
 
 ### Why it matters
 
-The BaaS space has been dominated by Supabase and Firebase for years, but neither was designed with AI agents as first-class consumers. Supabase added an MCP server recently, but it's an adapter layer on top of an existing API. Butterbase was built from scratch with the assumption that both humans and AI agents will be managing your backend. That architectural decision shows up everywhere — in the declarative schema system, the RLS policy helpers, the auto-generated REST endpoints, and the Claude Code plugin that ships 30+ guided skills for agentic app building.
+The backend-as-a-service space has been dominated by Supabase for the past few years, and for good reason — Postgres-first, open-source, great DX. But the landscape is shifting. AI agents are becoming legitimate consumers of backend APIs, not just humans clicking buttons in a React frontend. An agent that needs to query your database, upload a file, or trigger a function shouldn't have to reverse-engineer your REST API. It should have structured, typed tool interfaces it can call directly.
 
-For fullstack developers, this matters because the "backend" is no longer just a database and some REST endpoints. Modern apps need auth, storage, realtime, serverless compute, AI model routing, and RAG pipelines. Stitching these together from separate services (Auth0 + S3 + Lambda + Pinecone + OpenAI) creates integration debt that compounds over time. Butterbase collapses that stack into a single deployable unit, similar to what Supabase did for Postgres + Auth + Storage, but extended with AI-native primitives.
+Butterbase is the first BaaS I've seen that treats this as a core architectural concern rather than an afterthought. The MCP server isn't a bolted-on plugin — it's embedded in the main control API at `/mcp`. The Claude Code plugin ships 30+ guided skills for agentic app building: idea to plan to schema to auth to functions to deploy. This is where the entire BaaS category is heading, and Butterbase got there first.
 
-The MCP integration is the differentiator that makes this worth watching. When your backend exposes tools like `createTable`, `insertRow`, `invokeFunction`, and `semanticSearch` via MCP, AI coding assistants can build full features end-to-end. The Claude Code plugin takes this further with guided workflows: idea → plan → schema → auth → functions → deploy. That's not a demo — it's a development workflow.
+There's also the self-hosting angle. Supabase's self-host story has improved, but it's still complex. Butterbase is designed from the ground up for Docker-based self-hosting, with clear separation between the open-source runtime and the managed offering's extras (billing, multi-region orchestration). If you want full control over your backend without giving up modern DX, this is worth serious evaluation.
 
 ### Key Features
 
-**Postgres Data Plane with Auto-API.** Each app gets its own Postgres database with declarative schema management via `/schema` endpoints. Define your tables in JSON, and Butterbase generates REST endpoints automatically at `/auto-api`. Row-level security comes built in with user-isolation helpers at `/rls`, so multi-tenant data isolation doesn't require writing custom middleware.
+**Postgres Data Plane with Row-Level Security.** Every app gets its own isolated Postgres schema with declarative schema definitions via `/schema`, automatic REST endpoints via `/auto-api`, and built-in migration support. Row-level security is a first-class feature with user-isolation helpers, not something you have to wire up manually. This is the same model Supabase uses, and it works.
 
-**MCP Server at Every Layer.** Every capability — data operations, auth, storage, functions, AI gateway, RAG — is exposed as MCP tools at `/mcp` (HTTP) or via the `@butterbase/mcp` npm package (stdio). This means Claude, ChatGPT, Cursor, and any MCP-compatible tool can read your schema, create records, invoke functions, and manage your app without custom integration code. The MCP surface is not an afterthought; it's a core architectural decision.
+**Built-in MCP Server.** Every Butterbase capability — data queries, auth management, function deployment, storage operations, KV store access — is exposed as MCP tools at `/mcp` (HTTP) or via stdio through `@butterbase/mcp`. Claude Code, Cursor, Windsurf, and any MCP-compatible agent can operate your entire backend without custom integration code. This is the killer feature.
 
-**Serverless Functions on Deno.** Write TypeScript functions that execute on the Deno runtime at `/functions`. No cold-start container orchestration — Deno's fast startup keeps latency low. Functions have access to the full Butterbase API surface, including the database, storage, and AI gateway. Deploy from source, and the platform handles routing and execution.
+**Serverless Functions on Deno.** Write TypeScript functions that execute in sandboxed Deno isolates. No cold-start Docker containers, no Lambda configuration headaches. The function runtime is integrated into the platform, so your functions have direct access to auth context, database connections, and storage without boilerplate.
 
-**Durable Objects for Stateful Workloads.** Beyond stateless functions, Butterbase provides durable per-key actors at `/durable-objects` for workloads that need persistent state: chat rooms, multiplayer game sessions, rate limiters, long-running agent orchestrations. This is the same pattern Cloudflare Durable Objects popularized, but integrated into the BaaS rather than requiring separate infrastructure.
+**AI Gateway and RAG.** A single endpoint for chat completions, embeddings, and model listing with pluggable router adapters. The RAG subsystem provides managed collections, document ingestion, semantic search, and synthesized answers. You can build an AI-powered search feature for your app without standing up a separate vector database.
 
-**AI Gateway with RAG Pipeline.** A single `/gateway` endpoint handles chat completions, embeddings, and model listing with pluggable router adapters. The RAG system at `/rag` provides managed collections, document ingestion, semantic search, and synthesized answers. For developers building AI features, this eliminates the need to wire up a separate vector database and embedding pipeline.
+**Durable Objects for Stateful Agents.** Per-key stateful actors for chat rooms, multiplayer sessions, rate limiters, and long-running agent workflows. This borrows the Durable Objects concept from Cloudflare Workers and applies it to the BaaS context. If you're building collaborative features or agent orchestration, this is critical infrastructure.
 
-**Auth with Multi-Provider OAuth.** Email + password authentication with OAuth support for Google, GitHub, Apple, and X (Twitter). JWT tuning, post-login hooks, and service keys are all configurable. The auth system integrates with RLS policies, so your database security and authentication are connected rather than separate concerns.
+**Realtime Subscriptions.** WebSocket-based subscriptions to Postgres table changes for live UIs, presence indicators, and collaborative editing. The realtime system integrates with the auth layer, so subscriptions respect RLS policies automatically.
 
-**Claude Code Plugin with 30+ Skills.** The `butterbase-skills` submodule ships a Claude Code plugin with guided workflows for agentic app development. Skills cover the full lifecycle: generating schemas from product descriptions, setting up auth flows, writing and deploying functions, configuring RAG collections, and submitting apps. This turns Claude Code into a full-stack development assistant that understands your Butterbase backend.
+**Claude Code Plugin with 30+ Skills.** The `@butterbase/plugin` package ships guided skills for AI-driven app building: scaffold a project, define schema, configure auth, write functions, deploy, and submit — all through natural language in Claude Code. This isn't a gimmick; it's a genuine productivity multiplier for developers who use AI coding assistants.
 
 ### Use Cases
 
-- **Rapid prototyping for AI-powered apps** — When you need auth, a database, storage, and an LLM gateway without spending a week on infrastructure. Create an app, define a schema, deploy a function, and you have a working backend in under an hour.
+- **AI-powered SaaS products** — Build the backend for an AI chatbot, document analyzer, or content generator with the AI gateway handling model routing and RAG managing knowledge bases. The MCP server lets your AI agents operate the backend directly.
 
-- **AI agent backends** — Build agents that manage their own data, storage, and compute. The MCP surface means agents can create tables, store state, invoke functions, and search documents without custom API wrappers.
+- **Rapid prototyping for hackathons** — Spin up a full backend with auth, database, storage, and functions in minutes using the CLI. The Claude Code plugin makes scaffolding even faster. Perfect for 48-hour builds.
 
-- **Supabase migration for teams wanting AI-native primitives** — If you're on Supabase but need integrated AI gateway, RAG, and MCP tooling, Butterbase offers a similar Postgres-based BaaS with those capabilities built in rather than added via extensions.
+- **Self-hosted Supabase alternative** — Teams that need Postgres-backed BaaS but want full infrastructure control. Docker-based deployment with clear separation between OSS and managed features.
 
-- **Internal tools and dashboards** — The auto-generated REST API, realtime subscriptions, and auth system make it straightforward to build admin panels and internal tools. Deploy Next.js or Remix edge handlers directly from source via `/edge-ssr`.
+- **Agent orchestration platforms** — Use Durable Objects for stateful agent sessions, the AI gateway for model routing, and MCP tools for programmatic backend control. Build multi-agent systems that share state through the platform.
 
-- **Multi-tenant SaaS applications** — Row-level security with user-isolation helpers, per-app databases, and service keys provide the building blocks for multi-tenant architectures without custom middleware.
+- **Real-time collaborative apps** — Build multiplayer editors, live dashboards, or chat applications using realtime subscriptions with automatic RLS enforcement.
 
 ### Pros and Cons
 
 Pros:
-- MCP-first architecture means AI tools can interact with your backend natively, which is increasingly essential as AI coding assistants become standard development tools.
-- Self-hostable under Apache 2.0 with a clean separation between the open-source runtime and the managed offering. No feature gating that makes the OSS version unusable.
-- The Deno runtime for functions provides faster cold starts than container-based serverless, and the Durable Objects pattern handles stateful workloads that most BaaS platforms punt on.
-- Active development — commits landing daily as of early June 2026, with features like app templates and CLI improvements shipping in the most recent pushes.
+- The MCP server integration is genuinely novel. No other BaaS exposes its entire capability surface as structured tool interfaces for AI agents. This alone makes it worth watching.
+- Self-hosting is straightforward — Docker Compose with clear documentation. The three-plane Postgres architecture (control, runtime, data) is well-designed for isolation.
+- Apache 2.0 license with a clean OSS/managed boundary. You know exactly what's open and what's not, and the interfaces for extending the private features are documented.
+- Polyglot architecture picks the right tool for each job: Fastify for the API, Deno for functions, Python for agents, Cloudflare Workers for builds.
 
 Cons:
-- Very young project (two weeks old as of writing). The API surface is still settling, and production readiness is unproven. Early adopters should expect breaking changes.
-- The local Docker Compose setup requires three separate Postgres instances plus Redis and LocalStack, which is heavier than Supabase's single-container local development experience.
-- No visual dashboard or admin UI in the open-source repo — the managed offering adds ops dashboards, but self-hosters get API-only access. For teams that want a Supabase Studio equivalent, this is a gap.
-- Documentation is still maturing. SETUP.md covers the basics, but deeper architectural docs and API references lag behind the code.
+- Early stage at v0.2.0 (released May 25, 2026). The API surface is still settling, and the self-host documentation could be tighter based on the open issues.
+- The managed offering's extras (billing, multi-region, upstream AI adapters) are private. If you need Stripe billing or multi-region orchestration in self-host, you're building it yourself against the provided interfaces.
+- Smaller ecosystem than Supabase. No community plugins, fewer tutorials, less Stack Overflow coverage. You're an early adopter, and that comes with friction.
+- The polyglot architecture means more moving parts to monitor. Node.js, Deno, Python, Cloudflare Workers — that's four runtimes in one platform.
 
 ### Getting Started
 
 ```bash
 # Clone with submodules (required for Claude Code plugin)
-git clone --recurse-submodules https://github.com/butterbase-ai/butterbase-oss.git
-cd butterbase-oss
+git clone --recurse-submodules https://github.com/butterbase-ai/butterbase.git
+cd butterbase
 
 # Install dependencies
-npm ci
+npm install
+
+# Configure environment
 cp .env.example .env
+# Edit .env with your Postgres credentials and settings
 
-# Start local infrastructure
-docker compose -f docker-compose.local.yml up -d
+# Start with Docker Compose
+docker compose up -d
 
-# Run migrations across all planes
-npm run migrate:all
+# The API is available at http://localhost:3000
+# MCP server at http://localhost:3000/mcp
+# Docs at http://localhost:4321
 
-# Seed the dev user
-export NEON_PLATFORM_PRIMARY_URL=postgresql://butterbase:password@localhost:5433/butterbase_control
-npm run seed:dev
+# Install the CLI globally
+npm install -g @butterbase/cli
 
 # Create your first app
-curl -X POST http://localhost:4000/init \
-  -H "Content-Type: application/json" \
-  -d '{"name": "my-app"}'
+butterbase init my-app
+butterbase deploy
+```
 
-# List apps
-curl http://localhost:4000/apps
+For Claude Code integration, install the MCP server:
 
-# Access MCP tools
+```bash
 npx @butterbase/mcp
 ```
 
-The MCP endpoint is available at `http://localhost:4000/mcp` for HTTP-based clients, or via stdio using the npm package for Claude Code and other MCP-compatible tools.
+Add it to your Claude Code MCP config and you get 30+ guided skills for building apps through natural language.
 
 ### Alternatives
 
-**Supabase** — The most established open-source BaaS with a mature ecosystem, visual dashboard (Supabase Studio), and large community. Supabase has broader database support (Postgres with built-in vector extensions) and a more polished developer experience. Choose Supabase when you need a proven, production-ready platform and don't require native MCP integration or an AI gateway.
+**Supabase** — The incumbent open-source BaaS with a massive community, mature ecosystem, and excellent documentation. Supabase has Edge Functions, realtime, auth, and storage, but lacks MCP integration and AI gateway features. Choose Supabase if you need production stability today and don't care about agent-native workflows.
 
-**PocketBase** — A single-binary BaaS written in Go with SQLite, real-time subscriptions, and a built-in admin UI. PocketBase is dramatically simpler to deploy and self-host, making it ideal for small projects and prototypes. Choose PocketBase when you want minimal infrastructure overhead and don't need Postgres, serverless functions, or AI-native features.
+**Appwrite** — Another open-source BaaS that's more self-host-friendly than Supabase, with support for multiple databases and a visual console. Appwrite is more mature but less Postgres-opinionated and has no MCP or AI gateway story. Good choice if you want database flexibility over Postgres-first design.
 
-**Firebase** — Google's managed BaaS with a generous free tier, strong mobile SDK support, and Firestore's real-time sync. Firebase is fully managed with no self-hosting option, which eliminates ops burden but creates vendor lock-in. Choose Firebase when you're building mobile-first apps and prefer a managed service over self-hosted infrastructure.
+**Firebase** — Google's BaaS with excellent realtime capabilities and a generous free tier. Firebase is proprietary and doesn't support self-hosting, but it's battle-tested at massive scale. Choose Firebase if you're building on Google Cloud and want the least operational overhead.
 
 ### Verdict
 
-Butterbase is two weeks old, so recommending it for production use would be irresponsible. But as a signal of where backend infrastructure is heading, it's the most interesting BaaS project I've seen this year. The MCP-first architecture isn't a gimmick — it reflects a real shift in how developers build software. When Claude Code can define your schema, write your functions, and deploy your backend through a standardized tool protocol, the development workflow changes fundamentally. The 1,000-star velocity in two weeks suggests the developer community sees the same potential. If you're building AI-powered applications and want a self-hosted backend that treats agents as first-class consumers, Butterbase is worth tracking closely. Just don't bet your production infrastructure on it yet — give it a few months to stabilize.
+Butterbase is the most forward-looking BaaS project I've seen in 2026. The MCP server integration alone sets it apart from every competitor — it's the first backend platform that treats AI agents as first-class consumers, not an afterthought. At v0.2.0 with 1,200 stars in two weeks, it's early but the trajectory is strong. If you're a fullstack developer building AI-powered products and you want a self-hostable backend with Postgres, auth, storage, and native agent support, Butterbase is worth evaluating now. The Claude Code plugin with 30+ skills is a genuine productivity tool, not marketing fluff. Just know you're an early adopter — expect rough edges and API changes. For production-critical apps today, Supabase is still the safer bet. For everything else, especially agent-driven development, Butterbase is where the category is going.
