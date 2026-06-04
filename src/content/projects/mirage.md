@@ -1,84 +1,112 @@
 ---
 name: mirage
-description: "Mirage is a unified virtual filesystem for AI agents that mounts S3, GitHub, Slack, Gmail, and more as a single bash-accessible tree — one abstraction for every backend."
+description: "Mirage is a unified virtual filesystem for AI agents that mounts S3, GitHub, Slack, Gmail, and more as one tree with bash-like tools."
 url: https://github.com/strukto-ai/mirage
-stars: 2904
-forks: 204
+stars: 3041
+forks: 216
 language: TypeScript
-tags: ["ai-agents", "virtual-filesystem", "typescript", "llm", "devtools"]
+tags: ["ai-agents", "virtual-filesystem", "typescript", "developer-tools", "agent-framework"]
 featured: false
-publishedAt: 2026-06-02
+publishedAt: 2026-06-05
 ---
 
 ## Mirage
 
 ### Overview
 
-Mirage is a unified virtual filesystem for AI agents, built by Strukto AI. The core idea is deceptively simple: mount every backend service — S3, GitHub, Slack, Gmail, Redis, Google Drive, MongoDB, and more — under a single directory tree, then let agents interact with all of them through standard bash commands. It reached nearly 3,000 GitHub stars within a month of its May 2026 launch, which speaks to how badly the agent ecosystem needs this kind of glue layer.
+Mirage is a unified virtual filesystem for AI agents. It mounts services and data sources — S3, Google Drive, Slack, Gmail, Redis, GitHub, MongoDB, and more — side-by-side under a single tree that agents interact with using standard bash commands. No new APIs to learn, no SDK juggling. If an LLM knows `cat`, `grep`, `cp`, and `wc`, it can use Mirage out of the box.
 
-The project provides both Python and TypeScript SDKs, a CLI daemon that plugs into coding agents like Claude Code and Codex, and integrations with major frameworks including OpenAI Agents SDK, Vercel AI SDK, LangChain, Pydantic AI, and OpenHands. The architecture is layered: a virtual filesystem layer handles mount points and resource abstraction, a dispatcher routes operations to the right backend with caching, and the infrastructure layer talks to actual APIs. Agents see one tree. The complexity stays hidden underneath.
+The project launched in early May 2026 and crossed 3,000 GitHub stars within a month. It's built by Strukto AI, a company focused on agent infrastructure. The core insight driving Mirage is simple but powerful: LLMs are already extremely fluent in bash and filesystem operations because those patterns dominate their training data. Instead of teaching agents yet another API surface for each service, Mirage gives them one abstraction they already understand.
 
-The problem Mirage solves is real. Every AI agent that needs to read from S3, check a GitHub repo, search Slack messages, and update a Google Sheet currently requires four separate SDK integrations, four sets of credentials, and four distinct API vocabularies. LLMs already know bash — it's heavily represented in training data. Mirage exploits that by making every service accessible through `cat`, `ls`, `grep`, `cp`, and `wc`. No new abstractions to learn.
+The problem Mirage solves is real. Today, building an agent that reads from Slack, searches S3 logs, pulls data from GitHub, and writes results to Google Docs means wiring up four different SDKs, managing four sets of credentials, and writing custom glue code for each interaction. Every new integration multiplies the complexity. Mirage collapses all of that into a single workspace where every service is just a directory, and every operation is just a bash command.
 
 ### Why it matters
 
-The MCP (Model Context Protocol) ecosystem has been growing fast, but it has a fragmentation problem. Every MCP server defines its own tool schema, its own authentication flow, and its own response format. An agent that works with 10 MCP servers needs to understand 10 different interfaces. Mirage takes a different philosophical approach: instead of teaching agents new tools, make existing infrastructure accessible through the one interface every LLM already understands — the Unix filesystem.
+The AI agent ecosystem is exploding, but the tooling is fragmented. Every service has its own MCP server, its own SDK, its own authentication flow. Developers building multi-service agents spend more time on integration plumbing than on actual agent logic. Mirage offers a different model: a universal abstraction layer that makes every backend look like files in a directory.
 
-This matters more as agents get longer autonomy windows. A coding agent running for 30 minutes needs to pull configs from GitHub, check deployment logs in S3, message a team on Slack, and update a tracking doc. If each of those requires a different tool call with different parameters, the agent burns tokens on plumbing instead of the actual task. Mirage collapses that overhead to a handful of familiar commands.
+This connects to a broader trend in agent development. The most capable agents aren't the ones with the most specialized tools — they're the ones that can compose general-purpose operations across many data sources. Unix pipes and filesystem semantics are the original composability primitives. Mirage applies that same philosophy to the agent era, and the 3,000-star traction in weeks suggests developers have been waiting for exactly this kind of tool.
 
 ### Key Features
 
-**Unified Mount System.** Mirage mounts disparate services under a single root directory. You create a Workspace object, declare your mounts — RAM at `/data`, S3 at `/s3`, Slack at `/slack`, GitHub at `/github` — and the agent sees one coherent tree. Adding a new backend is a one-line mount declaration, not a new integration. The mount abstraction handles authentication, path resolution, and caching transparently.
+**Unified Filesystem Abstraction.** Every mounted service — whether it's an S3 bucket, a Slack workspace, a GitHub repo, or a MongoDB collection — appears as a directory under a single root. Agents navigate and operate on all of them with the same set of commands. This eliminates the cognitive overhead of context-switching between different service APIs and dramatically reduces the amount of code needed for multi-service agent workflows.
 
-**Bash-First Interface.** Every operation goes through standard Unix commands: `cat` to read, `ls` to list, `grep` to search, `cp` to copy between backends, `wc` to count. LLMs have extensive bash training data, so they execute these commands reliably without few-shot examples or custom tool descriptions. You can even pipe across mounts — `grep alert /slack/general/*.json | wc -l` searches Slack messages and counts matches in one line.
+**Bash-Native Agent Interface.** Mirage exposes a small set of Unix-like tools (`cat`, `ls`, `cp`, `grep`, `wc`, `mv`, `rm`, `find`) that work identically across every mounted resource. LLMs are already deeply trained on these patterns, so agents using Mirage require zero new vocabulary. A command like `grep alert /slack/general/*.json | wc -l` just works, composing across services with familiar pipe semantics.
 
-**Custom Command Override.** You can register new commands or override existing ones per resource and file type. For example, `cat` on a Parquet file in S3 can render rows as JSON instead of raw bytes. This lets you tailor the filesystem semantics to your domain without changing the agent's command vocabulary. The override system is granular: resource-specific, filetype-specific, or global.
+**Extensible Resource System.** The resource architecture supports RAM, disk, Redis, S3, R2, OCI, Supabase, GCS, Gmail, Google Drive, Google Docs, Google Sheets, Google Slides, GitHub, Linear, Notion, Trello, Slack, Discord, Telegram, Email, MongoDB, SSH, and more. Each resource implements a common interface, and you can mount multiple instances of the same type. New resource types are straightforward to add.
 
-**Framework Integrations.** Mirage works with OpenAI Agents SDK, Vercel AI SDK (TypeScript), LangChain, Pydantic AI, CAMEL, and OpenHands out of the box. The Python SDK embeds directly into FastAPI or any async runtime. The TypeScript SDK has both Node.js and browser builds. You don't need to run a separate daemon process — the filesystem lives inside your application.
+**Custom Command Registration.** You can register new commands that work across every mount, or override existing commands for specific resource and filetype combinations. For example, you can make `cat` on a Parquet file in S3 render rows as JSON instead of raw bytes. This lets you shape the agent's toolset to your specific domain without modifying Mirage itself.
 
-**Portable Workspaces.** Clone, snapshot, and version entire agent environments. Move a workspace between machines, resume an interrupted agent run, or create branching environments for parallel agent tasks. This is particularly useful for CI pipelines where you want deterministic agent behavior across runs.
+**Portable Workspaces with Snapshots.** Workspaces can be cloned, snapshotted, and versioned. You can move agent runs between machines without restarting or reconfiguring. The `ws.snapshot("demo.tar")` call serializes the entire workspace state. This is particularly useful for debugging agent behavior — you can capture a workspace state, share it with a teammate, and replay the exact same environment.
 
-**Extensive Resource Support.** The mount roster includes RAM, local disk, Redis, S3-compatible storage (R2, OCI, Supabase, GCS), Google Workspace (Gmail, Drive, Docs, Sheets, Slides), project tools (GitHub, Linear, Notion, Trello), messaging (Slack, Discord, Telegram, Email), MongoDB, and SSH. That covers the majority of what production agents need to interact with.
+**Multi-Language SDKs.** Mirage ships with Python (`mirage-ai`) and TypeScript (`@struktoai/mirage-node`, `@struktoai/mirage-browser`, `@struktoai/mirage-core`) SDKs. You embed workspaces directly inside FastAPI, Express, browser apps, or any async runtime. There's also a standalone CLI that plugs into coding agents like Claude Code and Codex, plus first-class integration with OpenAI Agents SDK, Vercel AI SDK, LangChain, Pydantic AI, CAMEL, and OpenHands.
+
+**Cross-Service Pipeline Composition.** Because every resource shares filesystem semantics, you can pipe operations across services naturally. Copy a file from S3 to local disk, grep through Slack messages and count matches, pull a GitHub README and summarize it — all with the same bash pipeline operators. This composability is the core architectural advantage over point-to-point integrations.
 
 ### Use Cases
 
-- **Multi-service agent workflows** — An agent that monitors GitHub issues, searches related Slack discussions, pulls deployment logs from S3, and updates a Notion tracker. All accessible through a single filesystem without custom tool definitions.
-- **Coding agent enhancement** — Plug Mirage into Claude Code or Codex so they can read configs from GitHub, check CI logs in S3, or search documentation in Google Drive through bash, getting more useful work done per turn.
-- **Data pipeline orchestration** — Copy files between S3 and local disk, transform data with shell commands, and write results to Google Sheets — all in one pipeline without switching SDKs.
-- **Agent state management** — Snapshot and version agent workspaces for reproducibility in CI/CD, debugging, or audit trails. Clone environments for parallel agent runs.
-- **Browser-based agent apps** — The browser SDK lets you give web applications a virtual filesystem, useful for building agent interfaces that need to access multiple backends from the client side.
+- **Multi-source data aggregation** — An agent that collects customer feedback from Slack channels, support tickets from Linear, and usage metrics from S3, then produces a consolidated report. Mirage makes this a single bash pipeline instead of three separate SDK integrations.
+
+- **DevOps automation agents** — Agents that monitor infrastructure by reading logs from S3, checking GitHub issues, and posting alerts to Slack or Discord. The filesystem abstraction means the agent doesn't need to know the details of each service's API.
+
+- **Content research and synthesis** — An agent that reads documents from Google Drive, cross-references them with GitHub wiki pages, and writes a summary to a new Google Doc. Each step is a familiar filesystem operation.
+
+- **Coding agent enhancement** — Plugging Mirage into Claude Code or Codex so the coding agent can access external resources (documentation, configs, data files) through the same bash interface it already uses for local files.
+
+- **RAG pipeline data preparation** — Collecting training or context data from multiple sources (S3, Notion, GitHub) into a unified workspace, then processing it with standard Unix tools before feeding it to an embedding pipeline.
 
 ### Pros and Cons
 
 Pros:
-- The bash-first design is genuinely clever. LLMs have deep bash knowledge from training, so agents execute Mirage commands with high reliability compared to custom tool schemas that require specific parameter formats.
-- Resource coverage is broad. S3, GitHub, Slack, Gmail, Google Drive, Redis, MongoDB, and more — the mount roster covers what production agents actually need.
-- No separate process required. The SDK embeds directly into your Python or TypeScript application. The CLI daemon is optional, for when you want to plug into external coding agents.
-- Workspace portability (clone, snapshot, version) is a real differentiator for production agent deployments where reproducibility matters.
+
+- The abstraction is genuinely clever. Agents that know bash can use every mounted service without any new API knowledge, which means less prompt engineering and fewer hallucinated API calls.
+
+- The resource catalog is already broad — 20+ service integrations out of the box — and the extension model is clean enough that adding custom resources is straightforward.
+
+- Dual Python and TypeScript SDKs with browser support means you can use Mirage in virtually any agent stack. The framework integrations (OpenAI Agents SDK, LangChain, Vercel AI SDK) cover the major players.
 
 Cons:
-- FUSE dependency for local mounts limits Windows support. macOS and Linux only.
-- The abstraction layer adds latency. Every `cat` on an S3 file goes through mount layer, dispatcher, cache, then S3 API. For high-throughput scenarios, direct SDK calls will be faster.
-- The project is young (May 2026). Expect breaking changes in the API as it matures.
+
+- The abstraction leaks. Not every service maps cleanly to filesystem semantics. Complex operations like "search Gmail with specific date filters and attachment types" may require custom commands rather than simple bash, reducing the "just use bash" promise.
+
+- FUSE-based mounts require macOS or Linux. Windows developers need to use the in-memory or SDK-only modes, which limits the CLI experience.
+
+- At one month old, the documentation is still catching up with the feature set. Some resources have sparse examples, and the API surface is evolving quickly. Production use at this stage requires comfort with reading source code.
 
 ### Getting Started
 
 ```bash
-# Python
+# Install the Python SDK (includes CLI)
 uv add mirage-ai
 
-# TypeScript (Node.js)
+# Or install the TypeScript SDK
 npm install @struktoai/mirage-node
 
-# TypeScript (Browser)
-npm install @struktoai/mirage-browser
-
-# CLI daemon (for Claude Code, Codex integration)
-pip install mirage-ai
-mirage start
+# Or install the standalone CLI
+curl -fsSL https://strukto.ai/mirage/install.sh | sh
 ```
 
-Basic usage in TypeScript:
+Quick Python example:
+
+```python
+from mirage import Workspace
+from mirage.resource.gdocs import GDocsConfig, GDocsResource
+from mirage.resource.ram import RAMResource
+from mirage.resource.s3 import S3Config, S3Resource
+from mirage.resource.slack import SlackConfig, SlackResource
+
+ws = Workspace({
+    "/data":  RAMResource(),
+    "/s3":    S3Resource(S3Config(bucket="my-bucket")),
+    "/slack": SlackResource(SlackConfig()),
+    "/docs":  GDocsResource(GDocsConfig()),
+})
+
+await ws.execute("cp /s3/report.csv /data/report.csv")
+await ws.execute("grep alert /s3/data/log.jsonl | wc -l")
+ws.snapshot("demo.tar")
+```
+
+TypeScript example:
 
 ```ts
 import { Workspace, RAMResource, S3Resource, SlackResource, GitHubResource } from '@struktoai/mirage-node';
@@ -90,19 +118,18 @@ const ws = new Workspace({
   '/github': new GitHubResource({}),
 });
 
-await ws.execute('cat /github/my-repo/README.md');
-await ws.execute('grep error /s3/logs/*.txt | wc -l');
+await ws.execute('grep alert /slack/general/*.json | wc -l');
 await ws.execute('cp /s3/report.csv /data/local.csv');
 ```
 
 ### Alternatives
 
-**MCP (Model Context Protocol)** — The Anthropic-led standard for connecting LLMs to external tools. MCP defines per-server tool schemas that agents discover at runtime. It's more flexible in some ways — each server can expose rich, typed operations — but it requires agents to learn a new interface per service. Mirage's bash-first approach trades expressiveness for universality. If your agent already knows bash, Mirage is faster to integrate.
+**MCP (Model Context Protocol)** — Anthropic's protocol for connecting LLMs to external tools. MCP gives you fine-grained, schema-validated tool calls per service, which is more precise than Mirage's filesystem abstraction. Choose MCP when you need strict type safety and explicit tool definitions, especially for single-service integrations where the overhead of a virtual filesystem isn't justified.
 
-**LangChain Tool Kits** — LangChain provides individual tool wrappers for S3, GitHub, Slack, and other services. Each wrapper has its own class, parameters, and error handling. Mirage consolidates all of those into one filesystem abstraction. LangChain's approach gives you more control per service; Mirage gives you less boilerplate across all services.
+**LangChain Toolkits** — LangChain's agent toolkit approach provides pre-built integrations for many services, but each tool has its own interface and parameters. Agents need to learn each toolkit's API individually. Mirage's advantage is the unified interface; LangChain's advantage is maturity and a larger community. Choose LangChain toolkits when you need battle-tested integrations and don't mind the per-tool learning curve.
 
-**Direct SDK Integration** — The most flexible option. You write custom code for each service using their native SDKs. Maximum control, maximum maintenance burden. Mirage exists because most agent use cases don't need that level of control — they need reliable read/write access across multiple backends with minimal integration code.
+**Direct SDK Integration** — Building agent-tool connections with native SDKs (aws-sdk, @slack/bolt, @octokit/rest) gives you full API access and maximum control. It's the right choice for simple, single-service agents where the integration code is minimal. Mirage wins when you're composing across three or more services and want to avoid the N×M integration complexity.
 
 ### Verdict
 
-Mirage is the right abstraction at the right time. The AI agent ecosystem is drowning in tool integration complexity. Every new service an agent needs to touch requires a new MCP server, a new tool schema, or a new SDK wrapper. Mirage cuts through that by betting on the one interface every LLM already knows: the Unix filesystem. The bash-first design isn't just convenient — it's empirically more reliable because LLMs have extensive shell training data. The project is young and the connector ecosystem will need time to mature, but the architectural direction is sound. If you're building agents that interact with multiple backends, Mirage should be on your shortlist. It won't replace direct SDK calls for performance-critical paths, but for the 80% case where agents need to read, search, and move data across services, it's a significant reduction in integration complexity.
+Mirage is the most interesting agent infrastructure tool I've seen in recent months. The core idea — make every backend look like a filesystem so agents can use bash, the language they're most fluent in — is elegant and solves a real pain point. At 3,000 stars in under a month with active development from Strukto AI, the momentum is there. The dual Python/TypeScript SDK and broad framework support mean you can adopt it incrementally without rewriting your agent stack. It's early, and the abstraction has limits for complex service-specific operations, but for multi-service agent workflows — which is where most interesting agent applications are heading — Mirage is worth building on today.
