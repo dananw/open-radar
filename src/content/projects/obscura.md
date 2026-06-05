@@ -1,69 +1,84 @@
 ---
 name: obscura
-description: "Obscura is a lightweight Rust headless browser for AI agents and web scraping — drop-in replacement for headless Chrome with built-in stealth mode and MCP support."
+description: "Obscura is a Rust-based headless browser for AI agents and web scraping — 7x less memory than Chrome with built-in anti-detection and MCP support."
 url: https://github.com/h4ckf0r0day/obscura
-stars: 14062
-forks: 911
+stars: 14146
+forks: 921
 language: Rust
-tags: ["browser-automation", "ai-agents", "web-scraping", "rust", "mcp"]
+tags: ["headless-browser", "ai-agents", "web-scraping", "rust", "automation"]
 featured: false
-publishedAt: 2026-06-03
+publishedAt: 2026-06-05
 ---
 
 ## Obscura
 
 ### Overview
 
-Obscura is a headless browser engine written in Rust, purpose-built for web scraping and AI agent automation. It crossed 14,000 GitHub stars in under two months after its April 2026 launch, which tracks with how hungry the developer community is for something that isn't headless Chrome.
+Obscura is a headless browser engine written in Rust, purpose-built for AI agent automation and web scraping at scale. It crossed 14,000 GitHub stars in under two months after its April 2026 launch, which is remarkable for a project in a space dominated by Google's headless Chrome and Playwright. The numbers tell the story: 30 MB of memory versus Chrome's 200+ MB, 85 ms page loads versus 500 ms, and a 70 MB binary that runs on Linux, macOS, and Windows with zero external dependencies.
 
-The project uses V8 directly for JavaScript execution and implements the Chrome DevTools Protocol (CDP), making it a drop-in replacement for headless Chrome when used with Puppeteer or Playwright. The pitch is simple: you get the same protocol-level compatibility without the 200+ MB memory footprint, the 2-second startup time, or the dependency on a full Chrome installation.
+The project comes from h4ckf0r0day, a developer who's clearly been frustrated by the resource overhead of running headless Chrome in production. That frustration shows in the architecture — Obscura embeds V8 directly, implements just enough of the browser to render JavaScript-heavy pages, and skips everything that matters for desktop browsing but nothing for automation. It's the browser equivalent of "you aren't gonna need it."
 
-The numbers tell the story. Obscura uses 30 MB of memory versus Chrome's 200+ MB. Its binary is 70 MB compared to Chrome's 300+ MB. Static page loads benchmark at 51 ms versus Chrome's ~500 ms. For anyone running browser automation at scale — scraping pipelines, E2E testing, AI agent web interactions — those margins matter. A single machine running Obscura can handle workloads that would otherwise require multiple Chrome instances eating through your RAM.
+The core problem Obscura solves is one that every developer building AI agents or large-scale scraping has hit: Chrome is expensive to run. Not in license terms — it's free — but in compute. Each Chrome instance eats 200+ MB of RAM, starts in about 2 seconds, and needs a full browser installation. Run 50 concurrent scraping tasks and you're looking at 10+ GB of memory just for the browser. Obscura cuts that to 1.5 GB with instant startup, and it does it without sacrificing JavaScript rendering or DOM manipulation capabilities.
 
 ### Why it matters
 
-The headless browser space has been dominated by Chrome-based solutions for years. Puppeteer (Google) and Playwright (Microsoft) are excellent tools, but they carry Chrome's weight. Every CI pipeline spins up a full Chromium instance. Every scraping server runs multiple Chrome processes consuming hundreds of megabytes each. For teams running browser automation at scale, the infrastructure cost adds up fast.
+The AI agent space is exploding, and nearly every agent that interacts with the web needs a browser. Claude Computer Use, OpenAI's Operator, browser-use, and dozens of other agent frameworks all depend on headless Chrome under the hood. That dependency creates a real bottleneck — browser resource consumption is often the limiting factor in agent throughput, not the LLM inference itself.
 
-Obscura addresses this from a different angle entirely. Instead of wrapping Chrome, it reimplements the browser engine in Rust with a narrow focus: run JavaScript, render pages, expose CDP. There's no rendering pipeline for visual output, no extension system, no DevTools UI. It's a browser stripped down to what automation actually needs. That architectural decision is what enables the memory and speed improvements.
+Obscura arrives at exactly the right moment. As companies deploy AI agents for customer support, data extraction, competitive monitoring, and automated testing, the infrastructure cost of running hundreds of headless browsers becomes a genuine business problem. AWS charges for memory. Kubernetes pods have limits. CI/CD pipelines have timeouts. Every megabyte matters when you're operating at scale.
 
-The MCP server integration is what makes this especially relevant in mid-2026. AI coding agents like Claude, Cursor, and others need to interact with web pages — filling forms, clicking buttons, reading content. Obscura ships a built-in MCP server that exposes browser automation tools directly to these agents. No custom glue code, no wrapper libraries. Start the MCP server, point Claude Desktop at it, and your AI agent can navigate pages, fill forms, and extract data. This is where browser automation is heading, and Obscura is early to the party.
+What makes this project particularly interesting is the built-in stealth mode. Anti-detection is something every serious scraping operation needs but few open-source tools handle well. Obscura randomizes fingerprints per session — GPU renderer, screen resolution, canvas output, audio context — and masks `navigator.webdriver` to match real Chrome. It blocks 3,520 known tracking domains automatically. This isn't a toy feature; it's the kind of capability that companies like Bright Data and Oxylabs charge significant money for, now available as an Apache-2.0 licensed Rust binary.
 
 ### Key Features
 
-**Chrome DevTools Protocol Compatibility.** Obscura implements the CDP domains that matter for automation: Target, Page, Runtime, DOM, Network, Fetch, Storage, and Input. Your existing Puppeteer and Playwright scripts work with zero changes — just point them at Obscura's WebSocket endpoint instead of Chrome's. This means adoption is frictionless for teams already invested in these ecosystems.
+**CDP Compatibility.** Obscura implements the Chrome DevTools Protocol, which means it works as a drop-in replacement for headless Chrome with both Puppeteer and Playwright. You connect via WebSocket to `ws://127.0.0.1:9222` and use the exact same API calls. No code changes, no adapter layers, no "compatible with" asterisks. The CDP implementation covers Target, Page, Runtime, DOM, Network, Fetch, Storage, and Input domains — enough for real-world automation without the bloat of a full browser.
 
-**Built-in Stealth Mode.** Anti-detection is a first-class feature, not an afterthought. When compiled with `--features stealth`, Obscura randomizes per-session fingerprints (GPU, screen, canvas, audio, battery), sets realistic `navigator.webdriver` values, masks native functions, and blocks 3,520 known tracker domains. For scraping teams that currently bolt puppeteer-extra-plugin-stealth onto their Chrome instances, this collapses that dependency into the engine itself.
+**Stealth Mode with Anti-Fingerprinting.** Enable it with `--stealth` or `--features stealth` at build time. Each browser session gets a randomized fingerprint stack: GPU renderer, screen dimensions, canvas noise, audio context perturbation, and battery API spoofing. The `navigator.webdriver` property returns `undefined` (matching real Chrome), `event.isTrusted` returns `true` for dispatched events, and `Function.prototype.toString()` outputs `[native code]` for internal functions. Combined with 3,520 blocked tracker domains, this gives you production-grade anti-detection without third-party tools.
 
-**Parallel Scrape Command.** The `obscura scrape` command accepts multiple URLs and processes them concurrently with configurable worker counts. No need to write your own concurrency logic or manage a pool of browser instances. Run `obscura scrape url1 url2 url3 --concurrency 25 --format json` and get structured output. The workers inherit proxy settings globally, so routing through residential proxies is a single flag.
+**Parallel Scrape Command.** The `obscura scrape` command accepts multiple URLs and processes them concurrently with configurable worker counts. Run `obscura scrape url1 url2 url3 --concurrency 25 --eval "document.title" --format json` and get structured output across all pages. Workers inherit global proxy settings, and the `--quiet` flag suppresses progress output for clean script integration. This turns Obscura into a high-throughput scraping tool without writing a single line of orchestration code.
 
-**MCP Server for AI Agents.** Obscura ships a built-in Model Context Protocol server that exposes browser automation as tools for AI agents. The tool set covers the essentials: navigate, snapshot page content, click elements, fill inputs, type text, press keys, select options, evaluate JavaScript, wait for selectors, inspect network requests, and read console messages. Both stdio and HTTP transports are supported, so it works with Claude Desktop, Cursor, and any MCP-compatible client.
+**MCP Server for AI Agents.** Obscura ships a Model Context Protocol server that exposes 12 browser automation tools — navigate, snapshot, click, fill, type, press key, select option, evaluate, wait for selector, list network requests, read console messages, and close. Run `obscura mcp` for stdio transport (Claude Desktop, Cursor) or `obscura mcp --http --port 8080` for network access. This is the fastest path to giving an AI agent real browser capabilities without writing glue code.
 
-**DOM-to-Markdown Conversion.** The `LP.getMarkdown` CDP domain and the `--dump markdown` CLI flag convert rendered pages into clean Markdown. This is built for the LLM era — AI agents and RAG pipelines need text content, not raw HTML. Instead of running a separate HTML-to-Markdown library after fetching, the conversion happens inside the browser engine where it has access to the fully rendered DOM.
+**Minimal Resource Footprint.** At 30 MB memory and 70 MB binary size, Obscura is designed for constrained environments. Docker images are 57 MB compressed on a `distroless/cc` base with no shell or package manager. Startup is instant — no waiting for Chrome to initialize its rendering pipeline. Page loads benchmark at 51 ms for static HTML and 84 ms for JavaScript-heavy pages with XHR requests. For teams running browser automation in Lambda functions, edge workers, or resource-limited containers, these numbers change what's possible.
 
-**Zero External Dependencies.** Obscura is a single binary. No Chrome installation, no Node.js runtime, no system libraries to install. Download the binary, make it executable, and run it. The Docker image is 57 MB compressed on a distroless base with no shell or package manager. For CI/CD pipelines, this eliminates the "install Chrome" step that adds 30-60 seconds to every build.
+**CLI-First Design.** Every capability is accessible from the command line without writing code. Fetch a page title with `obscura fetch https://example.com --eval "document.title"`. Extract all links with `--dump links`. Render JavaScript and get HTML with `--dump html`. Convert DOM to Markdown with `--dump markdown`. Stream raw binary responses with `--dump original`. Wait for dynamic content with `--wait-until networkidle0`. Set navigation timeouts with `--timeout 10`. Use proxies with `--proxy socks5://127.0.0.1:1080`. The CLI covers the common cases so you only reach for Puppeteer/Playwright when you need complex interaction sequences.
 
-**Proxy and Network Control.** Global proxy support via `--proxy` flag works with both HTTP and SOCKS5 proxies, and it propagates to all subcommands including parallel scrape workers. The Fetch CDP domain enables live request interception — modify headers, redirect requests, or block resources programmatically. For scraping behind authenticated proxies or testing with specific network conditions, this is essential.
+**V8 Tuning and Proxy Support.** Pass raw V8 flags with `--v8-flags "--max-old-space-size=4096"` for JavaScript-heavy pages that need more heap space. Global proxy settings (HTTP and SOCKS5) cascade to all subcommands — fetch, scrape, serve, and MCP. This means a single `--proxy` flag at the top level routes all browser traffic through your proxy infrastructure, whether you're doing single page fetches or parallel scraping with 25 workers.
 
 ### Use Cases
 
-- **Large-scale web scraping** — Teams collecting data from hundreds or thousands of pages benefit from the 30 MB memory footprint and built-in parallel scraping. The stealth mode handles anti-bot detection without external plugins.
-- **AI agent web interaction** — Agents using Claude, Cursor, or custom LLM setups can control a real browser through the MCP server. Fill forms, navigate multi-step flows, extract structured data from rendered pages.
-- **E2E testing in CI/CD** — Replace headless Chrome in your test pipeline with a 70 MB binary that starts instantly. Puppeteer and Playwright tests run unchanged, but CI builds finish faster and use less memory.
-- **Content extraction for RAG pipelines** — The DOM-to-Markdown conversion combined with the CLI makes it straightforward to feed rendered web content into vector databases or LLM context windows.
-- **Monitoring and change detection** — Periodically scrape pages and compare content or screenshots. The low resource usage means you can run continuous monitoring without dedicated infrastructure.
+- **AI agent web interaction** — Give Claude, GPT, or custom agents browser capabilities through the MCP server. Navigate pages, fill forms, click buttons, and extract data without managing Chrome instances or writing Puppeteer boilerplate.
+
+- **Large-scale web scraping** — Extract data from thousands of pages with the parallel scrape command. The 30 MB memory footprint means you can run 50+ concurrent workers on a single machine instead of needing a cluster.
+
+- **E-commerce price monitoring** — Scrape product pages at regular intervals with stealth mode enabled to avoid bot detection. The anti-fingerprinting capabilities handle the arms race with anti-bot systems without third-party services.
+
+- **Automated testing in CI/CD** — Run browser tests in GitHub Actions or GitLab CI without the overhead of installing Chrome. The 70 MB binary and instant startup fit comfortably in CI time budgets.
+
+- **SEO and content auditing** — Fetch pages with `--dump markdown` to get clean text content, or `--dump links` to build site maps. Run at scale with the scrape command for comprehensive audits.
+
+- **Form submission and login flows** — Automate authenticated workflows. Puppeteer and Playwright scripts that handle login forms, multi-step wizards, and session cookies work unchanged against Obscura's CDP server.
 
 ### Pros and Cons
 
 Pros:
-- Dramatic resource savings: 30 MB memory and 70 MB binary versus Chrome's 200+ MB and 300+ MB respectively. This translates directly to lower infrastructure costs at scale.
-- Drop-in CDP compatibility means zero migration effort for existing Puppeteer and Playwright codebases. Just change the connection endpoint.
-- Stealth mode baked into the engine eliminates the fragile plugin stack that scraping teams currently maintain on top of Chrome.
-- Apache 2.0 license with a stated commitment to never gate features behind paid tiers. The open-source engine stays fully featured.
+- **Dramatic resource savings.** 30 MB memory versus Chrome's 200+ MB is a 7x improvement. At scale, this translates to real infrastructure cost reduction — running 100 concurrent browsers drops from 20 GB to 3 GB of RAM.
+
+- **True drop-in compatibility.** Existing Puppeteer and Playwright scripts work without modification. The CDP implementation is thorough enough for real-world automation, not just basic page fetching.
+
+- **Production-grade stealth.** Anti-fingerprinting and tracker blocking are built in, not bolted on. The per-session fingerprint randomization and 3,520 blocked domains handle the most common anti-bot detection methods.
+
+- **Apache-2.0 license with no feature gating.** The maintainers have stated the open-source engine stays fully featured even as they build Obscura Cloud. No open-core bait-and-switch.
+
+- **Active development.** Created April 13, 2026, already at 14,000+ stars with regular releases. The community is growing fast, which matters for long-term maintenance and ecosystem support.
 
 Cons:
-- Rust-based with V8 compiled from source means building from source takes ~5 minutes and requires Rust 1.75+. Most users will grab pre-built binaries, but contributing to the project has a higher barrier than Node.js-based alternatives.
-- The CDP implementation covers the automation domains but not the full Chrome protocol. Complex scenarios involving service workers, WebRTC, or advanced CSS rendering may behave differently than real Chrome.
-- Relatively young project (April 2026) with 14 open issues. The API surface and CLI flags could change. Production adoption right now requires comfort with early-stage software.
+- **Rust build requirements.** Building from source needs Rust 1.75+ and compiles V8 from source on first build (~5 minutes). Most users will grab pre-built binaries, but contributors and customizers face a real build toolchain.
+
+- **Young project.** Launched less than two months ago. While the CDP implementation covers the common domains, edge cases and uncommon protocol methods may have gaps compared to Chrome's decades of development.
+
+- **Limited mobile emulation.** Unlike Chrome DevTools' full device emulation with touch events and viewport presets, Obscura's mobile simulation capabilities are still maturing. If your use case depends heavily on mobile-specific behavior, test thoroughly.
+
+- **No built-in proxy rotation.** While proxy support is solid (HTTP and SOCKS5, global flag propagation), you still need external infrastructure for proxy pool management and rotation. Tools like Bright Data handle this internally.
 
 ### Getting Started
 
@@ -72,26 +87,33 @@ Cons:
 curl -LO https://github.com/h4ckf0r0day/obscura/releases/latest/download/obscura-x86_64-linux.tar.gz
 tar xzf obscura-x86_64-linux.tar.gz
 
-# Fetch a page and extract text
-./obscura fetch https://news.ycombinator.com --dump text
+# Fetch a page and extract the title
+./obscura fetch https://example.com --eval "document.title"
 
-# Start CDP server for Puppeteer/Playwright
+# Extract all links from a page
+./obscura fetch https://news.ycombinator.com --dump links
+
+# Start the CDP server for Puppeteer/Playwright
 ./obscura serve --port 9222
 
-# Run with stealth mode
+# Start with stealth mode enabled
 ./obscura serve --port 9222 --stealth
 
-# Parallel scrape with JSON output
-./obscura scrape https://example.com https://news.ycombinator.com \
-  --concurrency 10 --format json
+# Scrape multiple URLs in parallel
+./obscura scrape https://example.com https://github.com https://news.ycombinator.com \
+  --concurrency 10 \
+  --eval "document.title" \
+  --format json
 
-# Start MCP server for AI agents
-./obscura mcp
+# Docker (no installation needed)
+docker run -d --name obscura -p 127.0.0.1:9222:9222 h4ckf0r0day/obscura
+
+# Connect with Puppeteer
+npm install puppeteer-core
 ```
 
-Use with Puppeteer (no Chrome needed):
-
 ```javascript
+// Puppeteer example
 import puppeteer from 'puppeteer-core';
 
 const browser = await puppeteer.connect({
@@ -109,14 +131,26 @@ console.log(stories);
 await browser.disconnect();
 ```
 
+```json
+// Claude Desktop MCP config
+{
+  "mcpServers": {
+    "obscura": {
+      "command": "obscura",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
 ### Alternatives
 
-**Playwright** — Microsoft's browser automation library that supports Chromium, Firefox, and WebKit. Playwright is more mature, has a larger community, and handles cross-browser testing that Obscura doesn't target. Choose Playwright when you need to test across multiple browser engines or when your workflow depends on features beyond CDP basics.
+**Playwright** — Microsoft's browser automation framework is the gold standard for testing and supports Chromium, Firefox, and WebKit. It's more mature, has better documentation, and offers a richer API for complex interaction patterns. Choose Playwright when you need cross-browser testing, detailed tracing, or the extensive assertion library. Choose Obscura when resource efficiency and stealth matter more than browser engine variety.
 
-**Puppeteer** — Google's Node.js library for controlling Chrome/Chromium. Puppeteer has the deepest Chrome integration and the largest ecosystem of plugins and middleware. Stick with Puppeteer when you need full Chrome fidelity — service workers, Chrome extensions, or advanced DevTools features that Obscura's minimal engine doesn't replicate.
+**Puppeteer** — Google's Node.js library for controlling Chrome/Chromium is the original headless browser automation tool. It has the largest ecosystem of plugins and the most community examples. Stick with Puppeteer if your team already has Chrome-based infrastructure and the 200 MB per-instance overhead isn't a problem. Switch to Obscura when you're hitting memory limits in production or need anti-detection without extra tooling.
 
-**Crawlee** — Apify's open-source web scraping library that manages browser pools, handles retries, and provides structured extraction. Crawlee is higher-level than Obscura and works on top of Puppeteer or Playwright. Choose Crawlee when you want a scraping framework with built-in request queue management and dataset storage rather than a raw browser engine.
+**browser-use** — This Python framework wraps browser automation with LLM-powered decision making, letting agents figure out which elements to interact with. It's a higher-level abstraction that handles the "what to do" while Obscura handles the "how to do it." Use browser-use for agent-first workflows where you want the LLM to drive navigation. Use Obscura when you need fine-grained control over the browser or want to integrate with existing Puppeteer/Playwright codebases.
 
 ### Verdict
 
-Obscura is the most practical headless browser alternative I've seen for the AI agent era. The 30 MB memory footprint alone makes it worth evaluating if you run any browser automation at scale — scraping, testing, or agent workflows. The CDP compatibility means you're not locked into a new ecosystem; your existing Puppeteer and Playwright code works unchanged. The built-in MCP server is the forward-looking feature that sets it apart from just being a "lighter Chrome." AI agents need to interact with the web, and shipping that integration at the engine level rather than as a wrapper library is the right architectural call. At 14K stars in under two months with an Apache 2.0 license and a commitment to keeping the open-source engine fully featured, this is one to watch closely. The main risk is maturity — it's two months old, and production teams should test thoroughly before committing. But for new projects starting browser automation today, Obscura should be on your shortlist.
+Obscura is the most interesting browser infrastructure project I've seen in the last year. The Rust rewrite of a headless browser isn't new — Servo, Ladybird, and others have explored similar territory — but Obscura nails the execution by focusing ruthlessly on the automation use case instead of trying to be a general-purpose browser. The 7x memory reduction, instant startup, and built-in stealth mode address the three biggest pain points in production browser automation simultaneously. At 14,000 stars in under two months with an Apache-2.0 license and no feature gating, the project has real momentum. If you're building AI agents that interact with the web, running scraping infrastructure at scale, or just tired of Chrome eating your CI budget, Obscura deserves a serious evaluation. The MCP server integration alone makes it worth installing — giving Claude or Cursor browser capabilities in under a minute is the kind of developer experience that drives adoption.
