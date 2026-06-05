@@ -1,116 +1,112 @@
 ---
 name: bumblebee
-description: "Bumblebee is a read-only Go scanner by Perplexity AI that inventories packages, extensions, and MCP configs on developer machines for supply-chain exposure checks."
+description: "Bumblebee is a Go-based supply-chain scanner from Perplexity AI that inventories npm, pip, Go, and MCP packages across developer machines to detect exposure to compromised dependencies."
 url: https://github.com/perplexityai/bumblebee
-stars: 4114
-forks: 363
+stars: 4284
+forks: 377
 language: Go
-tags: ["supply-chain-security", "go", "developer-tools", "open-source", "sbom"]
+tags: ["supply-chain-security", "go", "developer-tools", "security", "devops"]
 featured: false
-publishedAt: 2026-06-02
+publishedAt: 2026-06-05
 ---
 
 ## Bumblebee
 
 ### Overview
 
-Bumblebee is a read-only inventory collector for package, extension, and developer-tool metadata on macOS and Linux endpoints. Built by Perplexity AI and open-sourced in May 2026, it hit 4,000 GitHub stars within two weeks. That velocity for a security tool — not a framework, not an AI chatbot — says something about how anxious developers have become about supply-chain attacks.
+Bumblebee is a read-only inventory collector that scans developer machines for package, extension, and tool metadata to detect exposure to known supply-chain compromises. Launched by Perplexity AI on May 20, 2026, it accumulated over 4,200 GitHub stars in just two weeks — a velocity that speaks to how badly the developer community needed this kind of tool. It's a single static Go binary with zero non-stdlib dependencies, and it works by reading lockfiles and package-manager metadata without ever executing package managers or touching source code.
 
-The project fills a gap existing tools don't cover. SBOMs tell you what shipped in your build artifacts. EDR tells you what ran on your network. But when a security advisory drops at 2 AM naming a compromised npm package, the question your incident response team needs answered is: which developer machines have that exact package version on disk right now? Bumblebee answers that by scanning lockfiles, package-manager metadata, extension manifests, and MCP configuration files, then outputting structured NDJSON records you can match against an exposure catalog.
+The project comes from Perplexity AI, the company best known for its AI-powered search engine. This is their first major open-source developer tool, and it's a surprisingly practical one. Rather than building another AI wrapper, they shipped a focused utility that answers a specific incident-response question: when a supply-chain advisory drops naming a compromised package version, which developer machines in your org actually have that version installed right now? It's the kind of tool you don't think about until you need it, and when you need it, you need it fast.
 
-The tool is written in Go with zero non-stdlib dependencies, ships as a single static binary, and runs without network access. That design philosophy — minimal, auditable, offline-capable — reflects lessons from years of supply-chain incidents where the security tooling itself became an attack vector.
+The problem Bumblebee addresses is increasingly urgent. The npm ecosystem alone saw over 700 malicious package incidents in 2025, according to Phylum's threat reports. The xz-utils backdoor in 2024 showed that even widely-used infrastructure packages can be compromised. SBOMs tell you what shipped in production, and EDR tells you what touched the network, but neither answers the question of which developer laptops have a vulnerable package version sitting in their node_modules. Bumblebee fills that gap by turning scattered on-disk state — lockfiles, extension manifests, MCP configs — into structured NDJSON records that security teams can query against exposure catalogs.
 
 ### Why it matters
 
-Supply-chain attacks have become the dominant threat model for software teams. The Synopsys 2025 report found that 91% of codebases contained open-source components with known vulnerabilities. The npm ecosystem sees weekly incidents involving typosquatted packages and compromised maintainer accounts.
+Supply-chain attacks have become one of the most effective vectors for compromising software organizations, and the response tooling hasn't kept up. When a new CVE or advisory drops, security teams scramble to answer "who's affected?" — and that question is surprisingly hard to answer across a fleet of developer machines. Each developer has different projects, different package managers, different editor extensions. Traditional asset management tools don't track this granular level of dependency state.
 
-What makes Bumblebee interesting is that it doesn't try to be a vulnerability scanner or SCA tool. Those already exist (Snyk, Trivy, Socket). Bumblebee solves a narrower, more operational problem: rapid endpoint-level inventory and exposure matching. Traditional SCA tools scan your codebase or CI pipeline. Bumblebee scans what's actually installed on your developers' machines — the messy reality of `node_modules`, browser extensions, and MCP server configs that don't show up in clean CI builds.
+Bumblebee matters because it's the first tool from a credible, well-funded company that treats developer-endpoint inventory as a first-class security concern. Perplexity AI's involvement gives it immediate visibility and a higher likelihood of long-term maintenance compared to solo-developer security tools. The Go implementation means it runs on any platform, deploys as a single binary, and scans quickly — properties that matter when you're trying to assess exposure across hundreds of machines during an active incident.
 
-The MCP coverage is particularly forward-looking. As AI coding assistants become standard tooling, developers are configuring MCP servers in Claude Desktop, Cursor, and Gemini CLI. Those configs can reference packages with known vulnerabilities. Bumblebee is the first tool I've seen that treats MCP configurations as a first-class inventory source alongside traditional package managers.
+The MCP and agent-skills coverage is particularly forward-looking. As AI coding assistants become standard tooling, developers are installing MCP servers and agent skill packages that have their own supply-chain risks. Bumblebee inventories these alongside traditional packages, acknowledging that the modern developer's attack surface extends well beyond npm and pip.
 
 ### Key Features
 
-**Single Static Binary with Zero Dependencies.** Bumblebee is written in Go 1.25+ with no third-party libraries. The entire tool compiles to a single binary you can drop onto any macOS or Linux machine. No runtime dependencies, no container required. For security tooling, every dependency is a potential attack surface — Bumblebee eliminates that concern entirely.
+**Zero-Dependency Single Binary.** Bumblebee is compiled as a single static Go binary with no non-stdlib dependencies. This means no runtime requirements, no container images to manage, no interpreter versions to worry about. You can drop it on any macOS or Linux machine and it works. For security tooling, this simplicity is a feature — fewer dependencies means fewer supply-chain risks in the tool that's supposed to detect supply-chain risks.
 
-**Three Scan Profiles for Different Use Cases.** The `baseline` profile scans global package roots, toolchains, editor extensions, browser extensions, and MCP configs — a lightweight recurring inventory. The `project` profile targets specific development directories like `~/code`. The `deep` profile walks broad filesystem roots for on-demand incident response. Each profile produces records tagged with `profile` and `root_kind` so receivers can keep populations separate.
+**Three Scan Profiles.** The tool offers three profiles — `baseline`, `project`, and `deep` — designed for different use cases and cadences. `baseline` scans global package roots and editor extensions for recurring lightweight inventory. `project` targets specific development directories. `deep` walks broad paths like `$HOME` for on-demand incident response. This tiered approach means you can run lightweight scans frequently without the overhead of full filesystem walks.
 
-**Broad Ecosystem Coverage.** Bumblebee inventories npm (including pnpm, Yarn, and Bun), PyPI, Go modules, RubyGems, Composer, Homebrew, VS Code/Cursor/Windsurf extensions, Chromium and Firefox browser extensions, and MCP server configurations. It reads lockfiles and metadata directly — no `npm ls` or `pip show` execution.
+**Broad Ecosystem Coverage.** Bumblebee covers npm, pnpm, Yarn, Bun, PyPI, Go modules, RubyGems, Composer, MCP configs, agent skills, VS Code/Cursor/Windsurf extensions, browser extensions, and Homebrew packages. That's 13 ecosystem families from a single tool. For a fullstack developer working across React, NestJS, Django, and Go, this means one scan catches everything — no need for separate tools per language.
 
-**Exposure Catalog Matching.** Supply an `--exposure-catalog` JSON file with known-compromised package names and versions, and Bumblebee flags exact matches. The catalog format is minimal: ecosystem, package name, version list, severity. Perplexity maintains sample catalogs in the `threat_intel/` directory, updated via PRs as new campaigns emerge.
+**Exposure Catalog Matching.** When given a JSON catalog of known-compromised packages, Bumblebee flags exact matches in your inventory with severity levels. The `threat_intel/` directory ships with maintained catalogs built from public threat-intelligence reporting, assembled using Perplexity's own AI capabilities. You can also create custom catalogs for internal advisories. The matching is exact — `(ecosystem, name, version)` — so there are no false positives from fuzzy matching.
 
-**Read-Only and Offline Operation.** Bumblebee never executes package managers, never reads source files, and never makes network calls. When scanning MCP configs that may contain credentials, it extracts server inventory but deliberately suppresses sensitive values from output records.
+**Read-Only Operation.** Bumblebee never executes package managers, never reads source files, and never makes network calls. It reads only lockfiles, install metadata, extension manifests, and config files. This is critical for security tooling — the scanner itself cannot be a vector for supply-chain attacks. MCP host configs that contain credentials or environment values are parsed for server inventory but those sensitive values are never emitted in the output records.
 
-**Structured NDJSON Output with Confidence Levels.** Every record includes a `confidence` field: `high` for exact identity and version from canonical metadata, `medium` for reliable identity with partial version info, and `low` for config/path references without proof of an installed version. Each run ends with a `scan_summary` record for downstream state management.
+**Structured NDJSON Output.** Every scan produces NDJSON (one JSON object per line) with consistent schema versioning, content-addressed record IDs, and per-record confidence levels. This makes the output pipeline-friendly — pipe it to jq, ingest it into a SIEM, or ship it to a central collector. The `scan_summary` record at the end of each run gives receivers a clear signal for state promotion.
 
-**Built-In Self-Test.** Run `bumblebee selftest` to verify the installation against embedded fixtures using fake package names. No network calls, completes in milliseconds. A fast smoke test for fleet rollouts.
+**Built-In Self-Test.** Running `bumblebee selftest` executes an end-to-end check against embedded fixtures with deliberately fake package names. It makes no network calls and completes in milliseconds. This is useful for fleet deployments — run the self-test as a pre-deployment smoke test to verify the binary works before rolling it out.
 
 ### Use Cases
 
-- **Incident response for compromised packages** — When a security advisory drops, run a deep scan across your team's machines to find exact matches within minutes instead of asking developers to manually check their lockfiles.
+- **Incident response when a supply-chain advisory drops** — When a compromised npm package is reported, security teams can immediately scan all developer machines to find exact matches, rather than asking developers to manually check their lockfiles.
 
-- **Recurring developer endpoint inventory** — Schedule baseline scans via cron or launchd to maintain a rolling inventory of what's installed across your engineering team. Feed the NDJSON output into your SIEM or a database for auditing.
+- **Continuous developer-endpoint inventory** — Run `baseline` scans daily via cron or systemd to maintain a rolling inventory of what's installed across your development fleet, useful for compliance audits and license tracking.
 
-- **MCP server configuration auditing** — As your team adopts AI coding tools, audit which MCP servers are configured and whether any reference known-vulnerable packages. This is a new attack surface most organizations haven't started tracking.
+- **MCP and AI tool supply-chain auditing** — As teams adopt AI coding assistants with MCP servers and agent skills, Bumblebee inventories those alongside traditional packages, catching risks in this new attack surface.
 
-- **Browser and editor extension governance** — Inventory installed VS Code, Cursor, and browser extensions across your team. Extensions have full access to the DOM, network, and filesystem — and they're rarely included in traditional SCA scans.
+- **Pre-merge security gates** — Integrate Bumblebee scans into CI pipelines to verify that new dependencies don't match known exposure catalogs before code reaches main branches.
+
+- **Migration planning and dependency analysis** — Use the structured inventory output to understand what packages are actually installed across your org before planning major upgrades or migrations.
 
 ### Pros and Cons
 
 Pros:
-
-- Zero dependencies and a single static binary make it the most auditable security scanner I've seen. You can read the entire source in an afternoon.
-
-- The read-only design eliminates the class of bugs where a security tool accidentally modifies the system it's scanning. No package manager execution, no source file reads, no network calls.
-
-- MCP configuration scanning is a genuinely novel capability. As AI coding assistants proliferate, the attack surface of MCP server configs is going to grow fast.
-
-- Exposure catalogs from Perplexity's threat intelligence team provide immediate value without requiring you to build your own intelligence pipeline.
+- Backed by Perplexity AI, a well-funded company with strong engineering talent, which increases the likelihood of long-term maintenance and threat-intel catalog updates.
+- Genuinely zero dependencies and single binary — unlike most security scanners that require Python, Node.js, or Docker, Bumblebee just works after download.
+- The read-only, no-network-calls design makes it one of the safest security tools to deploy — it can't accidentally modify your environment or exfiltrate data.
 
 Cons:
-
-- Early-stage project (v0.1.1 as of late May 2026) with limited documentation beyond the README. Advanced use cases like custom transport or state management are sparsely documented.
-
-- The tool answers "which machines have this package?" but doesn't assess vulnerability severity or suggest remediation. You'll need additional tooling for the full incident-response workflow.
-
-- Windows support is absent. The scanner targets macOS and Linux only, which excludes a meaningful portion of development teams in enterprise environments.
+- Only supports macOS and Linux — Windows developers are out of luck, which matters for teams with mixed development environments.
+- Version 0.1 means the tool is still early — the MCP coverage doesn't parse non-JSON configs like Codex's TOML or Continue's YAML yet, and the ecosystem coverage will need to expand.
+- The exposure catalog approach requires someone to maintain the catalogs; if your threat-intel feed goes stale, the matching becomes less useful over time.
 
 ### Getting Started
 
 ```bash
-# Install the latest release
+# Install the latest release (requires Go 1.25+)
 go install github.com/perplexityai/bumblebee/cmd/bumblebee@latest
 
-# Verify the installation
+# Verify the installation works
 bumblebee selftest
+# selftest OK (2 findings in 1ms)
 
-# Run a baseline inventory of your machine
+# Run a baseline inventory scan
 bumblebee scan --profile baseline > inventory.ndjson
 
 # Scan specific project directories
 bumblebee scan --profile project \
   --root "$HOME/code" \
-  --root "$HOME/projects"
+  --root "$HOME/Developer"
 
-# Check for exposure against a known advisory
+# Filter to specific ecosystems
+bumblebee scan --profile baseline \
+  --ecosystem npm,pypi \
+  --ecosystem go
+
+# Run an exposure check against threat intel
 bumblebee scan --profile deep \
   --root "$HOME" \
-  --exposure-catalog ./catalog.json \
-  --findings-only
-
-# Preview what roots a profile would scan
-bumblebee roots --profile baseline
+  --exposure-catalog ./threat_intel/ \
+  --findings-only \
+  --max-duration 10m
 ```
-
-The output is NDJSON — one JSON object per line. Pipe it to `jq` for filtering, store it in a database, or feed it into your SIEM. Each record includes endpoint metadata, ecosystem, package name, version, confidence level, and source attribution.
 
 ### Alternatives
 
-**Trivy** — Aqua Security's vulnerability scanner covers container images, filesystems, and Git repositories. More mature with broader vulnerability database integration, but it scans codebases and build artifacts rather than developer endpoints. Choose Trivy for CI/CD pipeline security; choose Bumblebee for developer machine inventory.
+**Socket.dev** — Socket is a commercial supply-chain security platform that focuses on proactive detection of malicious packages in npm and PyPI ecosystems. It analyzes package behavior before you install, which is a different angle from Bumblebee's post-install inventory approach. Socket is better for preventing compromises; Bumblebee is better for responding to advisories after they drop. For most teams, you'd want both.
 
-**Socket** — Socket detects supply-chain attacks in npm and PyPI by analyzing package behavior (network access, filesystem patterns, shell commands). It's proactive defense that flags suspicious packages before they're known-compromised. Socket prevents attacks during development; Bumblebee responds to known compromises after the fact.
+**SBOM Tools (Syft, Trivy)** — Traditional SBOM generators like Syft and Trivy produce software bills of materials for container images and build artifacts. They answer "what shipped?" but not "what's on every developer's laptop right now?" Bumblebee's endpoint-focused approach complements SBOM tools rather than replacing them. Use SBOMs for production artifacts and Bumblebee for developer machines.
 
-**Snyk** — The most popular commercial SCA platform with IDE integrations, CI/CD plugins, and a large vulnerability database. Snyk is a full vulnerability management platform with remediation guidance. Right choice for teams wanting a managed service. Bumblebee is right when you need a fast, auditable, offline-capable scanner you control completely.
+**npm audit / pip audit** — These language-specific tools check installed packages against known vulnerability databases. They're simpler to use but only cover a single ecosystem per run and require executing the package manager. Bumblebee covers 13 ecosystem families in a single scan without executing anything, making it more suitable for fleet-wide incident response.
 
 ### Verdict
 
-Bumblebee is the kind of tool that shouldn't need to exist, but does. The npm ecosystem alone processes over 4 billion package downloads per week, and the gap between "what's in your lockfile" and "what's actually installed on your developers' machines" is wider than most security teams want to admit. Bumblebee closes that gap with a design that's almost aggressively minimal — zero dependencies, read-only, offline, single binary. The MCP configuration scanning got my attention. As someone with Claude Desktop, Cursor, and Gemini CLI all configured with MCP servers, I hadn't considered that those configs represent an untracked inventory of packages and services. Bumblebee treats them as first-class citizens alongside npm and PyPI, and that forward-looking design will matter more as AI coding tools become ubiquitous. The tool is young — v0.1.1, limited docs, no Windows support — but the 4,000-star first month and Perplexity's backing suggest it'll mature quickly. If you're responsible for developer security, run a baseline scan today. You'll find something you didn't know was installed.
+Bumblebee is the supply-chain scanner that should have existed three years ago. The xz-utils incident, the countless npm typosquatting campaigns, and the increasing sophistication of package-ecosystem attacks all pointed to the need for a fast, read-only, multi-ecosystem inventory tool for developer machines. Perplexity AI shipping it as a Go binary with zero dependencies is the right call — security tools should be the simplest things in your stack, not the most complex. At two weeks old with 4,200 stars, it's too early to call it battle-tested, but the architecture decisions are sound: read-only, no network calls, structured output, content-addressed records. If you're running a development team of any size and you don't have a way to quickly answer "which machines have this compromised package installed?", Bumblebee is worth evaluating today. The maintained threat-intel catalogs from Perplexity's AI-assisted research are a differentiator that solo-developer alternatives can't easily replicate.
