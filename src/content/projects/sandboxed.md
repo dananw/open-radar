@@ -1,110 +1,123 @@
 ---
 name: sandboxed
-description: "Sandboxed is an open-source Go engine for building AI app-builder products — isolated containers, live preview URLs, and agent orchestration in one command."
+description: "Self-hosted Go platform for AI app-builder products — isolated Docker sandboxes with live preview URLs, idle sleep/wake, and built-in coding agents."
 url: https://github.com/tastyeffectco/sandboxes
-stars: 134
-forks: 12
+stars: 381
+forks: 6
 language: Go
-tags: ["go", "docker", "sandbox", "ai-agents", "developer-tools", "self-hosted"]
+tags: ["sandbox", "ai-agents", "devtools", "self-hosted", "docker", "go"]
 featured: false
-publishedAt: 2026-06-04
+publishedAt: 2026-06-05
 ---
 
 ## Sandboxed
 
 ### Overview
 
-Sandboxed is the open-source backend engine behind AI app-builder products like Lovable, Bolt, v0, and Replit — except you can run it yourself. Created by the team at TastyEffect and launched on June 3, 2026, it racked up 134 stars in its first day, which tells you something about developer demand for this category of tool. The project is MIT-licensed and written in Go, with a deliberately small footprint: one binary, SQLite, Docker, and Traefik.
+Sandboxed is an open-source Go platform that gives you the backend infrastructure behind AI app-builder products like Lovable, Bolt, and v0 — but self-hosted, on your own server, in one command. It hit 380 GitHub stars within 48 hours of its June 3, 2026 launch, which tracks with how hungry developers are for this kind of infrastructure without the vendor lock-in.
 
-The pitch is clean. You send one HTTP request to the API. It spins up an isolated Linux container, runs an AI coding agent inside it (OpenCode and Claude Code come pre-installed), and gives the resulting app a live preview URL. When nobody's looking at a sandbox, it goes to sleep and frees the RAM. When someone opens the preview link again, it wakes up instantly. Files persist on disk the whole time. One ordinary $20/month server can hold dozens of concurrent sandboxes instead of needing one VM per user.
+The project comes from TastyEffect Co., a small team focused on developer tooling. Their pitch is direct: if you're building a product where users type "build me a todo app" and a working website appears at its own URL, sandboxed gives you that plumbing without spending months on multi-tenant isolation, preview routing, and cost control. It's the kind of project that makes you wonder why something like this didn't exist sooner.
 
-The problem sandboxed solves is real. If you've ever tried to build a "describe an app, see it live" product, you know the hard part isn't the prompt — it's the infrastructure. Multi-tenant isolation so one user's code can't touch another's. Per-user preview URLs with automatic routing and TLS. Cost control so idle environments don't drain your budget. Agent orchestration that streams progress and captures results. Persistence and crash recovery. That's months of platform engineering work. Sandboxed compresses it into a single `./install.sh`.
+Here's what it actually does. You send one HTTP request, and sandboxed spins up an isolated Linux container with its own filesystem and memory limits. It runs an AI coding agent inside that container — OpenCode and Claude Code CLIs come pre-installed — and gives the resulting app a live preview URL. When nobody's using a sandbox, it goes to sleep and frees the RAM. When someone opens the preview link again, it wakes up transparently. One ordinary server can hold dozens of sandboxes instead of needing one VM per user.
 
 ### Why it matters
 
-The AI app-builder space is exploding. Vercel's v0, Lovable, Bolt, and Replit have proven there's massive demand for tools that turn natural language into working applications. But all of them are closed-source SaaS products with vendor lock-in. If you want to build your own version — for a startup, an internal tool, or a platform play — you've been on your own until now.
+The AI app-builder space has exploded over the past year. Lovable raised $200M, Bolt (by StackBlitz) is growing fast, and v0 by Vercel is pushing the same pattern. But all of them are closed SaaS products. If you wanted to build something similar — whether as a startup, an internal tool, or an open-source alternative — you'd spend months just on the infrastructure layer: container orchestration, preview URL routing, idle management, agent lifecycle, and crash recovery.
 
-Sandboxed changes that equation. It gives you the core infrastructure layer that these products are built on, minus the proprietary bits. The architecture is intentionally boring and readable: SQLite for state, Docker for containers, Traefik for routing, a single Go binary for the control plane. You could read the entire codebase in an afternoon. That's a feature, not a limitation — it means you can extend it, debug it, and trust it in production.
+Sandboxed collapses that into a single Go binary plus Docker. It uses SQLite for state, Traefik for URL routing, and the Docker CLI for container management. No Kubernetes, no separate database server, no message queue. The README is honest about what it is: a strong starting point for shipping fast, not a production-hardened platform for running untrusted code at scale. That honesty is refreshing in a space full of overpromising.
 
-The timing connects to a broader shift. AI coding agents are getting good enough that "generate a working app from a prompt" is now a viable product category. But the infrastructure to run these agents safely at scale — with isolation, cost control, and preview URLs — hasn't been available as open source. Sandboxed fills that gap. For fullstack developers working with React, NestJS, Django, or Go, this is the missing piece if you want to build on top of the AI agent wave instead of just consuming someone else's API.
+For fullstack developers, this is interesting because it lowers the barrier to building AI-powered development tools. You can have a working prototype of an AI app-builder in an afternoon instead of a quarter. The fact that it's written in Go — fast, single binary, minimal dependencies — means it fits well into existing Go infrastructure and doesn't require a Node.js or Python runtime.
 
 ### Key Features
 
-**One-Command Setup.** Run `./install.sh` and you have a working API plus preview routing. No Kubernetes, no Helm charts, no YAML configuration files that span hundreds of lines. Docker Engine with the Compose plugin on Linux is the only requirement. The installer checks your environment, writes a `.env` file, builds the sandbox base image and control plane, and starts the whole stack. The API is live at `http://127.0.0.1:9090` within minutes.
+**One-Command Install.** Run `./install.sh` and you get a working API plus preview URLs. The script checks Docker, writes a `.env` file, builds the sandbox base image and control plane, and starts the whole stack. The API is live at `http://127.0.0.1:9090` immediately. No Helm charts, no Terraform modules, no "configure these 15 environment variables first."
 
-**Isolated Multi-Tenant Containers.** Each sandbox runs in its own hardened Docker container with capability dropping (`cap-drop ALL`), `no-new-privileges`, and a read-only root filesystem. Per-sandbox memory and PID limits prevent one user from consuming resources meant for others. A host-memory pressure reaper kills sandboxes that exceed their bounds. This isn't full VM isolation — the README is honest about that — but it's solid for running code from trusted or semi-trusted users.
+**Built-In Coding Agents.** Every sandbox ships with OpenCode and Claude Code CLIs pre-installed. You submit a prompt via the API, and the agent writes code into the sandbox's workspace. Progress streams back via Server-Sent Events. You can inject your own API keys at sandbox creation time, or use OpenCode's free plan out of the box for testing.
 
-**Live Preview URLs with Auto-Routing.** Every sandbox gets a clean preview URL like `http://s-<id>-3000.preview.localhost`. Traefik v3's Docker provider handles the routing automatically — sandboxes self-register their routes when they start. On a real domain with TLS, you get `https://s-<id>-3000.preview.yourdomain.com` with a single wildcard certificate via Let's Encrypt DNS-01. No port bookkeeping, no collisions, no manual configuration.
+**Live Preview URLs with Automatic Routing.** Each sandbox gets a clean preview URL like `http://s-<id>-3000.preview.localhost`. Traefik handles the routing automatically — sandboxes self-register their routes when they start. On a real domain with TLS, you get `https://s-<id>-3000.preview.yourdomain.com` with Let's Encrypt wildcard certificates. No port bookkeeping, no DNS configuration per sandbox.
 
-**Sleep-on-Idle, Wake-on-Request.** Idle sandboxes stop automatically via `docker stop`, freeing their RAM. The next time someone opens the preview URL, the sandbox wakes up transparently with a warming-up page and readiness probe. This is the difference between a $20 server handling 50 users and a $2,000 cluster doing the same thing. The idle timeout is configurable, and you can send a keepalive POST to postpone the reaper for active sessions.
+**Idle Sleep and Wake-on-Request.** This is the feature that makes the economics work. Idle sandboxes stop automatically, freeing their memory. When someone opens the preview URL, the sandbox wakes up transparently — there's a warming-up page, a readiness probe, and request holding so the user doesn't see an error. The difference between always-on VMs and this approach is the difference between a $20/month server and a $2,000/month cluster.
 
-**Built-In AI Agent Orchestration.** The base sandbox image ships with OpenCode and Claude Code CLIs pre-installed. Submit a prompt via the API, and the agent builds the app inside the sandbox. Progress streams back as Server-Sent Events. You can inject your own API keys at sandbox creation time, or use OpenCode's free plan out of the box. The agent lifecycle is first-class: submit, stream, capture result, retry — not just "fire and forget."
+**Crash Recovery via SQLite Reconciler.** SQLite is the single source of truth for sandbox state. A reconciler converges Docker back to the database on every boot, so the system survives host reboots without losing track of what's running. This is the kind of boring, reliable design that matters when you have real users depending on your platform.
 
-**Persistent Workspaces with Crash Recovery.** Each sandbox has a bind-mounted workspace directory that persists across container restarts and server reboots. SQLite (in WAL mode) is the single source of truth. A reconciler converges Docker's actual state to the database on every boot, so if the host restarts unexpectedly, everything comes back cleanly. Destroy a container and the workspace survives. Purge it when you actually want the data gone.
+**REST API with Full Sandbox Lifecycle.** Create, list, execute commands, stream agent progress, read and write files, stop, destroy, and purge — all via HTTP endpoints with bearer token authentication. The API is designed to be called from your app backend, per user, at scale. There's also a complete `AGENTS.md` runbook for driving sandboxes programmatically.
 
-**Full REST API with File Management.** The API covers the complete lifecycle: create, list, get, exec commands, stop, destroy, purge. A file management endpoint lets you read, write, and list workspace files without entering the container. Health and readiness endpoints (`/healthz`, `/readyz`) are built in for load balancer integration. Auth is off by default for local development, with token-based auth available for production.
+**Hardened Container Isolation.** Sandboxes run with `cap-drop ALL`, `no-new-privileges`, and read-only rootfs by default. Per-sandbox memory and PID limits prevent one user from taking down the rest. There's even a host-memory pressure reaper that kills sandboxes if the host runs low. It's not VM-level isolation, but it's solid for running your own users' code.
 
 ### Use Cases
 
-- **AI app-builder products** — Build a "describe an app, see it live" SaaS like Lovable or Bolt. Sandboxed gives you the multi-tenant infrastructure on day one so you can focus on the prompt engineering and UX.
-- **Agent development platforms** — Run AI coding agents safely at scale. Each agent gets its own isolated environment with persistent state and a live URL to show results.
-- **Per-branch preview environments** — Give every pull request or feature branch its own sandbox with a unique URL. Great for design review, QA, and stakeholder demos.
-- **Coding playgrounds and education** — Let students or workshop participants write and run code in isolated environments without risking the host system. Sleep-on-idle keeps costs manageable.
-- **Internal developer platforms** — Give your team on-demand development environments that spin up in seconds and clean up automatically. Works with any language or framework that runs in Docker.
+- **AI app-builder products** — Give users a text input, have an agent build an app, and serve it at a live URL. This is the primary use case and what the project was designed for.
+- **Coding playgrounds and education platforms** — Students get isolated environments where they can experiment without affecting each other. The preview URL makes it easy to share work.
+- **Per-branch preview environments** — Spin up a sandbox for each pull request or feature branch. The sleep/wake economics make this affordable even for small teams.
+- **Agent development and testing** — Test AI coding agents in isolated environments with real file systems and network access. Stream agent progress and capture durable results.
+- **Multi-tenant SaaS backends** — Any product where each user needs their own isolated environment with a live URL. The API is designed for this pattern from the start.
 
 ### Pros and Cons
 
 Pros:
-- The architecture is deliberately simple and readable — one Go binary, SQLite, Docker, Traefik. You can understand the entire system in an afternoon, which makes it trustworthy and extensible.
-- Sleep-on-idle with wake-on-request is a genuine cost innovation. Running dozens of sandboxes on a single $20/month server instead of one VM per user changes the economics of multi-tenant development platforms.
-- MIT license with no vendor lock-in. You own your data, your margins, and your roadmap. Ship what you build on it.
-- Honest documentation about what's simple on purpose and what to harden before scaling. The team doesn't pretend Docker containers are as secure as VMs for untrusted code.
+
+- The architecture is genuinely simple — one Go binary, SQLite, Docker CLI, and Traefik. You could read the entire control plane in an afternoon. That's rare for infrastructure software.
+- The idle sleep/wake economics are the killer feature. Running dozens of sandboxes on a single $20/month server changes the calculus for indie developers and small teams building AI tools.
+- MIT licensed with no vendor lock-in. You own your data, your margins, and your roadmap. The team is explicit about this being a starting point you can build a business on.
+- The API design is clean and well-documented. RESTful endpoints with SSE streaming for agent progress. The `AGENTS.md` runbook shows how to drive it programmatically.
 
 Cons:
-- Beta quality with 134 stars means limited production battle-testing. The project is one day old as of this writing — expect breaking changes and rough edges.
-- Docker container isolation isn't sufficient for running truly untrusted code from strangers. The README acknowledges this and recommends VM-per-tenant (gVisor, Kata, Firecracker) for that use case.
-- Single-server architecture means you can't distribute sandboxes across multiple hosts yet. Multi-host sharding is listed as a future concern, not a current feature.
+
+- Two-day-old project with 380 stars and a single contributor. The beta label is real — expect breaking changes, missing edge cases, and rough documentation. Don't put production traffic on this yet.
+- Container isolation uses hardened Docker, not VMs. Fine for running your own users' code, but insufficient for running untrusted strangers' code. The README is honest about this and recommends gVisor, Kata, or Firecracker for that use case.
+- Single-server only today. No multi-host sharding, no Kubernetes backend. The control plane talks to Docker via the CLI boundary, so a k8s backend is described as "an interface swap, not a rewrite," but it doesn't exist yet.
+- API auth is off by default. Fine for local development, but you need to remember to turn it on before exposing the API port. The README warns about this, but it's still a footgun.
 
 ### Getting Started
 
-Requirements: Docker Engine with the Compose plugin on Linux.
-
 ```bash
-# Clone and install
+# Clone and install (requires Docker Engine + Compose plugin on Linux)
 git clone https://github.com/tastyeffectco/sandboxes.git
 cd sandboxes
 ./install.sh
 
 # Verify the API is running
 curl http://127.0.0.1:9090/healthz
+# → ok
 
-# Create a sandbox
-ID=$(curl -s -XPOST http://127.0.0.1:9090/sandbox \
+# Create a sandbox that will serve on port 3000
+API=http://127.0.0.1:9090
+ID=$(curl -s -XPOST $API/sandbox -H 'content-type: application/json' \
+       -d '{"ports":[3000]}' | sed -E 's/.*"id":"([^"]+)".*/\1/')
+echo "sandbox: $ID"
+
+# Have an agent build a Vite app
+curl -s -XPOST $API/v1/sandboxes/$ID/tasks \
   -H 'content-type: application/json' \
-  -d '{"ports":[3000]}' | sed -E 's/.*"id":"([^"]+)".*/\1/')
+  -d '{
+    "prompt": "create a Vite app that shows a todo list and run it on port 3000",
+    "agent": "opencode"
+  }'
 
-# Have an agent build an app inside it
-curl -s -XPOST http://127.0.0.1:9090/v1/sandboxes/$ID/tasks \
-  -H 'content-type: application/json' \
-  -d '{"prompt":"create a Vite app that shows a todo list and run it on port 3000","agent":"opencode"}'
-
-# Stream the agent's progress
-curl -N http://127.0.0.1:9090/v1/sandboxes/$ID/tasks/<taskId>/events
+# Stream the agent progress
+curl -N $API/v1/sandboxes/$ID/tasks/<taskId>/events
 
 # Open the live preview
 # http://s-<id>-3000.preview.localhost
 ```
 
-For production with TLS, point `*.preview.yourdomain.com` at the host, enable the `websecure` entrypoint in Traefik, and configure Let's Encrypt DNS-01 for a wildcard certificate.
+To inject your own API key for Claude Code instead of OpenCode's free plan:
+
+```bash
+curl -s -XPOST $API/sandbox -d '{
+  "ports": [3000],
+  "env": {"ANTHROPIC_API_KEY": "sk-ant-..."}
+}'
+```
 
 ### Alternatives
 
-**Lovable / Bolt / v0** — These are the closed-source SaaS products that sandboxed is modeled after. They offer polished UX, managed infrastructure, and built-in hosting. Choose them if you want a turnkey product without running your own infrastructure. Choose sandboxed if you want control over the stack, your data, and your margins.
+**Daytona** — A more mature dev environment manager that supports multiple backends (Docker, SSH, cloud VMs) and has a VS Code integration. Daytona is better if you need remote development environments for individual developers. Sandboxed is better if you're building a multi-tenant product where each user gets an isolated environment with a preview URL and an AI agent.
 
-**Daytona** — An open-source dev environment manager that focuses on per-developer workspaces (like GitHub Codespaces but self-hosted). Daytona is more mature and feature-rich for developer productivity use cases, but it doesn't include the AI agent orchestration or the "build an app from a prompt" workflow that sandboxed targets. Different problem, similar infrastructure layer.
+**Gitpod / GitHub Codespaces** — Cloud-hosted development environments with full IDE support. These are polished, production-ready products, but they're SaaS offerings with per-user pricing. Sandboxed is self-hosted and designed for building products on top of, not for providing development environments to your team.
 
-**Gitpod / GitHub Codespaces** — Cloud-hosted development environments with preview URLs and multi-tenant isolation. More polished and reliable than a self-hosted solution, but you're paying per-user pricing to a vendor and you don't control the infrastructure. Sandbox is for teams that need to own the platform.
+**Devbox by Jetify** — Reproducible development environments using Nix. Devbox solves the "works on my machine" problem for individual developers but doesn't address multi-tenant isolation, preview URLs, or AI agent orchestration. Different problem, different tool.
 
 ### Verdict
 
-Sandboxed is the most interesting infrastructure project I've seen for the AI app-builder space. It takes the core technical challenges — multi-tenant isolation, preview routing, sleep-on-idle cost control, agent orchestration — and distills them into a single Go binary you can deploy in minutes. The architecture is deliberately simple, which is the right call for a v1: boring technology that works beats clever technology that doesn't. At 134 stars on day one with MIT licensing, it has the momentum and the licensing to become the standard open-source foundation for this category. The beta quality and single-server limitation are real constraints, but they're the kind you can work around. If you're building anything that involves "run code in isolated environments at scale" — whether that's an AI app-builder, an agent platform, or a coding playground — sandboxed deserves a serious look right now.
+Sandboxed is the most practical open-source answer to "how do I build my own Lovable/Bolt/v0" that I've seen. It's two days old and beta-quality, so temper your expectations — this is a starting point, not a finished product. But the architecture decisions are sound: Go for the control plane, SQLite for state, Docker for isolation, Traefik for routing. The idle sleep/wake feature alone makes this worth evaluating if you're building any kind of multi-tenant AI development tool. If you're a fullstack developer who wants to ship an AI app-builder product without spending six months on infrastructure, sandboxed gives you a running start. Watch this repo — with 380 stars in 48 hours, the community interest is clearly there.
