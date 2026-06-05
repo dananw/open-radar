@@ -1,88 +1,101 @@
 ---
 name: freellmapi
-description: "FreeLLMAPI stacks free tiers from 16 LLM providers into one OpenAI-compatible endpoint — 1.7B tokens/month with smart routing and automatic failover."
+description: "FreeLLMAPI stacks free tiers from 16 LLM providers behind one OpenAI-compatible endpoint — ~1.7B tokens/month with smart routing and automatic failover."
 url: https://github.com/tashfeenahmed/freellmapi
-stars: 7045
-forks: 1131
+stars: 7842
+forks: 1280
 language: TypeScript
-tags: ["llm", "api-proxy", "openai-compatible", "developer-tools", "self-hosted"]
+tags: ["llm", "ai-infrastructure", "openai-compatible", "proxy", "developer-tools"]
 featured: false
-publishedAt: 2026-06-02
+publishedAt: 2026-06-06
 ---
 
 ## FreeLLMAPI
 
 ### Overview
 
-FreeLLMAPI is a self-hosted TypeScript proxy that aggregates the free tiers of 16 LLM providers — Google Gemini, Groq, Cerebras, SambaNova, Mistral, OpenRouter, GitHub Models, Cohere, Cloudflare, HuggingFace, Z.ai, Ollama Cloud, Kilo, Pollinations, LLM7, and NVIDIA — behind a single OpenAI-compatible `/v1/chat/completions` endpoint. Stack them together and you get roughly 1.7 billion tokens per month of working inference capacity, at zero cost. The project hit 7,000 GitHub stars in about six weeks after its April 2026 launch, which says a lot about how many developers are tired of juggling a dozen API keys and SDK configurations just to experiment with different models.
+FreeLLMAPI is a TypeScript proxy server that aggregates the free tiers of 16 LLM providers — Google Gemini, Groq, Cerebras, SambaNova, NVIDIA, Mistral, OpenRouter, GitHub Models, Cohere, Cloudflare, HuggingFace, Z.ai (Zhipu), Ollama Cloud, Kilo, Pollinations, and LLM7 — into a single OpenAI-compatible `/v1/chat/completions` endpoint. Stacked together, those free tiers add up to roughly 1.7 billion tokens per month across 100+ models. The repo hit nearly 8,000 stars within six weeks of its April 2026 launch, which tells you how many developers are tired of paying per-token pricing while prototyping.
 
-The project is built by Tashfeen Ahmed, a developer who's clearly spent time dealing with the pain of provider fragmentation. The architecture is clean: an Express server handles the proxy logic, a React + Vite dashboard (shadcn/ui) lets you manage keys and view analytics, and SQLite with AES-256-GCM encryption stores your provider credentials safely. It runs on anything Node 20+ supports — your laptop, a VPS, even a Raspberry Pi. The whole thing sits at around 40 MB of memory at idle.
+The project is built by Tashfeen Ahmed and a growing contributor community. It's MIT-licensed, runs anywhere Node.js 20+ works (including Raspberry Pi), and ships as a Docker image with a React + Vite admin dashboard. The architecture is deliberately simple: an Express proxy sits in front of your OpenAI SDK calls, a router picks the best available model for each request, and per-key rate tracking keeps you under every provider's free-tier cap. No magic, no complex abstractions — just a well-engineered proxy that does one thing well.
 
-The core problem it solves is deceptively simple but practically annoying. Every major AI lab now offers a free tier — a few million tokens per month, a few thousand requests per day. On its own, each tier is a toy. But if you've got accounts at Google, Groq, Cerebras, Mistral, and a handful of others, the combined capacity is genuinely usable for prototyping, side projects, and experimentation. The issue is managing them: different SDKs, different rate limits, different error formats, different auth schemes. FreeLLMAPI collapses all of that into one endpoint that any OpenAI-compatible client can talk to. Point your existing code at `http://localhost:3001/v1` and forget about provider management.
+The core problem it solves is practical: every major AI lab now offers a free tier, but managing 16 different SDKs, rate limits, and failure modes by hand is a nightmare. FreeLLMAPI collapses that into one endpoint. Point any OpenAI-compatible client at your local server — Python's `openai` library, LangChain, LlamaIndex, Continue, Hermes Agent, or even curl — and it routes transparently across whichever providers you've added keys for. When one provider hits its rate limit, the router automatically fails over to the next one in your configured fallback chain.
 
 ### Why it matters
 
-The LLM landscape in mid-2026 is fragmented in a way that punishes individual developers the hardest. Big companies can afford dedicated AI infrastructure teams. Solo developers and small teams are left signing up for eight different free tiers, reading eight different API docs, and writing custom retry logic for each one. FreeLLMAPI is a response to that reality — not a product, but a developer utility that makes the free-tier ecosystem actually usable.
+The AI infrastructure space is consolidating around OpenAI-compatible APIs as the de facto standard. Every major provider — Groq, Mistral, Cerebras, SambaNova, Cloudflare — now speaks the same wire format. That convergence creates an opportunity that FreeLLMAPI exploits cleanly: if everyone speaks the same protocol, you can build a router that treats providers as interchangeable backends.
 
-What's interesting is the router design. It doesn't just round-robin through providers. It tracks per-key rate limits (RPM, RPD, TPM, TPD), runs periodic health checks, maintains a configurable fallback chain, and applies sticky sessions so multi-turn conversations don't randomly switch models mid-thread (which causes hallucination spikes). When a provider returns a 429 or 5xx, the router puts that key on cooldown and moves to the next one — up to 20 retry attempts. This isn't naive load balancing; it's thoughtful engineering around the specific constraints of free-tier APIs.
+For fullstack developers working with React, NestJS, Django, or Go backends that need LLM integration, the economics matter. Production API calls to GPT-4 or Claude Opus cost real money. But prototyping, testing, and building internal tools don't need frontier models — they need *enough* intelligence at zero cost. FreeLLMAPI fills exactly that gap. You get a unified endpoint that auto-routes to whichever free provider has capacity, with graceful degradation as daily caps reset at UTC midnight.
 
-The timing connects to a broader shift: developers are building more AI-powered features into regular apps, not just building "AI apps." If you're a fullstack developer adding an AI chat feature to a SaaS product, or using LLMs for code review in your CI pipeline, or prototyping an agent workflow, you need inference capacity during development. FreeLLMAPI gives you that capacity without touching your production API budget.
+The project also reflects a broader trend: developers are building their own AI infrastructure layers instead of depending on single-provider setups. Tools like LiteLLM and OpenRouter serve the paid multi-provider use case. FreeLLMAPI specifically targets the "I want to experiment without spending money" use case, and does it with a cleaner UX than hand-rolling provider rotation scripts.
 
 ### Key Features
 
-**OpenAI-Compatible Wire Format.** The proxy implements `POST /v1/chat/completions` and `GET /v1/models` exactly as the OpenAI SDKs expect. This means zero code changes in your existing apps — swap the `base_url` and you're done. It works with the official OpenAI Python/Node SDKs, LangChain, LlamaIndex, Continue, Hermes Agent, and anything else that speaks OpenAI. The `/v1/responses` endpoint (the wire format current Codex CLI versions require) is also implemented as a translating shim over the same router.
+**Smart Router with Automatic Failover.** The router picks the highest-priority model that has a healthy key and is under all its rate limits. On a 429, 5xx, or timeout, it puts the key on a short cooldown and retries the next model in your fallback chain — up to 20 attempts per request. This means your endpoint stays available even when individual providers are overloaded or rate-limited. The fallback chain is fully configurable from the dashboard.
 
-**Smart Router with Fallback Chain.** The router picks the highest-priority model that has a healthy key and is under its rate limits. On failure, it puts the failing key on a short cooldown and retries down the fallback chain. You can reorder the chain from the dashboard — put your fastest/strongest providers at the top, let weaker ones serve as safety nets. Every response carries an `X-Routed-Via: <platform>/<model>` header so you know exactly which provider served each call.
+**Per-Key Rate Tracking.** RPM (requests per minute), RPD (requests per day), TPM (tokens per minute), and TPD (tokens per day) counters are tracked per `(platform, model, key)` tuple. The router always picks a key that's under its caps, so you never blow through a provider's free tier accidentally. Counters reset automatically and are backed by SQLite for persistence across restarts.
 
-**Per-Key Rate Tracking.** Instead of hitting a provider's limit and getting hard-blocked, the router maintains in-memory RPM/RPD/TPM/TPD counters backed by SQLite. It always selects a key that's under its caps. This means you effectively get the combined throughput of all your free tiers rather than the bottleneck of whichever one you happen to hit first. When a counter resets (usually at UTC midnight), that provider becomes available again automatically.
+**Sticky Sessions for Multi-Turn Conversations.** When you're in a multi-turn chat, the router keeps talking to the same model for 30 minutes to avoid the hallucination spike that comes from mid-conversation model switches. This is a subtle but important detail — switching models between turns in a conversation degrades output quality because each model has different context about what was said before.
 
-**Sticky Sessions.** Multi-turn conversations stay pinned to the same model for 30 minutes. This is a subtle but important feature — switching models mid-conversation causes hallucination spikes because different models have different context handling. The sticky session implementation prevents that degradation without requiring any configuration from the user.
+**AES-256-GCM Encrypted Key Storage.** Provider API keys are encrypted with AES-256-GCM before hitting the SQLite database. Decryption happens in-memory just before a request. You authenticate to the proxy with a single `freellmapi-…` bearer token — your upstream provider keys are never exposed to your applications. This is the right security model for a local proxy.
 
-**Encrypted Key Storage with Unified Auth.** Provider API keys are encrypted with AES-256-GCM before they hit SQLite; decryption happens in memory just before a request. Your apps authenticate to the proxy with a single `freellmapi-…` bearer token, so upstream provider keys never leave your server. The admin dashboard uses email + password authentication with scrypt-hashed credentials and session tokens.
+**OpenAI-Compatible Responses API.** Beyond the standard `/v1/chat/completions`, FreeLLMAPI implements `/v1/responses` — the wire format that current Codex CLI versions require. It's a translating shim over the same router, with full streaming events and tool calls. Tool calling works too: OpenAI-style `tools` and `tool_choice` requests pass through, and assistant `tool_calls` + `tool` role follow-up messages round-trip across every supported provider.
 
-**Vision and Tool Calling Support.** When a request contains images, the router automatically restricts itself to vision-capable models (Gemini 2.5/3.x, Llama 4 Scout/Maverick, GPT-4o/4.1). If no vision model is enabled, you get a clear 422 error instead of silent image dropping. OpenAI-style tool calling is fully supported — `tools` and `tool_choice` parameters pass through, and multi-step tool call flows (assistant `tool_calls` → `tool` role follow-up → final answer) work across every compatible provider.
+**Admin Dashboard with Analytics.** A React + Vite + shadcn/ui dashboard lets you manage provider keys, reorder the fallback chain, run prompts in a playground, and inspect per-request analytics including latency, token counts, success rate, and per-provider breakdowns over 24h/7d/30d windows. Dark mode included. The dashboard is served from the same Express server — no separate deployment needed.
 
-**Admin Dashboard with Analytics.** The React + Vite dashboard shows per-request logging with latency, token counts, success rate, and per-provider breakdowns over 24h/7d/30d windows. You can manage keys, reorder the fallback chain, inspect analytics, and run prompts in a built-in playground — all from the browser. Dark mode included.
+**Embeddings with Family-Based Routing.** The `/v1/embeddings` endpoint is OpenAI-compatible with one deliberate difference: failover never crosses models. Vectors from different models live in incompatible spaces, so embeddings route by family (one model identity + dimension), and failover only walks providers serving that same family. Supported families include Gemini embeddings, text-embedding-3-large/small, Cohere embed-v4.0, BGE-M3, and several NVIDIA models.
 
 ### Use Cases
 
-- **Prototyping AI features** — If you're building an AI chat widget, a code assistant, or an agent workflow for a side project, FreeLLMAPI gives you free inference capacity during development without burning production API credits.
-- **Multi-model experimentation** — Compare how different models handle the same prompt by routing through the fallback chain. The `X-Routed-Via` header tells you which provider served each response, making A/B testing straightforward.
-- **Local development for AI-powered apps** — Point your local dev environment at `localhost:3001` and stop worrying about rate limits during hot-reload cycles. The proxy handles provider failover transparently.
-- **Agent and workflow development** — Building an AI agent that needs reliable inference? The automatic failover and sticky sessions make FreeLLMAPI more resilient than hitting a single provider directly, even during development.
-- **Cost-conscious experimentation** — Students, indie developers, and researchers who want to experiment with LLM APIs without signing up for paid tiers get a single endpoint that aggregates multiple free quotas.
+- **Rapid prototyping with LLMs** — Build a chatbot, content generator, or AI-powered feature in your React or Next.js app without provisioning paid API keys. Point the OpenAI SDK at `localhost:3001` and start coding.
+- **Internal tools and dashboards** — NestJS or Django backends that need LLM capabilities for internal admin tools, content moderation, or data processing. FreeLLMAPI gives you a stable endpoint without per-request costs.
+- **AI agent development** — Build and test autonomous agents (LangChain, LlamaIndex, Hermes Agent) that make many LLM calls per task. The automatic failover and rate tracking keep your agent running even when individual providers throttle.
+- **Learning and experimentation** — Students and hobbyists exploring prompt engineering, RAG pipelines, or fine-tuning workflows who need LLM access without a credit card.
+- **Cost-conscious production backends** — Small startups or side projects that can tolerate variable latency and model quality in exchange for zero inference costs during the early growth phase.
+- **Local development workflow** — Run FreeLLMAPI on your dev machine alongside your Go or Python backend. The Docker setup takes under a minute, and the unified endpoint means your `.env` files don't need 16 different API key variables.
 
 ### Pros and Cons
 
 Pros:
-- Genuinely usable free inference capacity. The combined ~1.7 billion tokens/month across 16 providers is enough for serious prototyping, not just toy demos. The router makes it practical by handling failover and rate limits automatically.
-- Zero lock-in. The OpenAI-compatible wire format means any existing OpenAI client works without modification. Swap out the base_url and you're connected to 16 providers simultaneously.
-- Thoughtful security design. AES-256-GCM encrypted key storage, unified bearer tokens, and dashboard authentication. Provider keys never leave your server and never get exposed to client applications.
-- Active development with a responsive maintainer. 7,000 stars and 1,100 forks in six weeks, with 31 open issues suggesting the project is growing but manageable.
+- Zero-cost LLM access across 16 providers and 100+ models. The aggregate free tier is genuinely useful — 1.7 billion tokens/month is enough for serious prototyping and internal tool development.
+- True OpenAI compatibility means it works with every existing client library and framework. No vendor-specific SDK changes, no wrapper libraries — just change `base_url`.
+- The router's per-key rate tracking and automatic failover are production-quality engineering. The sticky session feature shows attention to real-world usage patterns that most proxy tools miss.
+- Active development with 25+ contributors and a responsive maintainer. The ToS review table in the README shows genuine care about doing things correctly.
 
 Cons:
-- No frontier models. The free-tier catalog tops out around Llama 3.3 70B, GLM-4.5, Qwen 3 Coder, and Gemini 2.5 Pro. You won't get GPT-5 or Claude Opus-class reasoning. For hard problems, you still need a paid API.
-- Intelligence degrades throughout the day. Your top-ranked models (Gemini 2.5 Pro, GPT-4o via GitHub Models) have the lowest daily caps. Once they're exhausted, the router falls to smaller models. Expect the effective quality to drop in the evening, then reset at UTC midnight.
-- Latency varies significantly. Cerebras and Groq are extremely fast; other providers are not. You get whichever one is available, and the response time can swing from 200ms to several seconds depending on the provider.
-- Free tiers change without notice. Providers regularly tighten, loosen, or remove their free offerings. When that happens, you'll see 429s or auth errors until the catalog is updated.
-- Single-user by design. No multi-tenant auth, no per-user billing. This is a personal tool, not something you expose to a team or the internet.
+- No frontier models. The free-tier catalog tops out around Llama 3.3 70B, GLM-4.5, and Gemini 2.5 Pro. You will not get GPT-5 or Claude Opus class reasoning through this proxy. For hard reasoning tasks, you still need a paid API.
+- Intelligence degrades as the day progresses. Your top-ranked models (usually Gemini 2.5 Pro, GPT-4o via GitHub Models) have the lowest daily caps. Once they hit their limits, the router falls to smaller, weaker models. Expect effective quality to drop in the late hours, then reset at UTC midnight.
+- Free tiers change without notice. Providers regularly tighten, loosen, or remove free tiers. When that happens you'll see 429s or auth errors until the catalog is updated. The maintainer publishes re-seed scripts, but you're still at the mercy of provider decisions.
+- Single-user by design. No multi-tenant auth, no per-user billing. This is a personal tool, not a SaaS platform. Don't expose it to the internet.
 
 ### Getting Started
 
 ```bash
-# Clone and run with Docker (recommended)
+# Recommended: Docker Compose
 git clone https://github.com/tashfeenahmed/freellmapi.git
 cd freellmapi
 
-# Generate encryption key
+# Generate an encryption key for at-rest key storage
 ENCRYPTION_KEY="$(openssl rand -hex 32)"
 printf "ENCRYPTION_KEY=%s\nPORT=3001\n" "$ENCRYPTION_KEY" > .env
 
-# Start with Docker Compose
 docker compose up -d
 ```
 
-Open http://localhost:3001, add your provider keys on the **Keys** page, reorder the **Fallback Chain**, and grab your unified API key. Then use it in any OpenAI-compatible client:
+Open http://localhost:3001, add your provider keys on the **Keys** page, reorder the **Fallback Chain** to taste, and grab your unified API key from the dashboard header.
+
+For local development without Docker:
+
+```bash
+git clone https://github.com/tashfeenahmed/freellmapi.git
+cd freellmapi
+npm install
+cp .env.example .env
+ENCRYPTION_KEY="$(node -e 'console.log(require("crypto").randomBytes(32).toString("hex"))')"
+printf "ENCRYPTION_KEY=%s\nPORT=3001\n" "$ENCRYPTION_KEY" > .env
+npm run dev
+```
+
+Using it from Python:
 
 ```python
 from openai import OpenAI
@@ -92,39 +105,36 @@ client = OpenAI(
     api_key="freellmapi-your-unified-key",
 )
 
-# Let the router pick the best available model
 resp = client.chat.completions.create(
-    model="auto",
+    model="auto",  # let the router pick
     messages=[{"role": "user", "content": "Summarize the fall of Rome in one sentence."}],
 )
 print(resp.choices[0].message.content)
 print("Routed via:", resp.headers.get("x-routed-via"))
 ```
 
-For local development without Docker:
+Using it from curl:
 
 ```bash
-npm install
-npm run dev      # server on :3001, dashboard on :5173, both with HMR
-npm test         # run the test suite
-```
-
-To expose it on your LAN (e.g., a Raspberry Pi):
-
-```bash
-HOST_BIND=0.0.0.0 docker compose up -d
+curl http://localhost:3001/v1/chat/completions \
+  -H "Authorization: Bearer freellmapi-your-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "auto",
+    "messages": [{"role": "user", "content": "hi"}]
+  }'
 ```
 
 ### Alternatives
 
-**LiteLLM** — The most established LLM proxy with support for 100+ providers and a much larger feature set (embeddings, image generation, budgeting, multi-tenant auth). LiteLLM is the better choice if you need production-grade features like team management, per-user budgets, or a wider provider catalog. FreeLLMAPI is simpler to set up and specifically optimized for stacking free tiers with automatic failover — choose it when you want a lightweight personal proxy, not an enterprise gateway.
+**LiteLLM** — A Python library and proxy that supports 100+ LLM providers with OpenAI-compatible output. LiteLLM is more mature and handles paid providers well, but it doesn't specifically optimize for free-tier stacking. Better choice if you need a production-grade proxy with enterprise features like budgeting and team management.
 
-**OpenRouter** — A hosted service that aggregates multiple providers behind a single API, including free-tier models. OpenRouter requires no self-hosting and handles routing/failover for you, but you're limited to their catalog and pricing model. FreeLLMAPI gives you direct control over which providers you use, keeps your keys local, and doesn't take a cut of paid requests. Choose OpenRouter when you don't want to run infrastructure; choose FreeLLMAPI when you want control and zero cost.
+**OpenRouter** — A hosted service that routes across 200+ models with a single API key, including 21 free-tier models. OpenRouter is easier to set up (no self-hosting) and offers paid models alongside free ones, but you're dependent on their infrastructure and pricing. Better choice if you want a managed service and don't mind paying for premium models.
 
-**Portkey** — An AI gateway focused on reliability features like fallbacks, load balancing, and observability for production workloads. Portkey targets teams running LLM-powered products at scale with features like semantic caching and guardrails. It's overkill for personal experimentation. FreeLLMAPI is the right tool when you're a solo developer who just wants to aggregate free tiers without enterprise overhead.
+**OneAPI** — A Go-based API management and distribution tool that supports multiple LLM providers with token-based billing and quota management. OneAPI is more feature-rich for multi-user deployments and has a larger Chinese developer community, but it's heavier and more complex than FreeLLMAPI's single-user design. Better choice if you need to manage API access for a team.
 
 ### Verdict
 
-FreeLLMAPI is the kind of tool that makes you wonder why it didn't exist sooner. The premise — stack every free LLM tier into one endpoint — sounds almost too simple, but the execution is solid. The router is genuinely smart about rate limits and failover, the encrypted key storage is a nice security touch, and the admin dashboard is polished enough that you don't need to touch config files. The 7,000 stars in six weeks reflect real demand: developers want to experiment with LLMs without paying for every API call during prototyping.
+FreeLLMAPI is the most practical zero-cost LLM infrastructure tool I've seen. The concept — stack every free tier behind one endpoint — is obvious in hindsight, but the execution is what makes it work. The router engineering is solid: per-key rate tracking, automatic failover with cooldowns, sticky sessions for multi-turn conversations, and family-based routing for embeddings. These aren't features you'd hack together in a weekend.
 
-The limitations are real but honest. You're not getting frontier model intelligence, quality degrades as daily caps are hit, and latency varies. But for prototyping, side projects, and learning, those trade-offs are perfectly acceptable. If you're a fullstack developer building AI features into a regular app and you want free inference capacity during development, FreeLLMAPI is worth running locally. It takes five minutes to set up with Docker, and the unified endpoint means your existing OpenAI SDK code works without changes.
+It's not going to replace paid APIs for production workloads. The daily cap exhaustion problem is real — by evening, you're running on whatever scraps are left. And the ToS landscape is a minefield that requires periodic re-evaluation. But for the specific use case of "I want to experiment with LLMs without spending money," FreeLLMAPI is the best option available. The 8K stars in six weeks suggest the developer community agrees. If you're a fullstack developer building AI features into your app and want a local proxy that just works, this is worth the five-minute Docker setup.
