@@ -1,144 +1,98 @@
 ---
 name: zero-native
-description: "Vercel Labs' zero-native lets web developers build native desktop and mobile apps with Zig backends and any web frontend — tiny binaries, fast rebuilds, real native power."
+description: "Vercel Labs' zero-native builds native desktop and mobile apps with Zig and web UI — tiny binaries, instant rebuilds, and your existing React or Next.js skills."
 url: https://github.com/vercel-labs/zero-native
-stars: 4083
-forks: 168
+stars: 4113
+forks: 171
 language: Zig
-tags: ["native-apps", "zig", "desktop", "web-ui", "vercel", "cross-platform"]
+tags: ["desktop-apps", "zig", "web-ui", "native", "vercel"]
 featured: false
-publishedAt: 2026-06-03
+publishedAt: 2026-06-07
 ---
 
-## zero-native
+## Zero Native
 
 ### Overview
 
-zero-native is a Zig-based desktop app shell that wraps modern web frontends — React, Next.js, Vue, Svelte — into native applications. It landed on GitHub on May 8, 2026, and crossed 4,000 stars in under a month. The project comes from Vercel Labs, which immediately gives it a credibility boost in the web developer community.
+Zero Native is a Zig-based desktop app shell for modern web frontends, built by Vercel Labs. It launched in early May 2026 and crossed 4,000 GitHub stars within its first month — a signal that developers are hungry for something between Electron's bloat and the complexity of going fully native.
 
-The core contributor is ctate, who has 62 commits on the repo and appears to be a Vercel engineer working on native platform tooling. The first release (v0.1.8) dropped on May 9, with rapid iteration since — v0.1.9 the same day and v0.2.0 by May 13. That cadence suggests an active internal effort, not a weekend side project.
+The project comes from Vercel Labs, the same team behind Next.js, Turbo, and the Vercel deployment platform. That's important context. Vercel has spent years making the web development experience smoother, and zero-native is their answer to a question that keeps coming up: what happens when your web app needs to be a desktop app? Rather than forcing developers to learn Swift, Kotlin, or C++, zero-native lets you keep your React, Next.js, Svelte, or Vue frontend and wrap it in a native shell that compiles to tiny, fast binaries.
 
-The problem it solves is one web developers have been bumping into for years: you know React, you know TypeScript, but the moment someone asks for a desktop app, you're staring at Electron's 200MB+ bundle size or learning Swift/Kotlin from scratch. zero-native takes a different approach. Your frontend stays exactly as it is. The native layer is Zig — small, fast, and capable of calling C directly when you need real platform access. The result is an app that ships as a 2MB binary instead of a 200MB one, uses a fraction of the memory, and still renders your React components.
+The core problem zero-native solves is the gap between web apps and native apps. Electron solved this a decade ago, but at the cost of bundling an entire Chromium runtime — a hello world Electron app is 150MB+. Tauri improved on that with Rust and system WebViews, but the Rust toolchain can be intimidating for web developers. Zero Native takes a different angle: use Zig for the native layer (fast compilation, direct C interop, no garbage collector), let developers choose between system WebView for minimal footprint or bundled Chromium for rendering consistency, and keep the entire frontend workflow unchanged.
 
 ### Why it matters
 
-The desktop app space has been dominated by Electron for nearly a decade. VS Code, Slack, Discord, Notion — they're all Electron. And while Electron is battle-tested, the developer community has been vocal about its costs: massive bundles, high memory usage (each app is a full Chromium instance), and slow cold starts. Tauri emerged in 2020 as a Rust-based alternative, and it's gained serious traction — but it asks web developers to learn Rust, which is a steep curve.
+The desktop app space has been quietly consolidating around two options: Electron (heavy, reliable, huge ecosystem) and Tauri (lighter, Rust-based, growing fast). Zero Native introduces a third path that specifically targets web developers who want native performance without leaving their toolchain.
 
-zero-native threads the needle differently. Zig is lower-level than Rust in some ways (manual memory management, no borrow checker), but it's also simpler to read and write for developers coming from C or even Go. The Zig build system is fast. Compilation is fast. And because Zig calls C directly with zero overhead, you can use platform SDKs, native libraries, codecs, and system integrations without writing bindings or wrapper layers.
+What makes this interesting isn't just the technology — it's the strategic positioning. Vercel has enormous influence over how web developers build. If zero-native becomes the recommended way to ship desktop apps from the Vercel ecosystem, it could shift the market the same way Next.js shifted how people think about React deployment. The project supports React, Next.js, Svelte, and Vue out of the box with starter templates, and the `zero-native init` command scaffolds a working desktop app in seconds.
 
-For the fullstack developer running React or Next.js on the frontend, the pitch is almost too simple: `zero-native init my_app --frontend next`, then `zig build run`. Your Next.js app opens in a native window. No Electron. No Chromium bundled. No Rust to learn. That's a compelling onboarding story for any web developer who wants to ship a desktop app without leaving their ecosystem.
+The Zig choice is deliberate and smart. Zig compiles fast, produces small binaries, and calls C directly — which means platform SDKs, native libraries, codecs, and system integrations are all accessible without wrapper layers. For web developers who've been burned by Electron's memory usage or who find Rust's borrow checker frustrating, Zig offers a middle ground that's both performant and approachable.
 
 ### Key Features
 
-**System WebView or Chromium — Your Choice.** By default, zero-native uses the platform's built-in WebView: WKWebView on macOS, WebKitGTK on Linux, Edge WebView2 on Windows. This keeps binaries small (around 2MB) and startup fast. When you need rendering consistency across platforms, you can opt into Chromium through CEF as a platform-specific runtime. The choice is explicit and per-project, not a hidden default.
+**System WebView or Bundled Chromium.** Zero-native gives you a real choice: use the platform's native WebView (WKWebView on macOS, WebKitGTK on Linux) for the smallest possible binary, or bundle Chromium through CEF when rendering consistency across platforms matters. This isn't an either/or lock-in — you can configure it per-project in the `app.zon` manifest. System WebView apps can be under 5MB. Chromium-bundled apps are larger but guarantee pixel-identical rendering.
 
-**Zig Native Layer with Direct C Interop.** The app shell is written in Zig, which compiles to native code and calls C libraries directly — no FFI overhead, no binding generation. Need to use a platform API, a video codec, or a native UI component? You call it from Zig as if it were C. This is a massive advantage over Electron (where native modules are painful) and even Tauri (where Rust bindings add friction).
+**Zig Native Layer with Instant Rebuilds.** The native shell is written in Zig, which means app logic, bridge commands, and platform integrations rebuild in seconds, not minutes. If you've ever waited for a Rust/Tauri rebuild during development, this is a noticeable improvement. Zig's compilation speed is one of its core selling points, and zero-native takes full advantage of it.
 
-**JavaScript-to-Zig Bridge with Security Controls.** `window.zero.invoke()` is the bridge between your web frontend and native code. Every call is size-limited, origin-checked, and permission-checked. You explicitly register which Zig functions the WebView can call. This is a deliberate security design — the WebView is treated as untrusted by default, which is the right model for apps that load dynamic content.
+**JavaScript-to-Zig Bridge.** The `window.zero.invoke()` API lets your web frontend call native Zig functions directly. Calls are size-limited, origin-checked, permission-checked, and routed only to registered handlers. This is how your React app talks to the file system, system tray, notifications, or any other native capability. The bridge is explicit — you declare what the web layer can access, and everything else is blocked by default.
 
-**Fast Rebuilds for Native Code.** Zig's incremental compilation is fast — typically sub-second for the native shell layer. Your frontend still uses its own tooling (Vite, Next.js dev server, etc.), so the hot-reload experience for your React code is unchanged. But when you modify the Zig side — adding a native command, changing a platform integration — you're not waiting minutes for Rust to compile. This matters during development velocity.
+**Framework-Agnostic Frontend Support.** The project ships starter examples for Next.js, React, Svelte, and Vue. Your frontend code doesn't change. You keep your existing build tooling, state management, and component library. The native shell is transparent to your web code — it just provides the window, the bridge, and the platform integrations.
 
-**Framework Starter Templates.** The repo ships with working examples for Next.js, React, Svelte, and Vue, plus iOS and Android embedding examples. Each example is a complete app with `app.zon` (the manifest), a Zig shell, and a minimal frontend. The mobile embedding path exposes a C ABI through `libzero-native.a`, so native mobile apps can host your web UI as a component.
+**Mobile Embedding via C ABI.** Beyond desktop, zero-native exports a C ABI through `libzero-native.a` that iOS and Android host apps can link. This means you can embed your web UI in a native mobile app shell. The examples directory includes iOS and Android integration examples. It's early days for mobile, but the architecture supports it.
 
-**Declarative App Manifest.** `app.zon` is Zig's answer to Electron's `package.json` or Tauri's `tauri.conf.json`. It declares app ID, name, version, web engine choice, security policy (allowed origins, navigation rules), window configuration (size, title, label), permissions, and capabilities. It's a single file that controls everything about how the native shell behaves.
+**Explicit Security Model.** The WebView is treated as untrusted by default. Navigation is restricted to declared allowed origins. Bridge permissions are opt-in. External link handling is policy-controlled. This is a significant improvement over Electron's default security posture, where the renderer process has more access than it should. The `app.zon` manifest makes the security configuration declarative and reviewable.
 
-**Apache-2.0 License.** The project uses a permissive open-source license, which means you can use it in commercial products, modify it, and redistribute it. For a Vercel Labs project, this is the right call — it signals that this isn't a walled garden experiment.
+**App Manifest with `app.zon`.** Project configuration lives in a single Zig object literal file. It declares app metadata, icons, windows, frontend asset paths, web engine selection, security policy, bridge permissions, and packaging inputs. It's readable, version-controllable, and doesn't require learning a new config format — it's just Zig syntax.
 
 ### Use Cases
 
-- **Internal tools and dashboards** — If you already have a Next.js admin panel and your team wants a desktop app for it (with offline access, system tray integration, native menus), zero-native gives you that without rewriting anything.
-
-- **Developer tools and CLI companions** — Tools like database clients, API explorers, or monitoring dashboards that benefit from being a native app (window management, keyboard shortcuts, system notifications) but whose UI is best built with web tech.
-
-- **Prototyping native app ideas** — When you want to test whether a desktop app concept works before investing in Swift or Kotlin development. Ship a working prototype in hours instead of weeks.
-
-- **Cross-platform desktop apps for small teams** — Teams that don't have native developers but need to ship macOS, Linux, and Windows apps from a single codebase. The Zig layer handles platform differences; your React code stays the same.
-
-- **Mobile app embedding** — The iOS and Android examples show how to embed zero-native's WebView as a component in a native mobile app. This is useful when your mobile app has a hybrid architecture and you want a consistent web rendering layer.
+- **Internal tools and dashboards** — Teams that have web-based admin panels or data dashboards can ship them as desktop apps with system tray integration, offline access, and native notifications without rewriting anything.
+- **Creative and productivity apps** — Applications like design tools, note-taking apps, or project management software that need native window management, file system access, and cross-platform consistency while leveraging a web-based UI.
+- **Developer tools** — CLI companions, API explorers, database clients, and other dev tools where the UI is a web frontend but the functionality needs native system access like process spawning, file watching, and port binding.
+- **Prototyping native app ideas** — Web developers who want to test a desktop app concept without investing in a full native stack. Zero-native lets you validate the idea with your existing skills before committing to platform-specific development.
 
 ### Pros and Cons
 
 Pros:
 
-- **Tiny binary size compared to Electron.** A system WebView app ships at roughly 2MB versus Electron's 200MB+ baseline. For users downloading your app on a slow connection or running it on resource-constrained machines, this is a real difference.
-
-- **No new language to learn for the frontend.** Your React, Next.js, Vue, or Svelte code works unchanged. The Zig layer only matters when you need native platform access, and the bridge API is simple enough that most web developers can use it without deep Zig knowledge.
-
-- **Direct C interop without wrappers.** Zig's C calling convention is zero-cost. If you need to use a platform SDK, a database driver, or a native library, you call it directly. No binding generation, no FFI layer, no compile-time code generation.
-
-- **Backed by Vercel Labs.** This isn't a solo developer's side project. The backing suggests long-term investment, and the rapid release cadence (three releases in the first week) confirms active development.
+- Dramatically smaller binaries than Electron. System WebView apps can be under 5MB versus 150MB+ for a basic Electron app. Even Chromium-bundled builds are smaller because the Zig shell itself adds minimal overhead.
+- The Zig toolchain compiles fast and produces optimized binaries without a garbage collector. Development iteration speed is closer to web development than typical native development.
+- Vercel Labs backing means strong documentation, active maintenance, and likely integration with the broader Vercel ecosystem over time. The team has a track record of maintaining open source projects long-term.
+- Security-first design with the WebView treated as untrusted by default. Permission declarations in the manifest are explicit and auditable.
 
 Cons:
 
-- **Pre-release status.** The README explicitly says "pre-release." Mobile embedding is demonstrated but not production-ready. Windows support exists but may have rough edges. You should not ship critical applications on this yet.
-
-- **Zig is still a niche language.** While Zig is simpler than Rust, it's far less popular. Finding Zig developers for hire is hard. Debugging Zig issues requires familiarity with a language that most web developers haven't touched. The ecosystem of Zig libraries is small.
-
-- **No hot module replacement for Zig code.** Frontend HMR works as expected (Vite, Next.js fast refresh), but changes to the Zig native layer require a full rebuild. It's fast (sub-second), but it's not the instant feedback loop you get with pure web development.
-
-- **System WebView fragmentation.** Using the platform WebView means your app renders slightly differently on macOS (WKWebView) vs Linux (WebKitGTK) vs Windows (WebView2). If you need pixel-perfect consistency, you need to opt into Chromium/CEF, which increases bundle size.
+- Pre-release status means the API is unstable. Desktop support covers macOS 11+ and Linux, with Windows build paths existing but less tested. Production use today is risky.
+- Zig is still a niche language. The ecosystem is small compared to Rust (Tauri) or JavaScript (Electron). If you need to integrate a specific native library, there may not be Zig bindings available, and you'll need to write C interop yourself.
+- The project is young — only about a month old as of early June 2026. The contributor base is small (3 contributors listed), and the project hasn't faced the kind of real-world stress testing that Electron and Tauri have endured.
+- Mobile support is early and requires native iOS/Android host apps. It's not a "write once, run on mobile" solution — you're still writing platform-specific host code for mobile.
 
 ### Getting Started
 
-Install the CLI globally:
-
 ```bash
+# Install the CLI globally
 npm install -g zero-native
-```
 
-Initialize a new project with Next.js:
-
-```bash
+# Create a new app with a Next.js frontend
 zero-native init my_app --frontend next
 cd my_app
-```
 
-Run the app:
-
-```bash
+# Build and run the native app
 zig build run
 ```
 
-This opens a native desktop window rendering your Next.js app. The frontend runs on its normal dev server; the Zig shell hosts the WebView that loads it.
+The first run installs frontend dependencies, builds the native shell, and opens a desktop window rendering your web UI. You can also use `--frontend react`, `--frontend svelte`, or `--frontend vue`.
 
-To use React instead of Next.js:
-
-```bash
-zero-native init my_react_app --frontend react
-cd my_react_app
-zig build run
-```
-
-The `app.zon` manifest controls everything — web engine, security policy, window configuration:
-
-```zig
-.{
-    .id = "com.example.my-app",
-    .name = "my-app",
-    .display_name = "My App",
-    .version = "0.1.0",
-    .web_engine = "system",
-    .permissions = .{ "window" },
-    .capabilities = .{ "webview", "js_bridge" },
-    .security = .{
-        .navigation = .{
-            .allowed_origins = .{ "zero://app", "http://127.0.0.1:5173" },
-        },
-    },
-    .windows = .{
-        .{ .label = "main", .title = "My App", .width = 960, .height = 640 },
-    },
-}
-```
+For mobile embedding, check the `examples/ios` and `examples/android` directories. These show how to link `libzero-native.a` from a native host app.
 
 ### Alternatives
 
-**Electron** — The incumbent. Electron bundles Chromium and Node.js into every app, giving you a consistent rendering environment and access to the entire npm ecosystem for native modules. It's battle-tested and powers VS Code, Slack, and Discord. But the bundle size (200MB+), memory overhead (each app runs its own Chromium), and cold start times are real costs. Choose Electron when you need maximum compatibility, a mature ecosystem, and don't care about binary size.
+**Electron** — The battle-tested option for building desktop apps with web technologies. Electron has a massive ecosystem, extensive documentation, and powers apps like VS Code, Slack, and Discord. It bundles Chromium and Node.js, which means consistent rendering but large binaries (150MB+ baseline) and significant memory usage. Choose Electron when you need maximum compatibility, a proven track record, and don't mind the binary size.
 
-**Tauri** — The Rust-based alternative that's been gaining momentum since 2020. Tauri also uses system WebViews and produces small binaries, but the backend is Rust instead of Zig. Tauri has a larger community, more plugins, and better documentation at this point. Choose Tauri when you want the small-binary approach with a more mature project and your team is comfortable writing Rust. The tradeoff is Rust's steeper learning curve and longer compile times compared to Zig.
+**Tauri** — A Rust-based alternative that uses system WebViews like zero-native does, but with Rust on the backend instead of Zig. Tauri is more mature (v2 stable), has a larger community, and supports mobile more completely. It also has a rich plugin ecosystem and frontend-agnostic design. Choose Tauri when you want the most established lightweight alternative to Electron and are comfortable with Rust.
 
-**Neutralinojs** — Another lightweight alternative that uses system WebViews with a C++ backend. It's simpler than both Electron and Tauri, with a lower barrier to entry. But it has a smaller ecosystem, less active development, and fewer platform integration options. Choose Neutralinojs when you want the absolute simplest path to a desktop app from web code and don't need deep native integration.
+**Flutter Desktop** — Google's cross-platform framework compiles to native code and supports desktop (Windows, macOS, Linux) alongside mobile and web. It uses Dart and its own widget system rather than web technologies. Choose Flutter when you want a single codebase for mobile and desktop and are willing to invest in learning Dart and Flutter's widget model.
 
 ### Verdict
 
-zero-native is the most interesting thing Vercel Labs has shipped this year. It solves a real problem — web developers who want to build native apps without learning Swift, Kotlin, or Rust — with an approach that feels native to the web ecosystem. The Zig choice is bold but smart: fast compilation, direct C access, tiny binaries. At 4,000+ stars in under a month, the developer community is clearly interested. The pre-release status means you shouldn't bet your production app on it today, but if you're exploring native desktop options for your React or Next.js project, this is the framework to watch. The onboarding story (`zero-native init --frontend next`, then `zig build run`) is the cleanest I've seen in the native-app-from-web-code space. For fullstack web developers who want to ship desktop apps without leaving their comfort zone, zero-native is worth a serious look right now.
+Zero Native is the most interesting addition to the "web-to-native" space since Tauri launched. The Zig choice is bold and smart — fast compilation, tiny binaries, and direct C interop make it a compelling alternative to Rust for the native shell layer. The Vercel Labs backing gives it credibility and staying power that most month-old projects don't have. If you're a web developer building internal tools, developer utilities, or desktop companions to web apps, zero-native deserves a spot on your watchlist. It's pre-release and the contributor base is small, so don't ship production apps on it yet. But for prototyping and early adoption, it's the fastest path from "I have a Next.js app" to "I have a native desktop app" that exists today. The 4,100 stars in a month suggest the developer community agrees.
