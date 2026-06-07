@@ -1,108 +1,99 @@
 ---
 name: terax-ai
-description: "Terax is a lightweight 7MB terminal-first AI-native dev workspace built on Tauri 2 and React 19 — terminal, code editor, git graph, file explorer, and agentic AI in one native app."
+description: "Terax is a lightweight 7MB terminal-first AI-native dev workspace built on Tauri 2 and React 19 with agentic AI, code editor, and git graph."
 url: https://github.com/crynta/terax-ai
-stars: 6685
-forks: 719
+stars: 6850
+forks: 739
 language: TypeScript
-tags: ["terminal", "ai-workspace", "tauri", "developer-tools", "code-editor"]
+tags: ["terminal", "ai-agent", "dev-workspace", "tauri", "developer-tools"]
 featured: false
-publishedAt: 2026-06-04
+publishedAt: 2026-06-08
 ---
 
-## Terax AI
+## Terax
 
 ### Overview
 
-Terax is a lightweight, open-source terminal-first AI-native dev workspace that packs a terminal, code editor, file explorer, source control with git graph, web preview, and an agentic AI side-panel into a single native application. It weighs in at about 7-8 MB on disk. To put that in perspective, VS Code's installer is over 100 MB, and Cursor sits around 300 MB. Terax does most of what those tools do in roughly 3% of the space.
+Terax is a terminal-first AI-native dev workspace that weighs about 7-8 MB on disk. Built on Tauri 2 with a Rust backend and React 19 frontend, it packs a native PTY terminal, CodeMirror 6 editor, git graph, file explorer, web preview, and an agentic AI side-panel into a single native app. It launched in April 2026 and hit 6,800 GitHub stars within six weeks.
 
-The project launched in late April 2026 and hit 6,000 GitHub stars within six weeks. It's built on Tauri 2 with a Rust backend and React 19 frontend — the same architectural approach that's making Tauri the go-to choice for developers who want native performance without shipping an entire Chromium browser. The terminal uses xterm.js with a WebGL renderer and a native PTY backend via `portable-pty`, supporting zsh, bash, fish, PowerShell, and cmd. The code editor is CodeMirror 6 with inline AI autocomplete, edit diffs you can accept or reject hunk by hunk, and vim mode.
+The project is created by Crynta, a developer clearly frustrated with the bloat of Electron-based dev tools. The Tauri 2 + Rust foundation is a deliberate choice — native PTY via `portable-pty`, WebGL rendering for the terminal (xterm.js), and a 7 MB binary compared to VS Code's 300+ MB footprint. No telemetry, no account required, no Electron process eating 800 MB of RAM just to display a terminal.
 
-What makes Terax worth watching is the combination of speed, size, and AI integration. Most AI-powered dev tools are either web-based (replit, bolt.new) or Electron-based (Cursor, VS Code). Terax is neither. It's a native app that starts fast, uses little memory, and treats AI as a first-class citizen rather than a plugin bolted on after the fact. The AI side-panel supports a dozen providers out of the box — OpenAI, Anthropic, Google Gemini, Groq, xAI, Cerebras, OpenRouter, DeepSeek, Mistral — plus local models through LM Studio, MLX, and Ollama. Your API keys stay in the OS keychain via `keyring`. No telemetry, no account required.
+The core problem Terax solves is the fragmentation of the developer workflow. You need a terminal, an editor, a git client, a file browser, an AI assistant, and a preview pane. Most developers cobble these together from separate apps — iTerm + VS Code + GitHub Desktop + a browser tab — or accept the weight of an IDE like Cursor that bundles everything but still runs on Electron. Terax aims to be the one native app that covers all of it without the memory overhead.
 
 ### Why it matters
 
-The developer workspace is fragmenting. VS Code is the default for most developers, but its Electron footprint and telemetry have pushed a growing minority toward alternatives. JetBrains IDEs are powerful but heavy and expensive. Cursor forked VS Code and added AI, but it's still Electron, still large, and still phone-home. Meanwhile, a new generation of developers is asking: why does my editor need 500 MB and an internet connection?
+The terminal emulator space has been quietly stagnant. iTerm2, Alacritty, WezTerm, Kitty — they're all good terminals, but they're just terminals. Meanwhile, AI coding assistants have exploded (Cursor, Windsurf, Claude Code), and they all need a terminal to actually execute things. The gap between "terminal that runs commands" and "workspace where you develop" has been growing.
 
-Terax represents a real answer to that question. It's not trying to replace your IDE for every use case — it's a focused workspace for the terminal-first developer who wants AI assistance without the bloat. The Tauri 2 architecture means native file system access, native window management, and native system tray integration, all without the memory overhead of a bundled browser engine. The React 19 frontend renders inside Tauri's native webview, which is already present on every macOS, Windows, and Linux system.
+Terax sits at that intersection. It's not trying to be an IDE — it doesn't have VS Code's extension ecosystem or JetBrains' refactoring engine. But it has enough: a real code editor with AI autocomplete, a git client with branch visualization, and an agentic AI panel that can read/write files, run bash, and plan multi-step tasks. For developers who live in the terminal and want AI assistance without switching windows, this hits a sweet spot.
 
-The timing connects to a broader shift. AI coding tools are moving from "autocomplete in your editor" to "agentic workflows that can read, write, search, and execute code." Terax's agentic AI side-panel can plan multi-step operations, spawn sub-agents, maintain project memory via a `TERAX.md` file, and execute bash commands with approval gating. That's the same workflow model as Claude Code, Cursor Agent, and OpenHands — but running inside a 7 MB native app instead of a 300 MB Electron wrapper.
+The BYOK approach to AI is smart. You bring your own API keys for OpenAI, Anthropic, Gemini, Groq, DeepSeek, Mistral, xAI, Cerebras, or OpenRouter. Or run fully local with Ollama, LM Studio, or MLX. No vendor lock-in, no subscription, no tokens to buy from the app itself. This matters for developers who already have API access and don't want another middleman.
 
 ### Key Features
 
-**Native PTY Terminal with WebGL Rendering.** The terminal uses xterm.js with a WebGL renderer for smooth scrolling even with heavy output. Multi-tab with background streaming means your dev server keeps running when you switch tabs. Split panels work horizontally and vertically. On Windows, WSL is a first-class workspace environment, not a wrapped subprocess — each tab can target a different Linux distribution.
+**Native PTY with WebGL Rendering.** The terminal runs on xterm.js with a WebGL renderer for smooth scrolling and true-color support. The backend is `portable-pty`, which gives you native PTY on macOS, Linux, and Windows — including WSL as a first-class workspace environment, not a wrapped subprocess. Multi-tab with background streaming means your dev server keeps running when you switch tabs.
 
-**CodeMirror 6 Code Editor.** The built-in editor supports all major languages — TypeScript, JavaScript, Rust, Python, Go, C/C++, Java, HTML, CSS, JSON, Markdown, and more. It includes inline AI autocomplete that works with local models, AI edit diffs you can accept or reject at the hunk level, vim mode for keyboard-driven developers, and ten built-in themes including Atom One, Gruvbox, Nord, and Tokyo Night. The editor theme is independent from the app theme.
+**Agentic AI Side-Panel.** This isn't a chatbot bolted onto a terminal. Terax has a full agentic workflow: plans, sub-agents, project memory via `TERAX.md`, file read/write/edit/multi-edit, grep, glob, bash with approval gating, and background processes. You can attach files from the explorer or selections directly to the agent. Custom agents with their own system prompt and tool subset let you specialize for different tasks — one for refactoring, one for tests, one for documentation.
 
-**Agentic AI Workflow.** This is where Terax stands out from being "just another terminal with a chatbot." The AI side-panel can plan multi-step operations, spawn sub-agents for parallel work, and maintain project memory through a `TERAX.md` file. It has access to file read, write, edit, multi-edit, grep, glob, and bash execution — all with approval gating so you stay in control. You can attach files and code selections directly to the AI from the file explorer or editor.
+**CodeMirror 6 Editor with AI Diffs.** The built-in editor supports all popular languages (TypeScript, Python, Go, Rust, C++, Java, HTML, CSS, JSON, Markdown) with inline AI autocomplete that works with local models. When the agent makes changes, you see diffs in the editor — accept or reject hunk by hunk. Vim mode is included. Ten built-in themes (Atom One, Aura, Copilot, GitHub Dark/Light, Gruvbox Dark, Nord, Tokyo Night, Xcode Dark/Light) and independent editor/app theme settings.
 
-**Source Control with Git Graph.** The source control panel lets you stage and unstage hunks, commit with Cmd+Enter, and push with upstream awareness. The git history pane renders a real commit graph with lane visualization for merges and branches. You can search and filter commits, click through to remote commit pages, and see detached HEAD state clearly. It's not a full Git GUI replacement, but it covers the 90% case without leaving the workspace.
+**Git Source Control with Commit Graph.** Stage and unstage hunks, commit with Cmd+Enter, push with upstream awareness. The history pane renders a real commit graph with lane visualization for merges and branches. Branch display includes detached HEAD state. Search and filter commits, click through to the remote commit page. It's not GitKraken, but it covers 90% of what you need without leaving the app.
 
-**Web Preview Pane.** Terax auto-detects local dev servers and opens them in a preview tab. This is particularly useful for fullstack developers running a React frontend with a NestJS or Django backend — you see your changes immediately without context-switching to a browser. External URLs open in a native child webview, not a browser tab.
+**Web Preview with Auto-Detection.** Terax auto-detects local dev servers (Vite, Next.js, Django, whatever) and opens them in a preview tab. External URLs open in a native child webview. For fullstack developers, this means you can see your React frontend and your API server in the same app where you're editing code and running commands.
 
-**BYOK and Local Model Support.** The AI integration supports over a dozen cloud providers plus local inference through Ollama, LM Studio, and MLX. Keys are stored in the OS keychain, never on disk or in localStorage. The Vercel AI SDK v6 handles provider abstraction, which means adding new providers is straightforward. If you're privacy-conscious or working offline, the local model path works just as well as the cloud path.
+**Lightweight Native App (7 MB).** The Tauri 2 binary is about 7-8 MB on disk. Compare that to Cursor (~500 MB), VS Code (~300 MB), or any Electron app. No telemetry, no account, no auto-updates phoning home — updates come from GitHub releases. API keys are stored in the OS keychain via `keyring`, never on disk or in localStorage.
 
-**Custom Themes and Background Images.** You can create themes in-app, share them with the community, or import from the community. Background images with adjustable opacity and blur give the workspace a personal touch that most terminal emulators don't bother with. The editor theme and app theme are independent, so you can mix and match.
+**Custom Themes and Background Images.** Build themes in-app, share them with the community, or import presets. Background images with adjustable opacity and blur. The editor theme is independent from the app theme. It's a small thing, but developers who spend 8+ hours a day in a tool care about how it looks.
 
 ### Use Cases
 
-- **Fullstack web development** — Run your React dev server, NestJS backend, and database in split terminal tabs, preview the result in the web pane, and use the AI to debug or refactor code in the editor. Everything stays in one window.
-
-- **AI-assisted coding without the bloat** — If you want agentic AI workflows (plan, execute, review) but don't want to run Cursor's 300 MB Electron process, Terax gives you the same capabilities in 7 MB with native performance.
-
-- **Terminal-first workflows** — Developers who live in the terminal but want a code editor and file explorer alongside it. The split-panel terminal and integrated editor mean you don't need tmux + vim + a separate file manager.
-
-- **Privacy-sensitive development** — Local model support through Ollama and LM Studio means your code never leaves your machine. API keys stay in the OS keychain. No telemetry, no account, no phoning home.
-
-- **Cross-platform development** — Native support for macOS, Linux, and Windows (including WSL as a first-class environment). The same workflow and configuration works across all three platforms.
+- **Fullstack developers** who want a single workspace for editing React/NestJS/Django/Go code, running terminals, previewing local servers, and managing git — without the RAM overhead of VS Code + iTerm + a browser.
+- **AI-first developers** who already have API keys and want agentic assistance (file editing, planning, bash execution) without paying for another subscription like Cursor Pro.
+- **Terminal-native developers** who prefer working in the terminal but want a code editor and git graph that doesn't require switching to a separate app.
+- **Developers on resource-constrained machines** — 7 MB binary, no Electron, native PTY. This runs well on older hardware or inside VMs where every MB counts.
+- **Privacy-conscious developers** who want AI assistance but don't want their code sent through a third-party platform. BYOK + local model support means you control the inference pipeline.
+- **Teams evaluating AI coding tools** — try Terax alongside Cursor or Claude Code to see which workflow fits. Zero cost to start, no vendor commitment.
 
 ### Pros and Cons
 
 Pros:
-- At 7-8 MB, it's roughly 40x smaller than Cursor and 15x smaller than VS Code. Cold start is sub-second on modern hardware. Memory usage stays under 200 MB with multiple tabs open.
-- The Tauri 2 + Rust architecture means native performance for file operations, terminal rendering, and system integration. No Electron overhead.
-- Broad AI provider support with local model options. The agentic workflow (plan, sub-agents, project memory, approval gating) is genuinely useful, not just a chat panel stapled to a terminal.
+- 7 MB native binary vs 300+ MB for Electron-based alternatives. The Tauri 2 + Rust foundation gives real performance benefits, not just smaller disk usage — startup is fast, memory usage stays low.
+- BYOK AI with 10+ provider options plus full local/offline support via Ollama, LM Studio, and MLX. No forced subscriptions or token purchases.
+- Agentic workflow with plan mode, sub-agents, and project memory via `TERAX.md`. This is more capable than a simple AI chat panel — it can actually do multi-step work with approval gating.
+- No telemetry, no account, API keys in OS keychain. Privacy-first by design, not as a marketing checkbox.
 
 Cons:
-- 281 open issues as of early June 2026 suggest the project is still settling its API surface. Expect rough edges, especially around the AI workflow and source control features.
-- No extension marketplace yet. VS Code's ecosystem of 50,000+ extensions is its moat. Terax has custom themes and agents, but no plugin system for third-party integrations.
-- The code editor is CodeMirror 6, which is capable but lacks the deep language server integration of VS Code. No IntelliSense-level type checking, no inline error diagnostics from tsc or ESLint.
+- No VS Code extension ecosystem. If you rely on specific extensions (ESLint inline, GitLens, remote SSH, Copilot), Terax won't replace VS Code for those workflows.
+- Young project — created April 2026. Expect rough edges, missing features, and breaking changes. The agentic workflow is promising but probably not as polished as Cursor's after a year of iteration.
+- No remote development support (SSH, containers, WSL from macOS). If your dev environment lives on a remote server, you're still going to need VS Code Remote or SSH.
 
 ### Getting Started
 
-Download the latest installer from the [Releases page](https://github.com/crynta/terax-ai/releases/latest). Terax auto-updates from there.
-
-On Arch Linux:
-
 ```bash
+# Download from releases (macOS, Linux, Windows)
+# https://github.com/crynta/terax-ai/releases/latest
+
+# Arch Linux (AUR)
 yay -S terax-bin
-```
 
-To build from source:
-
-```bash
-# Prerequisites: Rust (stable), Node 20+, pnpm
+# Or build from source
 git clone https://github.com/crynta/terax-ai.git
 cd terax-ai
 pnpm install
-pnpm tauri dev          # development
-pnpm tauri build        # production bundle
+pnpm tauri dev
+
+# Configure AI (in-app)
+# Settings -> AI -> Pick provider -> Paste API key
+# Or point to local Ollama: http://localhost:11434
 ```
-
-To configure AI:
-
-1. Open **Settings -> AI**
-2. Pick a provider and paste your API key (or point to your local Ollama/LM Studio endpoint)
-3. Keys are stored in the OS keychain via `keyring` — they never touch disk or localStorage
 
 ### Alternatives
 
-**Cursor** — The most popular AI-native code editor, built as a VS Code fork with deep AI integration. Cursor has a more mature code editor experience with full language server support, IntelliSense, and a larger ecosystem. It's the better choice if you need a full IDE replacement and don't mind the 300 MB footprint and Electron runtime. Terax is better if you want a lightweight, terminal-first workspace with AI that doesn't feel like a VS Code skin.
+**Cursor** — The dominant AI-native editor, built on VS Code with deep AI integration. Cursor has a more polished AI experience, a massive extension ecosystem, and remote development support. But it's 500+ MB, runs on Electron, and pushes its own subscription model. Choose Cursor if you want the most capable AI coding experience and don't mind the bloat and cost.
 
-**Warp** — A modern terminal with AI features built in. Warp has a better terminal experience (block-based output, AI command search, team collaboration) but lacks Terax's code editor, file explorer, and git graph. Choose Warp if the terminal is all you need. Choose Terax if you want a complete workspace in one window.
+**Windsurf** — Another AI-first editor (formerly Codeium) with a focus on agentic flows and "Cascade" multi-step AI. Similar to Cursor in philosophy but with different AI architecture. Heavier than Terax, lighter on the wallet. Choose Windsurf if you want agentic AI in a full IDE and prefer its pricing over Cursor's.
 
-**Zed** — A high-performance code editor written in Rust with multiplayer editing and AI assistance. Zed is faster than Terax's code editor and has better language server support, but it doesn't include a terminal-first workflow or the same breadth of AI provider support. Zed is the better choice for pure code editing; Terax is better for terminal-centric workflows with integrated AI.
+**Alacritty + Claude Code** — For terminal purists who want a fast, GPU-accelerated terminal paired with Claude Code for AI assistance. Alacritty is a better terminal than Terax's embedded one, and Claude Code is arguably the best agentic CLI tool. But you're managing two tools, no integrated editor, no git graph. Choose this setup if the terminal is your primary interface and you don't need an integrated workspace.
 
 ### Verdict
 
-Terax is the most interesting dev workspace I've seen come out of the Tauri ecosystem. It's not trying to be VS Code — it's carving out a distinct niche as a lightweight, terminal-first, AI-native workspace that respects your system resources and your privacy. The 7 MB footprint is real, the Tauri 2 architecture is the right call for 2026, and the agentic AI workflow is genuinely useful rather than a checkbox feature. The project hit 6,600 stars in six weeks, which suggests developers are hungry for this kind of tool. If you're a terminal-first developer who wants AI assistance without the bloat, Terax is worth installing today. If you need deep language server integration or a mature extension ecosystem, give it another few months.
+Terax is the most interesting terminal project I've seen in 2026. At 6,800 stars in six weeks with zero marketing budget, it's clearly filling a gap. The combination of a 7 MB native binary, real agentic AI (not just a chat sidebar), and a complete dev workspace (editor, git, preview, file explorer) makes it compelling for developers who find VS Code too heavy and plain terminals too limited. It won't replace Cursor for teams that depend on its extension ecosystem or remote development, and it's too young to trust for production-critical workflows. But for personal projects, terminal-heavy work, and developers who already have API keys and want a lightweight AI-assisted workspace — this is worth trying today. The Tauri 2 + Rust foundation gives it a performance ceiling that Electron apps can't match, and the BYOK model means you're never locked into a subscription. If the project maintains its development velocity through 2026, it could become the default terminal workspace for a significant chunk of the developer community.
