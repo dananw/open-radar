@@ -1,113 +1,109 @@
 ---
 name: headroom
-description: "Headroom is a context compression layer for AI agents that reduces token usage by 60-95% while preserving answer accuracy. Works as a library, proxy, or MCP server."
+description: "Headroom is a context compression layer for AI agents that reduces token usage by 60-95% while preserving answer quality. Library, proxy, MCP server."
 url: https://github.com/chopratejas/headroom
-stars: 8405
-forks: 560
+stars: 18395
+forks: 1170
 language: Python
-tags: ["ai-agents", "context-engineering", "token-optimization", "mcp", "llm"]
+tags: ["ai", "token-optimization", "context-engineering", "mcp", "llm", "agent-infrastructure"]
 featured: false
-publishedAt: 2026-06-03
+publishedAt: 2026-06-09
 ---
 
 ## Headroom
 
 ### Overview
 
-Headroom is a context compression layer that sits between your AI agent and the LLM provider. It compresses tool outputs, logs, RAG chunks, files, and conversation history before they reach the model — delivering 60-95% token savings while preserving answer accuracy. The project launched in January 2026 and has already accumulated over 8,400 GitHub stars, which tracks with how much developers are feeling the pain of context window limits and API costs.
+Headroom is a context compression layer for AI agents. It sits between your application and the LLM, compressing everything the model reads — tool outputs, logs, RAG chunks, files, and conversation history — before it hits the context window. The result: 60-95% fewer tokens with the same answers. The project hit 18,000 GitHub stars in under three months, which tells you how badly developers need this.
 
-The project is built by chopratejas, and it ships with a custom HuggingFace model called Kompress-base trained specifically on agentic traces. That's a differentiator — most token-reduction tools either truncate blindly or use generic summarization. Headroom detects content type (JSON, code, prose, images) and routes each piece through a specialized compressor. The architecture is opinionated in a good way: SmartCrusher handles structured data, CodeCompressor uses AST-aware parsing for Python, JS, Go, Rust, Java, and C++, and Kompress-base covers natural language.
+The project is built by Chopra Tejas, a developer who's been working at the intersection of LLM tooling and developer productivity. Headroom isn't a research paper — it's a production-ready tool that ships as a Python library, a TypeScript library, a drop-in HTTP proxy, and an MCP server. You can integrate it in 60 seconds or wrap your existing coding agent with a single command.
 
-The core problem is real and growing. Every AI coding agent — Claude Code, Cursor, Codex, Copilot — hits context limits during non-trivial sessions. A codebase exploration that returns 78,000 tokens of search results burns through your context budget before you've started reasoning about the problem. Headroom compresses that same workload to about 41,000 tokens (47% savings) on the low end, and a structured code search from 17,765 tokens down to 1,408 (92% savings) on the high end. The benchmarks on GSM8K, TruthfulQA, SQuAD v2, and BFCL show accuracy is preserved — in some cases slightly improved.
+The core problem is brutal and simple: LLM context windows are expensive and finite. A typical coding agent session burns through hundreds of thousands of tokens reading tool outputs, search results, and file contents. Most of that content is redundant, verbose, or structurally bloated. Headroom detects the content type, routes it to the right compressor, and delivers a compressed version that preserves the information the LLM actually needs. It's not lossy truncation — it's intelligent compression with a retrieval fallback called CCR (Compressed Content Retrieval) that lets the LLM request the original if it needs more detail.
 
 ### Why it matters
 
-Context engineering is becoming the defining challenge of AI-native development. The shift from "prompt engineering" to "context engineering" reflects a reality: the quality of what you feed the model matters more than how you phrase the question. But context is expensive. API costs scale linearly with token count, and most agents generate massive amounts of intermediate context (tool outputs, search results, file contents) that the model only needs a fraction of.
+The AI agent ecosystem is exploding, but the economics are brutal. Running Claude, GPT-4, or Gemini on real-world agent workloads costs real money, and most of that spend is wasted on bloated context. A code search returning 100 results might dump 17,000 tokens into the context window when 1,400 would do. SRE debugging sessions routinely push 65,000+ tokens of logs and metrics that could compress to 5,000.
 
-Headroom fills a gap that existing solutions handle poorly. OpenAI's built-in compaction only works on conversation history and only within their ecosystem. Hosted compression services like Compresr and Token Co. require sending your data to their API — a non-starter for teams working with proprietary code. Headroom runs entirely locally, works across every major agent framework, and its CCR (Compress-Check-Retrieve) system means compressed data is reversible — the LLM can retrieve originals on demand if it needs the full context.
+This is a context engineering problem, not a model problem. The models are good enough — the bottleneck is what we feed them. Headroom addresses this at the infrastructure layer, which is where it belongs. You shouldn't have to rewrite your prompts or redesign your agent architecture to save on tokens. You should be able to drop in a compression layer and get immediate savings.
 
-The cross-agent memory feature is particularly forward-looking. If you use Claude Code for architecture decisions and Codex for implementation, Headroom maintains a shared memory store with agent provenance and auto-deduplication. That's a workflow pattern that's becoming standard among senior developers, and no other compression tool addresses it.
+The broader trend is clear: as AI agents handle more complex, multi-step tasks, context management becomes the critical bottleneck. Tools like Cursor, Claude Code, and Codex are pushing agents into production workflows, and the token costs compound fast. Headroom's approach — compress locally, retrieve on demand — is the kind of pragmatic infrastructure that makes agentic AI economically viable for teams that aren't operating at OpenAI's budget.
 
 ### Key Features
 
-**Content-Aware Compression Pipeline.** Headroom doesn't just truncate or summarize — it detects what kind of content it's dealing with and picks the right compressor. JSON tool outputs go through SmartCrusher (which understands arrays of dicts, nested objects, mixed types). Source code goes through CodeCompressor with AST-aware parsing for six languages. Natural language goes through Kompress-base, a model trained specifically on agentic traces. This routing happens automatically via the ContentRouter component.
+**ContentRouter with Automatic Type Detection.** Headroom inspects incoming content and routes it to the right compressor. JSON tool outputs go to SmartCrusher, which strips redundant keys and collapses nested structures. Code files go to CodeCompressor, which uses AST parsing to remove comments, docstrings, and boilerplate while preserving semantic meaning. General text goes to Kompress-base, a fine-tuned model hosted on Hugging Face. You don't configure any of this — it's automatic.
 
-**Reversible Compression (CCR).** This is the feature that separates Headroom from every other compression tool. Compressed context isn't lost — the originals are stored locally and the LLM can call `headroom_retrieve` to get them back if it needs the full data. This means you get token savings without the risk of the model losing critical information. It's a safety net that makes aggressive compression viable in production.
+**Six Compression Algorithms.** The toolkit includes SmartCrusher for JSON, CodeCompressor for source code (Python, TypeScript, Go, Java, and more), Kompress-base for natural language, plus specialized compressors for logs, RAG chunks, and conversation history. Each algorithm is tuned for its content type. A generic text compressor would mangle JSON; a JSON compressor would destroy prose. Headroom gets this right.
 
-**Four Integration Modes.** You can use Headroom as a Python/TypeScript library (`compress(messages)`), as a zero-code-change HTTP proxy (`headroom proxy --port 8787`), as a one-command agent wrapper (`headroom wrap claude`), or as an MCP server with `headroom_compress`, `headroom_retrieve`, and `headroom_stats` tools. The proxy mode is particularly clever — point any OpenAI-compatible client at it and get compression without touching your code.
+**Drop-in Proxy Mode.** Run `headroom proxy --port 8787` and point your LLM client at localhost:8787. Zero code changes. Works with any language, any framework, any LLM provider. The proxy intercepts requests, compresses the context, forwards to the real API, and returns the response. This is the fastest way to get savings without touching your codebase.
 
-**CacheAligner for Provider KV Caches.** Anthropic and OpenAI both offer KV cache discounts, but only if your prompt prefixes stay stable across requests. Headroom's CacheAligner stabilizes these prefixes so you actually hit the cache. Most developers don't realize their cache hit rate is abysmal because their tool outputs change slightly between calls. This is free money left on the table.
+**Agent Wrapping in One Command.** `headroom wrap claude` or `headroom wrap codex` or `headroom wrap cursor` — one command to wrap your existing coding agent with compression. The wrapper intercepts the agent's tool calls, compresses outputs before they hit the context, and handles retrieval requests transparently. You keep using your agent exactly as before, but with 60-90% fewer tokens.
 
-**Cross-Agent Memory System.** SharedContext lets multiple agents (Claude Code, Codex, Gemini, Cursor) read and write to a common memory store with provenance tracking. Auto-deduplication prevents the same information from being stored twice across agents. For developers who use different agents for different tasks — architecture review in one, implementation in another — this eliminates the context fragmentation problem.
+**MCP Server for Any Client.** Headroom ships as an MCP (Model Context Protocol) server with three tools: `headroom_compress`, `headroom_retrieve`, and `headroom_stats`. Any MCP-compatible client — Claude Desktop, Cursor, custom agents — can use it. The compress tool takes content and returns a compressed version. The retrieve tool lets the LLM request the original if the compressed version isn't sufficient. Stats gives you visibility into savings.
 
-**`headroom learn` for Failure Mining.** The `headroom learn` command analyzes failed agent sessions and writes corrections to `CLAUDE.md`, `AGENTS.md`, or `GEMINI.md`. It's a feedback loop that makes your agents improve over time based on actual failure patterns, not generic best practices. This turns Headroom from a passive compression tool into an active learning system.
+**CCR (Compressed Content Retrieval).** This is what separates Headroom from naive compression. Compressed content is stored locally with a reference to the original. The LLM gets a `headroom_retrieve` tool it can call when the compressed version lacks detail. The originals are never deleted. This makes compression safe — you're not throwing away information, you're making it lazy-loaded.
 
-**Framework-Native Integrations.** Headroom wraps cleanly into the Anthropic SDK (`withHeadroom(new Anthropic())`), OpenAI SDK, Vercel AI SDK (`wrapLanguageModel` with middleware), LiteLLM (callback), LangChain, Agno, and Strands. It also works as ASGI middleware for Python web apps. The integration surface is impressively broad for a project this young.
+**Cross-Agent Memory.** Headroom maintains a shared memory store across different agents. If Claude Code compresses a file and Codex later needs the same file, Headroom serves the cached compression. It auto-deduplicates across sessions and agents. For teams running multiple coding agents, this eliminates redundant processing and keeps costs down.
 
 ### Use Cases
 
-- **AI coding agent sessions** — Developers running Claude Code, Codex, or Cursor on large codebases hit context limits constantly. Headroom compresses tool outputs and search results in real-time, keeping sessions productive without manual context management.
+- **Coding agents in production** — Teams running Claude Code, Cursor, or Codex on real codebases see immediate token savings. A 100-result code search that normally costs 17,765 tokens compresses to 1,408 — a 92% reduction. Multiply that across hundreds of agent sessions per day and the cost savings are substantial.
 
-- **RAG pipelines with large retrieval sets** — Applications retrieving 50-100 document chunks for a single query can compress the irrelevant portions while preserving the relevant ones. The benchmarks show 92% savings on search-heavy workloads.
+- **SRE and incident debugging** — Production debugging sessions generate massive log output. Headroom compresses 65,000+ tokens of logs and metrics to around 5,000 while preserving the errors, anomalies, and patterns the LLM needs to diagnose the issue.
 
-- **Multi-agent workflows** — Teams running multiple AI agents that share context (e.g., one agent for planning, another for coding, another for testing) benefit from the shared memory store and cross-agent deduplication.
+- **RAG pipelines** — Retrieval-augmented generation systems pull large document chunks that often contain redundant information. Headroom compresses RAG results before they hit the LLM, reducing costs without sacrificing answer quality. Benchmarks show 73% savings on GitHub issue triage tasks.
 
-- **Cost optimization for high-volume API usage** — Companies spending $5K+/month on LLM APIs can reduce costs by 60-95% on context-heavy operations without changing their prompts or switching providers.
+- **Multi-agent workflows** — Teams running multiple AI agents (coding, testing, documentation) benefit from cross-agent memory and shared compression caches. One agent's compression work benefits all others.
 
-- **SRE and incident debugging** — The benchmarks show 92% compression on SRE incident debugging workloads (65,694 → 5,118 tokens). For teams using AI to analyze logs and traces during incidents, this is a direct cost and latency win.
-
-- **MCP-based tool chains** — Any MCP-compatible client can call `headroom_compress` and `headroom_retrieve` as tools, making compression a first-class part of the tool chain rather than an external wrapper.
+- **Cost-sensitive startups** — Smaller teams that can't afford to burn through API credits on verbose tool outputs get immediate, measurable savings with a one-line integration.
 
 ### Pros and Cons
 
 Pros:
-- 60-95% token savings on real agent workloads with accuracy preserved on standard benchmarks (GSM8K ±0.000, TruthfulQA +0.030, SQuAD v2 97%, BFCL 97%).
-- Runs entirely locally — no data leaves your machine, which matters for teams working with proprietary code or regulated environments.
-- Four integration modes (library, proxy, agent wrap, MCP) mean you can adopt it incrementally without rewriting anything.
-- Reversible compression via CCR eliminates the risk of losing critical context — the LLM can always retrieve originals.
+- Measurable, proven savings: benchmarks show 60-95% token reduction across real workloads (code search, SRE debugging, issue triage, codebase exploration) with answer quality preserved.
+- Multiple integration modes (library, proxy, agent wrap, MCP) mean you can adopt it incrementally without rewriting anything. The proxy mode is particularly clever — zero code changes.
+- CCR reversible compression is a genuinely smart design. You're not losing information, you're making it lazy-loaded. The LLM can always retrieve the original if needed.
+- Apache 2.0 license, active development, strong community growth (18k+ stars in months), and support for both Python and TypeScript ecosystems.
 
 Cons:
-- Python 3.10+ required, which excludes teams stuck on older Python versions in legacy environments.
-- The ML model (Kompress-base) adds a dependency and download overhead. Teams that only need JSON/code compression can skip it, but the full experience requires it.
-- Proxy mode adds a network hop between your agent and the LLM provider, which introduces ~10-50ms latency per request. Usually negligible, but matters for latency-sensitive applications.
+- The ML-based Kompress-base compressor requires downloading a model from Hugging Face, which adds setup complexity and disk space. The non-ML compressors (SmartCrusher, CodeCompressor) work without it.
+- Proxy mode introduces a network hop between your app and the LLM provider. For latency-sensitive applications, the inline library mode is better but requires code changes.
+- Accuracy benchmarks are self-reported. While the numbers look solid, independent third-party benchmarks on diverse workloads would strengthen confidence. The project is still young enough that edge cases in compression quality may surface.
 
 ### Getting Started
 
 ```bash
-# Install (Python - everything included)
+# Install (Python)
 pip install "headroom-ai[all]"
 
-# Install (Node/TypeScript)
+# Or install (Node/TypeScript)
 npm install headroom-ai
 
-# Wrap your coding agent in one command
-headroom wrap claude              # wraps Claude Code
-headroom wrap codex               # wraps Codex
-headroom wrap cursor              # prints Cursor config to paste
-
-# Or run as a zero-code-change proxy
+# Quick start — proxy mode (zero code changes)
 headroom proxy --port 8787
-# Then point your client at http://localhost:8787
+# Point your LLM client at http://localhost:8787
 
-# Or use as a library in your Python app
+# Or wrap a coding agent
+headroom wrap claude
+
+# Or use inline in Python
+python3 -c "
 from headroom import compress
-result = compress(messages, model="claude-3-5-sonnet")
+result = compress([{'role': 'user', 'content': 'your long content here'}])
+print(result)
+"
 
-# Or install as an MCP server
-headroom mcp install
-
-# Check your savings
-headroom stats
+# Check savings
+headroom perf
 ```
 
 ### Alternatives
 
-**RTK** — A CLI tool that rewrites shell command outputs (git show, ls, installers) to be more compact. RTK focuses specifically on CLI output rewriting and does that job well. Headroom actually ships with RTK included for shell-output compression, but adds compression for JSON, code, prose, images, and conversation history on top. Choose RTK alone if you only need CLI output compaction and want a smaller footprint.
+**LLMLingua / LLMLingua-2** — Microsoft's prompt compression library that uses a small model to select important tokens. It's research-backed and well-cited, but it focuses on prompt compression only, not tool outputs or agent workflows. LLMLingua doesn't have proxy mode, MCP integration, or cross-agent memory. Choose LLMLingua if you need academic rigor and only care about prompt-level compression.
 
-**OpenAI Compaction** — Built into the OpenAI API, this compresses conversation history when you hit context limits. It's zero-setup if you're already in the OpenAI ecosystem, but it only works on conversation history (not tool outputs, RAG chunks, or files), only works with OpenAI, and isn't reversible. Headroom covers everything, works cross-provider, and lets you retrieve originals.
+**Not Diamond** — A routing layer that sends queries to the cheapest model that can handle them. It reduces costs by choosing cheaper models for simpler tasks rather than compressing context. Different philosophy: Not Diamond optimizes which model you use, Headroom optimizes what you feed the model. They're complementary — you could use both.
 
-**Lean-ctx** — A CLI context tool that handles CLI commands, MCP tools, and editor rules. Lean-ctx is narrower in scope but simpler to set up. Headroom can actually use lean-ctx as its CLI context tool (`HEADROOM_CONTEXT_TOOL=lean-ctx`), so they're more complementary than competing. Choose lean-ctx if you want a focused CLI context tool without the compression pipeline.
+**Manual context windowing** — Many teams just truncate or summarize context manually in their agent code. This works for simple cases but breaks down as complexity grows. You end up maintaining brittle prompt engineering that's specific to each use case. Headroom generalizes the problem and handles it at the infrastructure layer.
 
 ### Verdict
 
-Headroom is the most practical answer I've seen to the "context is too expensive" problem that every AI agent developer faces. The numbers are real — 92% compression on code search, 73% on issue triage, with benchmark accuracy preserved or improved. What makes it worth adopting now rather than waiting is the integration story: you can start with `headroom wrap claude` today and get savings without changing a single line of your existing workflow. The reversible compression via CCR removes the main objection to aggressive compression ("what if the model needs the original?"), and the cross-agent memory system addresses a workflow pattern that's only going to become more common. If you're spending more than $100/month on LLM APIs or regularly hitting context limits in your coding sessions, this should be on your shortlist.
+Headroom is the most practical token optimization tool I've seen for the agentic AI era. The 60-95% savings claims are backed by concrete benchmarks on realistic workloads, and the multiple integration modes (library, proxy, agent wrap, MCP) mean you can adopt it without restructuring your stack. The CCR reversible compression design is the key insight — you're not throwing away context, you're making it lazy-loaded, which makes compression safe for production use. If you're building with AI agents and watching your API bills climb, this should be your first stop. The 18,000-star growth in months reflects genuine developer demand, not hype. The Apache 2.0 license and active maintainer engagement make it a solid bet for teams of any size.
