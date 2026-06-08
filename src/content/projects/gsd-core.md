@@ -1,119 +1,120 @@
 ---
 name: gsd-core
-description: "Context engineering framework that eliminates AI coding agent context rot with fresh-subagent architecture and spec-driven development across 10+ runtimes."
+description: "GSD Core is a context-engineering framework for AI coding agents that prevents context rot through fresh subagents and spec-driven development workflows."
 url: https://github.com/open-gsd/gsd-core
-stars: 2469
-forks: 149
+stars: 3164
+forks: 192
 language: JavaScript
-tags: ["ai-agents", "context-engineering", "claude-code", "developer-tools", "spec-driven-development"]
+tags: ["ai-agents", "context-engineering", "developer-tools", "claude-code", "spec-driven-development"]
 featured: false
-publishedAt: 2026-06-03
+publishedAt: 2026-06-09
 ---
 
 ## GSD Core
 
 ### Overview
 
-GSD Core is a context engineering and spec-driven development framework that gives AI coding agents a disciplined structure for building software. It crossed 2,400 GitHub stars in under two weeks after its May 22 launch — a pace that tells you developers are hitting the wall it addresses. The tagline is "Git. Ship. Done." and the mechanism is a five-step phase loop (Discuss, Plan, Execute, Verify, Ship) that runs heavy work in fresh-context subagents while keeping your main session lean.
+GSD Core is a context-engineering and spec-driven development framework that makes AI coding agents actually reliable at scale. It hit 3,100 GitHub stars in under three weeks after its May 2026 launch, which tracks with the pain it addresses: every developer using Claude Code, Codex, or Gemini CLI has watched their agent slowly lose the plot as the context window fills up.
 
-The project comes from the OpenBMB ecosystem — the same group behind MiniCPM and other open-source AI tooling — though the primary contributors (trek-e with 1,700+ commits, glittercowboy with 900+) have been driving it as a focused developer-tools project. It's MIT licensed, written in JavaScript/TypeScript, and published on npm as `@opengsd/gsd-core`. The latest release (v1.2.0) dropped May 31 with security hardening and secret scanning improvements.
+The project comes from the open-gsd organization, with primary maintainer `trek-e` contributing over 1,800 commits. It's MIT-licensed and published as an npm package (`@opengsd/gsd-core`), so installation is a single `npx` command. The team also maintains `gsd-pi`, a companion meta-prompting system, suggesting a broader ecosystem play around AI-assisted development workflows.
 
-The core problem GSD Core tackles is **context rot** — the silent quality degradation that happens as an AI agent's context window fills up during a long coding session. This isn't a bug in any specific model. It's a structural property of how transformer attention works over long sequences. Early instructions get pushed to the edges of what the model can attend to. Nuance from the first few exchanges competes against everything that came later. The model doesn't fail loudly; it just starts contradicting earlier decisions, drifting on code style, and hallucinating function signatures it had correct twenty messages ago. GSD Core's answer is to never let a single session accumulate that much history in the first place.
+The core problem GSD Core solves is what the team calls "context rot" — the silent quality degradation that happens as an AI agent's context window fills with accumulated conversation history. It's not a model bug. It's a fundamental property of how transformer attention works over long sequences. Early instructions get pushed to the edge of what the model can attend to. Nuance from the first few exchanges — the constraints you stated, the architecture you agreed on — competes for attention against everything that came later. GSD Core attacks this structurally by routing all heavy work into fresh-context subagents while keeping your main session lean.
 
 ### Why it matters
 
-If you're using Claude Code, Cursor, Copilot, Codex, or any of the half-dozen AI coding assistants available in 2026, you've experienced context rot. You start a session with a clear plan, the agent does good work for the first few tasks, and then quality drops. You `/clear` and lose all context. You try to re-explain, but something is always lost. GSD Core is the first framework I've seen that treats this as a first-class engineering problem rather than something you just tolerate.
+If you're building anything serious with AI coding agents in 2026, you've hit this wall. You start a session, the agent does great work for 20 minutes, then it starts contradicting itself. It rewrites code it already wrote correctly. It ignores requirements you stated three messages ago. The standard fix — `/clear` and start over — loses all your continuity.
 
-The broader trend here is "context engineering" — the idea that how you structure and deliver information to an AI agent matters as much as the model itself. Andrej Karpathy called it the new prompt engineering. GSD Core operationalizes that insight with a concrete system: structured artifacts (STATE.md, CONTEXT.md, PLAN.md, RESEARCH.md) that survive session boundaries, subagents that each start with a clean 200k-token context window, and a verification step that checks what was built against what was planned. It's not magic. It's process.
+GSD Core is the first open-source framework I've seen that treats this as a first-class engineering problem rather than a user inconvenience. It's not wrapping an API call with better prompts. It's a full orchestration system with structured artifacts, phase-based workflows, and explicit context management. The fact that it works across Claude Code, Codex, Gemini CLI, Copilot, Cursor, Windsurf, and OpenCode means you're not locked into one AI vendor's ecosystem.
 
-For fullstack developers juggling React frontends, NestJS APIs, Django services, and Go microservices — the kind of codebase where a single feature might touch five files across three languages — context rot is especially painful. The planning and execution complexity exceeds what a single agent session can hold reliably. GSD Core's phase loop decomposes that work into bounded units that each fit comfortably within a fresh context window.
+This connects to a broader shift in how developers think about AI tooling. The first wave was "give the agent a prompt and hope." The second wave was "give it better prompts and rules files." GSD Core represents a third approach: engineer the context itself. Treat the context window as a finite resource that needs management, the same way you'd manage memory in a long-running process.
 
 ### Key Features
 
-**Fresh-Context Subagent Architecture.** The central design choice. Your main session acts as a thin orchestrator that spawns specialized subagents — researchers, planners, executors, verifiers — each starting with a clean 200k-token context window. The orchestrator never touches source files directly. It routes work, collects results, and updates shared state. Because it does very little itself, its context window grows slowly and predictably. Heavy work happens in agents that operate at full capacity, unencumbered by accumulated history.
+**Fresh-Context Subagent Architecture.** The central design decision. Your main session acts as a thin orchestrator that spawns specialized subagents for research, planning, execution, and verification. Each subagent starts with a clean 200k-token context window, receives exactly the context it needs for its task, and terminates when done. The orchestrator never touches source files directly — it spawns agents, collects results, and updates shared state. Because it does very little itself, its context window grows slowly and predictably.
 
-**Five-Step Phase Loop.** Every unit of work moves through Discuss → Plan → Execute → Verify → Ship in order. The Discuss step captures implementation decisions before planning begins. Plan decomposes work into dependency-ordered tasks with explicit acceptance criteria. Execute runs those plans in parallel waves. Verify walks through what was built and generates fix plans for discrepancies. Ship creates the PR and archives the artifacts. Each step exists because it catches a class of failure the previous step cannot.
+**Five-Step Phase Loop.** Every milestone follows a disciplined cycle: Discuss (capture implementation decisions), Plan (research and decompose into tasks with acceptance criteria), Execute (run plans in parallel waves with fresh subagents), Verify (walk through what was built and diagnose issues), and Ship (create PR and archive the phase). This isn't optional ceremony — each step produces structured artifacts that the next step depends on.
 
-**Spec-Driven Artifacts.** Every phase produces structured Markdown and JSON files in a `.planning/` directory: CONTEXT.md captures decisions, RESEARCH.md records findings, PLAN.md breaks work into bounded tasks, VERIFICATION.md tracks what passed and what didn't. These aren't throwaway notes — they're durable artifacts that any subsequent agent can read directly. Restart your session, switch machines, hand off to a teammate: the artifacts carry the context forward.
+**Durable Planning Artifacts.** Everything meaningful gets written to a `.planning/` directory as human-readable Markdown and JSON. `STATE.md` tracks your project's current position. `CONTEXT.md` captures decisions. `PLAN.md` files break work into dependency-ordered tasks. These artifacts survive session crashes, model changes, and `/clear` commands. Any subsequent agent can read them directly without depending on conversation history.
 
-**Multi-Runtime Support.** GSD Core works across Claude Code, OpenCode, Gemini CLI, Kilo, Codex, Copilot, Cursor, Windsurf, Trae, Cline, Augment Code, and more. The installer detects your runtime and configures accordingly. This matters because teams don't all use the same AI coding tool, and GSD Core's value increases when it provides a consistent workflow layer across all of them.
+**Multi-Runtime Support.** The installer detects your runtime and adapts automatically. Claude Code uses `/gsd-command-name` syntax with `context: fork` frontmatter for heavy skills. Gemini CLI uses `/gsd:command-name` with colon namespacing. Codex uses `$gsd-command-name`. The semantic behavior is identical across all runtimes — only the syntax differs. This means you can switch between AI tools without losing your workflow.
 
-**Context Window Monitoring.** Built-in tracking of how much of each agent's context window is consumed, with alerts when utilization crosses thresholds. This turns a vague "the model seems confused" into a measurable signal. If an executor is at 85% context utilization, you know to expect degraded output and can intervene before the code ships.
+**Lifecycle Hooks and Context Headroom Monitoring.** Since v1.4.0, GSD Core registers runtime-specific lifecycle hooks that monitor context consumption per turn. Claude Code fires `PreCompact` before compaction and `Stop` at session turn boundaries. Gemini fires `BeforeAgent`/`AfterAgent` around each invocation. These hooks give GSD a signal about how much context budget remains, so it can warn you before the window is exhausted rather than silently degrading.
 
-**Parallel Execution with Dependency Waves.** Plans are ordered into waves where tasks within the same wave touch non-overlapping concerns. Executors in the same wave run in parallel, each with their own fresh context. When a wave finishes, the orchestrator merges state and starts the next wave. This cuts execution time significantly on multi-file features without introducing merge conflicts.
+**86+ Specialized Commands.** The command surface is organized into six namespace routers: `/gsd-workflow` (phase pipeline), `/gsd-project` (project lifecycle), `/gsd-quality` (code review, security, debugging), `/gsd-context` (codebase intelligence and mapping), `/gsd-manage` (configuration and workspace management), and `/gsd-ideate` (exploration and spec capture). Heavy workflow skills like `/gsd-plan-phase` and `/gsd-execute-phase` carry `context: fork` to run in isolated subagent windows.
 
-**Verification Debt Tracking.** When the verifier finds discrepancies between what was planned and what was built, it doesn't just flag them — it generates targeted fix plans and tracks them as "verification debt." You can see at a glance how much cleanup work remains before a phase is genuinely done, not just functionally complete.
+**Workspace Isolation for Multi-Repo Work.** The `/gsd-workspace` command creates isolated environments with independent `.planning/` directories. Use `--repos repo1,repo2` to work on a subset of repos, `--strategy worktree` for git worktree-based isolation, or `--branch` for feature branches. This is particularly useful for fullstack developers juggling frontend and backend repos that need coordinated changes.
 
 ### Use Cases
 
-- **Multi-file feature development** — When a feature spans a React component, a NestJS controller, a Prisma migration, and a Go microservice, GSD Core decomposes the work into parallel plans that execute independently and verify against shared acceptance criteria.
+- **Large feature development** — When a feature spans multiple files and requires architectural decisions, the phase loop ensures research happens before planning, and planning happens before execution. No more "let me just start coding and figure it out as I go" with an agent that forgets what it decided 50 messages ago.
 
-- **Long-running refactoring sessions** — Refactors that touch dozens of files across hours of work are where context rot hits hardest. GSD Core's phase loop keeps each refactoring step bounded and verified before moving to the next.
+- **Onboarding to existing codebases** — The `/gsd-onboard` workflow maps your codebase, identifies patterns, and creates structured context that future agents can reference. Instead of explaining your project structure every session, the agent reads `.planning/PROJECT.md` and gets oriented immediately.
 
-- **Team onboarding to AI-assisted development** — The structured artifacts (PLAN.md, CONTEXT.md) give new team members a readable record of what was decided and why, not just what code was written. It makes AI coding sessions auditable.
+- **Multi-repo fullstack work** — Frontend React app, NestJS backend, shared types library. GSD workspaces let you coordinate changes across repos with isolated planning state for each, while the orchestrator tracks cross-repo dependencies.
 
-- **Cross-cutting concerns** — Authentication, error handling, logging, and other patterns that touch many files benefit from the plan-checker's ability to verify consistency across parallel execution waves.
+- **Code review and quality gates** — The `/gsd-code-review` and `/gsd-security-audit` commands spawn dedicated review agents with fresh context, so they evaluate code on its merits rather than being influenced by the conversation that produced it.
 
-- **Brownfield codebase integration** — GSD Core includes codebase mapping features that research an existing project's structure, conventions, and patterns before planning any changes. This prevents the common problem of an AI agent generating code that works but doesn't match the project's style.
+- **Long-running autonomous sessions** — The `/gsd-autonomous` command runs the full phase loop without human intervention, spawning subagents for each step. Useful for well-defined tasks where you want to let the agent work while you do something else.
 
 ### Pros and Cons
 
 Pros:
-
-- Solves a real, measurable problem. Context rot is not theoretical — every developer using AI coding assistants has experienced it. GSD Core's approach of fresh subagents with structured artifacts is a genuine architectural solution, not a workaround.
-
-- Runtime-agnostic design means you're not locked into a single AI tool. Teams where some developers use Claude Code and others use Cursor can share the same workflow discipline through GSD Core's abstraction layer.
-
-- The `.planning/` directory full of plain Markdown files is a smart choice. No opaque databases, no vendor-specific formats. You can inspect, edit, version-control, and grep through every artifact the system produces.
-
-- Rapid iteration — the project went from initial commit to v1.2.0 with 100+ features in about 10 days. The contributor activity (1,700+ commits from the primary maintainer) suggests sustained momentum rather than a hype-driven launch.
+- Solves a real, universally experienced problem with AI coding agents. Context rot isn't theoretical — every developer using these tools has hit it. GSD Core's structural approach is more effective than prompt engineering alone.
+- Multi-runtime support means you're not betting on one AI vendor. Works with Claude Code, Codex, Gemini CLI, Copilot, Cursor, Windsurf, and OpenCode today.
+- Planning artifacts are plain Markdown and JSON in your repo. No vendor lock-in, no proprietary state format, no cloud dependency. You can inspect, edit, and version everything.
+- Active development with 1,800+ commits from the lead maintainer, 52 open issues suggesting healthy engagement, and a Discord community for support.
 
 Cons:
-
-- Overhead is real. Running a full phase loop (Discuss → Plan → Execute → Verify → Ship) takes more elapsed time than just asking an AI to "write this feature." For small, well-understood changes, that overhead isn't justified. The `/gsd-quick` and `/gsd-fast` commands mitigate this, but the primary value is for complex work.
-
-- The learning curve is non-trivial. GSD Core introduces its own vocabulary (phases, milestones, waves, verification debt) and workflow. Developers who are already productive with a simpler "chat and iterate" approach may resist the added ceremony.
-
-- Node.js dependency for installation. The `npx @opengsd/gsd-core@latest` installer requires Node.js, and while there are alternative install paths for other runtimes, the primary experience assumes an npm ecosystem.
-
-- The project is very young (under two weeks old). While the feature set is impressively comprehensive, real-world stability and edge cases haven't been fully tested by a broad user base yet.
+- The command surface is large (86+ commands across 6 namespaces). Learning the full system takes time. The documentation is thorough but the initial learning curve is steep compared to just using Claude Code directly.
+- Overhead for simple tasks. If you're asking an agent to fix a typo or write a one-off script, the phase loop adds ceremony without value. GSD Core is designed for multi-session, multi-file work.
+- Relies on the AI runtime supporting subagent spawning and lifecycle hooks. Some runtimes implement these features more maturely than others. Claude Code has the best support; others may have gaps.
 
 ### Getting Started
 
 ```bash
-# Install via npx (requires Node.js)
+# Install and configure for your runtime
 npx @opengsd/gsd-core@latest
 
-# The installer will prompt for your runtime (Claude Code, Cursor, etc.)
-# and whether to install globally or locally
-
-# Start your first project
+# Initialize a new project with context gathering
 /gsd-new-project
 
-# Begin the phase loop for your first milestone
-/gsd-discuss-phase    # Capture implementation decisions
-/gsd-plan-phase       # Research, decompose, and plan
-/gsd-execute-phase    # Run plans in parallel waves
-/gsd-verify-phase     # Check what was built against what was planned
-/gsd-ship-phase       # Create PR and archive
+# Or auto-extract from an existing PRD
+/gsd-new-project --auto @prd.md
 
-# For quick changes that don't need the full loop
-/gsd-quick "fix the login button styling"
+# Start the phase loop
+/gsd-workflow
 
-# Run the full loop autonomously
-/gsd-autonomous       # Runs all phases without pausing
+# Plan a phase (spawns fresh-context research + planning agents)
+/gsd-plan-phase
+
+# Execute the plan (parallel waves with clean subagents)
+/gsd-execute-phase
+
+# Verify what was built
+/gsd-verify
+
+# Ship it
+/gsd-ship
+```
+
+For existing codebases, start with onboarding:
+
+```bash
+# Map your existing project
+/gsd-onboard
+
+# Then begin your first phase
+/gsd-plan-phase
 ```
 
 ### Alternatives
 
-**Claude Code /include and custom instructions** — The simplest approach to context management is manually curating your Claude Code project instructions and using `/include` to load relevant files. This works well for small projects and individual sessions. Choose this over GSD Core when your work is mostly single-file or short-session tasks where context rot isn't a real concern. No external tooling required.
+**Claude Code's built-in CLAUDE.md / rules files** — The simplest approach to context management: write a detailed project description and rules file that gets loaded at session start. Works well for small projects but doesn't address context rot during long sessions. Choose this if your work is mostly single-session and doesn't span many files.
 
-**Aider** — A terminal-based AI coding assistant that supports multiple models and has its own context management through repository maps and chat history files. Aider is lighter weight and more focused on the "chat with your codebase" use case. Choose it over GSD Core when you want a simpler, more direct coding assistant without the phase-loop ceremony. It's better for ad-hoc coding sessions than structured multi-phase projects.
+**Cursor / Windsurf workspace rules** — Similar concept to GSD Core's planning artifacts but tightly coupled to the IDE. Your context engineering lives inside the editor, not in portable files. Better choice if you exclusively use one IDE and want the tightest possible integration with its features.
 
-**Cursor / Windsurf built-in context** — IDE-integrated AI tools like Cursor and Windsurf have their own approaches to context management — indexing your codebase, maintaining conversation history, and using rules files. These are more tightly integrated with the editing experience. Choose them over GSD Core when you prefer a GUI-driven workflow and your projects don't require the structured planning artifacts that GSD Core produces.
+**Aider** — A terminal-based AI coding tool with its own context management (repository map, chat history files). Aider is more opinionated about how you interact with the agent and has a smaller command surface. Better choice if you want a simpler, more focused tool for pair-programming-style sessions.
 
 ### Verdict
 
-GSD Core is the most interesting developer tool I've seen come out of the May 2026 GitHub trending wave. It addresses a problem that every developer using AI coding assistants has felt but few have articulated clearly: context rot is the primary bottleneck preventing AI agents from handling complex, multi-file work reliably. The fresh-subagent architecture with structured artifacts is an elegant solution, and the fact that it works across 10+ AI coding runtimes makes it genuinely useful in heterogeneous teams.
-
-The 2,400 stars in under two weeks reflect real demand, not just hype. Developers are shipping AI-assisted features at increasing scale, and the limitations of "just chat with the model" are becoming painful enough that structured alternatives get traction. GSD Core won't replace your AI coding assistant — it wraps around it with process discipline. If you're doing single-file fixes, skip it. If you're building features that span a React frontend, a NestJS API, and a database migration, give it a serious look. The phase loop's overhead pays for itself the first time it prevents a context-rot-driven mistake that would have cost you an afternoon of rework.
+GSD Core is the most practical framework I've seen for making AI coding agents work on real projects. The context-rot problem it solves is universal — I've experienced it in every long coding session with Claude Code, and the fresh-subagent approach is the first solution that feels like engineering rather than hoping. The multi-runtime support is smart; it means you can adopt this without betting your workflow on one AI vendor. The 86-command surface is intimidating, but the namespace organization keeps it navigable, and you can ignore most of it until you need it. If you're doing anything more complex than quick one-off edits with AI agents, GSD Core is worth the setup time. The 3,100 stars in three weeks and active Discord suggest the community agrees.
