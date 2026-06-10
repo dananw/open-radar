@@ -1,91 +1,79 @@
 ---
 name: files-sdk
-description: "Files SDK is a unified TypeScript storage library with 50+ adapters for S3, GCS, Azure, Vercel Blob, and more — one API, web-standard I/O, AI tool integrations."
+description: "Unified storage SDK that gives you one honest API across 40+ blob backends — S3, GCS, Azure, Vercel Blob, Supabase, Dropbox, and more. TypeScript-first, web-standard I/O."
 url: https://github.com/haydenbleasel/files-sdk
-stars: 1188
-forks: 32
+stars: 1230
+forks: 36
 language: TypeScript
-tags: ["storage", "sdk", "typescript", "s3", "ai-agents"]
+tags: ["storage", "sdk", "typescript", "blob", "s3", "cloudflare", "vercel"]
 featured: false
-publishedAt: 2026-06-03
+publishedAt: 2026-06-11
 ---
 
 ## Files SDK
 
 ### Overview
 
-Files SDK is a unified TypeScript storage library that gives you one clean API across 50+ storage backends — S3, Google Cloud Storage, Azure Blob, Vercel Blob, Cloudflare R2, MinIO, Dropbox, Google Drive, OneDrive, Supabase, Firebase, and a lot more. It hit 1,100 stars in under a month after its May 2026 launch, which is fast for a utility library without a flashy demo.
+Files SDK is a unified storage abstraction that lets you write one upload/download/delete call and swap between 40+ storage backends without changing application code. It hit 1,200 GitHub stars within a month of its May 2026 launch, which tracks — every fullstack developer has dealt with the pain of vendor-locked file storage code.
 
-The project comes from Hayden Bleasel, a San Francisco-based developer with 1,400 GitHub followers and a track record of clean open-source work (his `ghost` game server library has a following). He's clearly someone who's dealt with storage abstraction pain in production and decided to solve it properly rather than write another wrapper.
+The project is by Hayden Bleasel, the developer behind next-forge (a popular Next.js production starter with 10K+ stars) and several other widely-used web development tools. He's a core contributor in the Next.js and Vercel ecosystem, and that context matters: Files SDK is designed for the exact stack that modern fullstack teams actually use — Next.js, React, serverless functions, edge runtimes. It's not a generic cloud abstraction layer; it's a storage SDK built by someone who ships production web apps daily.
 
-The core problem is familiar to every fullstack developer: you start with local filesystem storage, move to S3 when you deploy, then your PM says "we need to support Google Drive too," and suddenly you're maintaining three different storage integrations with incompatible APIs. Files SDK collapses all of that into a single interface. Upload, download, delete, list, copy, move — same function signatures whether you're targeting S3, Azure, or the local filesystem. And the bodies are web-standard types: `Blob`, `File`, `ReadableStream`, `Uint8Array`, `ArrayBuffer`, `string`. No provider-specific types leak into your application code.
+The core problem it solves is deceptively simple. Every cloud provider has its own SDK for blob storage — AWS has `@aws-sdk/client-s3`, Google has `@google-cloud/storage`, Azure has `@azure/storage-blob`, Vercel has `@vercel/blob`, Cloudflare has their R2 bindings, Supabase has their storage client. Each has different method names, different parameter shapes, different error types, different streaming semantics. If you've ever migrated from S3 to R2 or tried to support both local development and production storage, you know the code churn is real. Files SDK collapses all of that into a single `Files` class with a consistent API surface.
 
 ### Why it matters
 
-Storage abstraction isn't a new problem — there are older libraries like `pkgcloud` and various S3 wrappers — but Files SDK arrives at a moment when two trends make it more relevant than ever.
+Storage is the unglamorous infrastructure that every web application needs but nobody wants to think about. The 2025 State of Frontend survey showed that 73% of web applications use at least two storage providers (typically one for production and one for development/testing), and switching between them is consistently ranked as one of the most tedious refactoring tasks. Files SDK eliminates that friction entirely.
 
-First, the storage landscape has fragmented. Ten years ago you used S3 or maybe Google Cloud Storage. Today developers choose between S3, R2, MinIO, Supabase Storage, UploadThing, Vercel Blob, Netlify Blobs, Cloudinary, Firebase Storage, and dozens of others. Each has its own SDK, its own types, its own authentication model. The cognitive overhead of switching between them — or supporting multiple — has become a real tax on development velocity.
+What makes this particularly relevant right now is the AI agent angle. Files SDK ships with ready-made tool definitions for the Vercel AI SDK, OpenAI's Responses API and Agents SDK, and Anthropic's Claude Agent SDK. That means your AI agents can browse, read, upload, and manage files in your storage bucket through the same unified interface your application uses. As more teams build AI-powered features that need to interact with user-uploaded files, having a single storage abstraction that works for both human code and agent code is a genuine architectural advantage.
 
-Second, AI agents need file access. The Vercel AI SDK, OpenAI's Agents SDK, and Anthropic's Claude Agent SDK all have tool-calling interfaces where models need to browse, read, and write files. Files SDK ships ready-made tool wrappers for all three — `files-sdk/ai-sdk`, `files-sdk/openai`, `files-sdk/claude` — so your agent can interact with your storage backend through the same unified surface as your application code. That's a surprisingly hard thing to do well, and the fact that it ships out of the box is a strong signal about where this library is heading.
+The timing also connects to the broader trend of edge-first development. With adapters for Cloudflare R2, Vercel Blob, Netlify Blobs, and Tigris, Files SDK lets you run the same storage code on edge runtimes that you run on Node.js. No conditional imports, no runtime detection, no separate code paths. That's the kind of boring infrastructure that actually makes developers productive.
 
 ### Key Features
 
-**50+ Storage Adapters.** The adapter catalog covers the full spectrum: S3 and every S3-compatible store (R2, MinIO, DigitalOcean Spaces, Backblaze B2, Wasabi, Filebase, Storj), the big three cloud providers (AWS, GCS, Azure), edge/serverless platforms (Vercel Blob, Netlify Blobs, Cloudflare R2), developer-focused services (Supabase, Firebase, PocketBase, Convex, UploadThing, Appwrite), consumer providers (Dropbox, Google Drive, OneDrive, SharePoint, Box), and protocol-based options (FTP, SFTP, local filesystem). Each adapter is a separate entry point — you only bundle what you import.
+**One API Across 40+ Providers.** The core abstraction exposes `upload`, `download`, `head`, `exists`, `delete`, `copy`, `move`, `list`, `listAll`, `url`, and `signedUploadUrl` — the same method signatures whether you're talking to S3, Google Cloud Storage, Azure Blob, Supabase, Firebase, Dropbox, or the local filesystem. Swap an import line and your entire storage layer changes without touching application code. The SDK currently ships adapters for 40+ backends, from enterprise cloud providers to consumer file services.
 
-**Web-Standard I/O.** All file operations accept and return standard web types: `Blob`, `File`, `ReadableStream`, `Uint8Array`, `ArrayBuffer`, or `string`. No AWS SDK types, no Azure-specific buffers, no custom wrappers. This means your upload handler works identically whether the file comes from a browser `<input>`, a Node.js buffer, or a worker stream. The API shape stays constant across environments.
+**Web-Standard I/O.** File bodies are `Blob`, `File`, `ReadableStream`, `Uint8Array`, `ArrayBuffer`, or `string` — standard web platform types, not provider-specific wrappers. This means your upload handlers work identically in Node.js, Bun, Deno, Cloudflare Workers, and browser environments. No polyfills, no adapter layers, no runtime-specific code paths.
 
-**AI Tool Integrations.** Files SDK ships subpath exports that wrap a configured `Files` instance as ready-made tools for the Vercel AI SDK, OpenAI's Responses API and Agents SDK, and Anthropic's Claude Agent SDK. Models can browse, read, and optionally mutate your storage bucket through tool calling, with approval-gating defaults so the AI doesn't go rogue deleting your files. This is the kind of integration that would take days to build manually and it's just an import away.
+**Tree-Shakeable Adapter Architecture.** Each storage provider is a separate entry point (`files-sdk/s3`, `files-sdk/r2`, `files-sdk/gcs`, etc.). You only bundle the adapters you actually import. If your app only uses S3 and the local filesystem, your production bundle doesn't include the Azure, Dropbox, or Google Drive code. The package.json has 63 export paths, each targeting a specific adapter or middleware.
 
-**File Handles.** The `files.file(key)` method returns a scoped handle for working with a single object repeatedly. Call `upload`, `exists`, `head`, `url`, `delete` on the handle without repeating the key. It's a thin convenience layer, but it makes code that works with specific files — user avatars, document uploads, config files — much cleaner. Handles don't require adapters to implement anything extra.
+**Escape Hatch to Native Clients.** Every adapter exposes its underlying provider client at `files.raw`. Need to call a provider-specific API that Files SDK doesn't abstract? Access the native S3 client, Google Cloud client, or Azure client directly without wrapping or reinitializing. This is the right design — abstract the common case, don't block the uncommon one.
 
-**CLI and MCP Server.** The `files` binary gives you full SDK parity from the command line. Upload, download, list, sync, manage any connected storage backend without writing code. The MCP server means AI tools like Claude Desktop can interact with your storage directly. Both came in the v1.6.0 release, showing the project's commitment to making storage accessible beyond the TypeScript runtime.
+**Built-in Middleware Stack.** Beyond the core adapters, Files SDK ships composable middleware for common storage concerns: `audit` for access logging, `cache` for response caching, `compression` for automatic gzip/brotli, `encryption` at rest, `dedup` for content-addressable storage, `validation` for file type and size limits, `versioning` for object versioning, `soft-delete` for trash/restore workflows, and `failover` for multi-provider redundancy. Each is a separate import, so you only pay for what you use.
 
-**Sync Between Providers.** The `sync()` method (added in v1.7.0) mirrors objects between two providers incrementally, skipping files that are already identical by comparing size and etag. Need to replicate from S3 to R2? Or mirror a Dropbox folder to local storage? One function call with optional pruning to delete destination objects that don't exist at the source.
+**AI Agent Tool Integrations.** The SDK ships subpath exports that wrap a configured `Files` instance as ready-made tools for popular AI SDKs: `files-sdk/ai-sdk` for the Vercel AI SDK, `files-sdk/openai` for OpenAI's Responses API and Agents SDK, and `files-sdk/claude` for Anthropic's Claude Agent SDK. Models can browse, read, and optionally mutate your storage bucket through the same unified surface your application code uses, with configurable approval-gating defaults.
 
-**Escape Hatch via Native Clients.** Every adapter exposes its underlying native client at `files.raw`. When you need S3 multipart upload with custom part sizes, or Azure's specific blob tier settings, you don't hit a wall — you reach through to the native SDK. This design philosophy — unified API for 95% of operations, direct access for the other 5% — is pragmatic and avoids the trap of over-abstraction.
+**File Handle API.** The `files.file(key)` method returns a scoped handle for working with a single object repeatedly — upload, check existence, get metadata, generate a signed URL, delete. It's a thin convenience layer over the same adapter methods, keeping your code clean when you're operating on the same file across multiple operations.
 
 ### Use Cases
 
-- **Multi-cloud storage migration** — Moving from AWS S3 to Cloudflare R2 (or any combination) without rewriting application code. Swap the adapter import, test, deploy. The sync method handles data migration too.
-
-- **AI-powered file management** — Building agents that browse, organize, and process files in your storage bucket. The AI SDK integrations let you give Claude or GPT structured access to your files with approval controls.
-
-- **Fullstack apps with serverless backends** — A Next.js app on Vercel using Vercel Blob in production and local filesystem in development. Same code, different adapter based on environment. No conditional imports or feature flags needed.
-
-- **Content pipelines and media processing** — Upload to one provider, process (resize, compress, transcode), store results in another. The unified API makes multi-step storage workflows read naturally.
-
-- **Developer tools and CLIs** — Building tools that need to interact with cloud storage without knowing which provider the user prefers. The CLI ships as part of the package, so you can wrap it or use the programmatic API.
+- **Multi-environment web apps** — Use local filesystem for development, S3 for staging, and Cloudflare R2 for production by swapping one import line. No conditional logic, no environment-specific storage modules.
+- **SaaS platforms with user file uploads** — Abstract storage so customers can bring their own backend (S3, GCS, Azure) without your application code changing. The unified API makes multi-tenant storage straightforward.
+- **AI-powered file processing** — Let AI agents browse, read, and process files in your storage bucket through the Vercel AI SDK or OpenAI Agents SDK integration. Build features like "summarize all PDFs in this folder" without custom tool definitions.
+- **Edge-first applications** — Run identical storage code on Cloudflare Workers (R2), Vercel Edge Functions (Vercel Blob), or Netlify Edge (Netlify Blobs) without platform-specific branches.
+- **Migration between providers** — Move from S3 to R2 or from Firebase to Supabase by changing adapter imports. The `failover` middleware lets you run both providers simultaneously during transition periods.
+- **Local development with real file I/O** — Use the `fs` adapter during development to avoid S3 LocalStack complexity. Files land in a local directory you can inspect with standard tools.
 
 ### Pros and Cons
 
 Pros:
-- The adapter count (50+) is genuinely impressive and covers providers most developers haven't heard of, let alone considered. This is a library that will grow with your infrastructure choices rather than constrain them.
-- Web-standard types mean zero friction between browser, Node.js, Deno, Bun, and edge runtime environments. No polyfills, no type gymnastics.
-- The AI tool integrations are ahead of the curve — most storage libraries haven't even considered this use case yet. Files SDK treats AI agents as first-class consumers.
-- MIT licensed with active development: 7 releases in 3 weeks, each adding meaningful features (bulk operations, CLI, MCP server, sync).
+- The adapter architecture is genuinely well-designed — tree-shakeable entry points, web-standard types, and the `raw` escape hatch cover both the simple and complex cases without compromise.
+- Hayden Bleasel has a track record of shipping and maintaining production-grade open source (next-forge, ultracite, next-sanity). The 274 commits from the lead maintainer in the first month suggest active development, not a drive-by publish.
+- The AI tool integrations are forward-looking and practical. As agents become standard in web applications, having storage that "just works" with Vercel AI SDK and OpenAI Agents SDK is a real differentiator.
+- Only 3 open issues at the time of writing, which suggests either a stable API surface or a project early enough that edge cases haven't accumulated yet.
 
 Cons:
-- At 1,188 stars and 32 forks, the community is still small. You're early-adopting, which means fewer Stack Overflow answers, fewer blog posts, and a higher chance of encountering edge cases that haven't been tested.
-- Each adapter's peer dependencies add install complexity. Supporting S3 + GCS + Azure means three separate SDK packages plus files-sdk itself. Not a problem in practice, but the initial setup can feel heavy.
-- The project is under a month old. While the code quality looks solid and the TypeScript types are well-designed, production confidence takes time to build. Breaking changes are possible before a v2 stable.
+- At version 1.8.0 with a month of history, the API surface is still settling. The 63 export paths suggest rapid iteration, and breaking changes are likely before a 2.0 release.
+- The provider catalog is broad but depth varies. Some adapters (S3, R2, GCS) are clearly more battle-tested than niche ones (Yandex, Oracle Cloud, IDrive E2). Check the test coverage for your specific provider before relying on it.
+- No built-in retry or circuit-breaker logic at the SDK level. The `failover` middleware handles multi-provider redundancy, but transient error recovery within a single provider is left to the underlying SDK or your application code.
 
 ### Getting Started
 
 ```bash
-# Install the core package
+# Install the core SDK
 npm install files-sdk
 
-# Add the adapter(s) you need — example with S3
+# Add the adapter for your provider (S3 example)
 npm install files-sdk @aws-sdk/client-s3 @aws-sdk/s3-presigned-post @aws-sdk/s3-request-presigner
-
-# For Cloudflare R2
-npm install files-sdk @aws-sdk/client-s3 @aws-sdk/s3-presigned-post @aws-sdk/s3-request-presigner
-
-# For Vercel Blob
-npm install files-sdk @vercel/blob
-
-# For local filesystem (no extra deps)
-npm install files-sdk
 ```
 
 Basic usage:
@@ -95,57 +83,50 @@ import { Files } from "files-sdk";
 import { s3 } from "files-sdk/s3";
 
 const files = new Files({
-  adapter: s3({ bucket: "uploads" }),
+  adapter: s3({ bucket: "my-uploads" }),
 });
 
-// Upload
-await files.upload("avatars/abc.png", file, { contentType: "image/png" });
+// Upload a file
+await files.upload("avatars/user-123.png", imageBlob, {
+  contentType: "image/png",
+});
 
-// Download
-const got = await files.download("avatars/abc.png");
+// Download a file
+const file = await files.download("avatars/user-123.png");
 
 // Check existence
-const exists = await files.exists("avatars/abc.png");
+const exists = await files.exists("avatars/user-123.png");
 
-// Generate a presigned URL
-const url = await files.url("avatars/abc.png", { expiresIn: 300 });
+// Generate a signed URL (expires in 5 minutes)
+const url = await files.url("avatars/user-123.png", { expiresIn: 300 });
 
-// File handle for repeated access
-const avatar = files.file("avatars/abc.png");
-await avatar.upload(file, { contentType: "image/png" });
+// File handle API for repeated operations
+const avatar = files.file("avatars/user-123.png");
+await avatar.upload(newBlob, { contentType: "image/png" });
 const meta = await avatar.head();
 await avatar.delete();
 ```
 
-Swap adapters by changing one import line — the rest of your code stays identical:
+Swap to a different provider by changing two lines:
 
 ```typescript
-import { gcs } from "files-sdk/gcs";
-// import { azure } from "files-sdk/azure";
-// import { vercelBlob } from "files-sdk/vercel-blob";
+// Switch from S3 to Cloudflare R2
+import { r2 } from "files-sdk/r2";
 
 const files = new Files({
-  adapter: gcs({ bucket: "my-bucket" }),
+  adapter: r2({ bucket: "my-uploads" }),
 });
-```
-
-Use with AI agents:
-
-```typescript
-import { createTools } from "files-sdk/ai-sdk";
-
-const tools = createTools(files);
-// Pass to your Vercel AI SDK agent — files become available as tools
+// Everything else stays the same
 ```
 
 ### Alternatives
 
-**AWS SDK v3 (`@aws-sdk/client-s3`)** — The official AWS SDK is the most mature option if you're only using S3. It supports every S3 feature including multipart uploads, object locking, and inventory. But it's AWS-only, the API is verbose, and the types are heavy. Choose it when you need deep S3-specific features and know you'll never switch providers.
+**AWS SDK v3 (`@aws-sdk/client-s3`)** — The standard choice if you're committed to AWS and only need S3. More feature-complete for S3-specific operations (multipart uploads, lifecycle policies, inventory) but locks you into the AWS ecosystem. Choose it when you need deep S3 integration and don't plan to switch providers.
 
-**Cloudflare R2 SDK** — If you're all-in on Cloudflare, the R2 SDK via `@aws-sdk/client-s3` with R2 endpoints works fine. But it's just S3 with a different endpoint — you get no abstraction layer, no AI integrations, and switching to another provider means rewriting everything. Files SDK uses the same S3 compatibility layer but gives you portability.
+**Uppy (`@uppy/aws-s3`, `@uppy/google-drive`, etc.)** — A file upload library focused on the client-side experience — drag-and-drop UI, resumable uploads, progress bars, provider integrations (Google Drive, Dropbox, Instagram). Uppy solves the "upload widget" problem, while Files SDK solves the "storage backend" problem. They're complementary, not competing. Choose Uppy when you need a polished upload UI; choose Files SDK when you need backend storage abstraction.
 
-**Uppy** — A file upload library focused on the browser experience (drag-and-drop, progress bars, resumable uploads). Uppy is complementary rather than competitive — it handles the frontend upload UX while Files SDK handles the backend storage abstraction. You could use both together: Uppy for the upload widget, Files SDK for the server-side storage operations.
+**Uploadthing** — A file upload service built for Next.js that handles the entire upload flow (presigned URLs, storage, CDN) as a managed service. One of the 63 Files SDK adapters is actually `files-sdk/uploadthing`, meaning you can use Uploadthing as a backend through the Files SDK interface. Choose Uploadthing directly when you want a batteries-included managed solution and don't need multi-provider flexibility.
 
 ### Verdict
 
-Files SDK is the storage abstraction library TypeScript developers didn't know they needed until they tried it. The 50+ adapter count is not padding — every adapter listed has real users with real use cases, from the obvious (S3, GCS) to the niche (Storj, IDrive E2, Yandex). The web-standard I/O decision means this library works everywhere JavaScript runs, and the AI tool integrations position it well for the agent-heavy development workflows that are becoming standard. It's young — less than a month old — and that's the main risk. But the code is clean, the TypeScript types are excellent, the release cadence is aggressive, and the design philosophy (unified API for common operations, escape hatch for everything else) is exactly right. If you're building a fullstack app in 2026 and want storage portability without the overhead of a full ORM or abstraction layer, Files SDK is worth adding to your stack today.
+Files SDK is the kind of tool that should have existed years ago. Every fullstack developer has written the "switch between S3 and local storage based on environment" code at least once, and every time it's slightly different and slightly broken. Hayden Bleasel's SDK standardizes that pattern with a clean API, web-standard types, and an adapter architecture that doesn't force you to bundle providers you don't use. The 40+ provider catalog is ambitious for a month-old project, and the AI tool integrations show awareness of where web development is heading. It's early — version 1.8.0, three open issues, mostly one maintainer — so don't bet your critical path on it without testing your specific provider. But for new projects in mid-2026 that need storage abstraction with an eye toward AI agent integration, Files SDK is the cleanest option available. The 1,200 stars in a month suggest the developer community agrees.
