@@ -1,116 +1,108 @@
 ---
 name: pilotdeck
-description: "PilotDeck is an open-source AI agent operating system with workspace isolation, white-box memory, and smart model routing that cuts LLM costs by 70%."
+description: "PilotDeck is an open-source agent OS with WorkSpace isolation, white-box memory, and smart model routing — built by Tsinghua University and OpenBMB for long-running AI productivity tasks."
 url: https://github.com/OpenBMB/PilotDeck
-stars: 2763
-forks: 265
+stars: 3113
+forks: 331
 language: TypeScript
-tags: ["ai-agents", "llm", "productivity", "agent-os", "model-routing"]
+tags: ["ai-agents", "productivity", "typescript", "mcp", "model-routing"]
 featured: false
-publishedAt: 2026-06-02
+publishedAt: 2026-06-10
 ---
 
 ## PilotDeck
 
 ### Overview
 
-PilotDeck is an open-source agent operating system built around the concept of WorkSpaces — isolated environments where each project gets its own filesystem, memory store, and skill set. Launched on May 22, 2026, it crossed 2,700 GitHub stars in its first week, which speaks to how hungry developers are for a real agent orchestration platform.
+PilotDeck is an open-source agent operating system built around the concept of "WorkSpaces" — isolated environments where each project gets its own file system, memory store, and skill set. Launched on May 22, 2026, it crossed 3,000 GitHub stars in under three weeks, which is a strong signal that developers are hungry for something beyond the "ask a question, get an answer" paradigm of current AI tools.
 
-The project comes from serious pedigree: Tsinghua University's THUNLP lab, ModelBest, OpenBMB, and AI9Stars. This is the same group behind MiniCPM and other well-known Chinese AI research projects. When an NLP research group at one of China's top universities ships an open-source tool, it tends to have solid engineering underneath.
+The project comes from serious pedigree. It's jointly developed by Tsinghua University's THUNLP lab (the same team behind ChatGLM and numerous NLP breakthroughs), ModelBest, OpenBMB, and AI9Stars. OpenBMB has a track record of shipping production-quality open-source AI tools — their MiniCPM and ToolBench projects have thousands of citations. This isn't a weekend hack from a YC startup. It's research-backed engineering from one of China's top AI labs.
 
-The core problem PilotDeck tackles is that most AI agent tools are built for one-shot interactions — you ask, it answers, done. But real productivity work involves multiple projects running in parallel, long-running tasks that need to continue while you're away, and costs that spiral out of control when you send everything to frontier models. PilotDeck addresses all three: workspace-scoped isolation prevents cross-project memory pollution, always-on background execution lets agents keep working after you sign off, and smart routing automatically matches task complexity to the right model tier.
+The core problem PilotDeck tackles is deceptively simple: when you run multiple AI agent tasks in parallel — say, code review on one project, documentation generation on another, and a market research brief on a third — existing tools either share a single context pool (causing memory bleed) or require you to manually manage separate sessions. PilotDeck scopes everything per WorkSpace and adds three capabilities that matter for real productivity: white-box memory you can inspect and edit, smart routing that matches task complexity to model tier (saving up to 70% on token costs), and always-on background execution that keeps working after you walk away.
 
 ### Why it matters
 
-The agent tooling space has exploded in 2026. Claude Code, Cursor, Codex, and dozens of others compete on reasoning quality and IDE integration. But almost all of them share a fundamental limitation: they treat every interaction as isolated. There's no persistent memory you can inspect, no cost tracking per task, no way to run lightweight sub-agents for simple work while reserving expensive models for hard problems.
+The AI agent space is crowded, but most tools are optimized for single-session, single-task interactions. Claude Code, Cursor, and similar coding assistants are great for "write this function" or "debug this error." But when you shift to long-running, multi-project workflows — the kind of work that actually defines developer productivity — the cracks show fast. Memory is opaque, costs are unpredictable, and everything stops the moment you close the terminal.
 
-PilotDeck's approach — workspace isolation with white-box memory and intelligent model routing — addresses gaps that most agent tools haven't even acknowledged yet. The smart routing benchmarks are particularly compelling: their internal testing shows a 70% cost reduction on social media workflows by routing simple tasks to cheaper models while keeping frontier models for planning checkpoints. On 7 complex benchmark tasks, a "strong main + light sub" routing setup matched or beat single frontier model setups at one-sixth the cost.
+PilotDeck addresses all three problems architecturally. The white-box memory system means you can see exactly what the agent remembers, edit entries that are wrong, and pin decisions that shouldn't drift. Smart routing detects task complexity and routes simple calls to cheaper models while reserving frontier models for hard problems — their benchmarks show a Sonnet 4.6 + MiniMax-M2.7 routing setup scoring 70.6 (beating a Sonnet-only setup at 69.1) at one-sixth the cost. And the always-on mode means agents can run monitors, discover tasks, and land results as files while you're offline.
 
-For fullstack developers juggling multiple projects — a React frontend here, a NestJS API there, maybe a Go microservice — the workspace isolation model makes intuitive sense. Each project's agent context stays separate. Memory doesn't bleed. And you can actually see and edit what the agent remembers about your project, which is something most competitors can't offer.
+For fullstack developers specifically, this fills a gap between IDE-integrated AI assistants and enterprise agent platforms. You get WorkSpace isolation (no context pollution between your React frontend and Go backend projects), MCP-native tool integration, and a Web UI that doesn't require a PhD to configure. The fact that it's TypeScript and uses React + Tailwind + shadcn/ui means the codebase is immediately approachable for web developers.
 
 ### Key Features
 
-**Workspace-Level Isolation.** Every project gets its own file system, memory store, and skill set. Run agents on your React app and your Go backend simultaneously without context pollution. The isolation is enforced at the system level, not just through prompt engineering — each workspace is a genuinely separate environment with bounded retrieval scope.
+**WorkSpace-Level Isolation.** Every project gets its own sandboxed environment with dedicated files, memory, and skills. Running three agent tasks simultaneously no longer risks one project's context bleeding into another. The isolation is enforced at the data layer, not just the UI layer — retrieval queries are scoped to the active WorkSpace, so even vector similarity searches stay contained.
 
-**White-box Memory System.** Memory generation, extraction, storage, and retrieval are fully visible and auditable. When the AI misremembers something about your codebase, you can pinpoint the exact memory entry that caused it and fix or delete it directly. The built-in Dream Mode consolidates memory during idle windows, and supports one-click rollback to prior states. This is a major differentiator — most agent tools give you zero visibility into their internal memory.
+**White-Box Memory with Dream Mode.** Memory entries are fully visible: what was stored, when, and in which WorkSpace. You can edit, delete, or pin entries directly. The "Dream Mode" feature consolidates and optimizes memory during idle windows — think of it as garbage collection for agent knowledge — and supports one-click rollback if consolidation goes wrong. This is a significant improvement over black-box memory systems where you have no idea why the agent keeps hallucinating your API structure.
 
-**Smart Model Routing.** Task difficulty is automatically detected and matched to the appropriate model tier. Complex planning and architecture decisions go to flagship models like Claude Opus or GPT-4o, while routine formatting and simple edits drop to lighter models like Sonnet or MiniMax. Their benchmarks show 70% cost reduction on social media workloads and competitive quality at one-sixth the cost on complex multi-task benchmarks.
+**Smart Routing and Cost Optimization.** Tasks are auto-classified by complexity. Simple operations like text polishing or formatting route to lighter models (e.g., Sonnet 4.5), while planning and architecture decisions go to frontier models (e.g., Opus 4.5). In their social-media workload benchmarks, this approach cut costs from $12.58 to $2.83 — an 77% reduction with no quality loss. The routing is configurable, so you can define your own model tiers.
 
-**Always-on Background Execution.** PilotDeck breaks the synchronous "ask and answer" loop. After you leave, the agent continues discovering candidate tasks, running long-horizon monitors, and delivering results as local files with summary reports. For developers, this means your agent can keep refactoring overnight, run test suites, or monitor build pipelines without you babysitting the terminal.
+**Always-On Background Execution.** PilotDeck breaks the synchronous request-response loop. After you sign off, agents continue discovering candidate tasks, running long-horizon monitors, and producing deliverables as local files. When you return, a summary report is waiting. This is particularly useful for overnight code analysis, documentation generation, or monitoring tasks that don't need human-in-the-loop oversight.
 
-**MCP Native Support.** The entire system natively supports the Model Context Protocol (MCP), behaving consistently across Web, CLI, and IM frontends. Any MCP server integrates as a first-class plugin. This means the growing ecosystem of MCP tools — from file system access to database queries to web search — works out of the box.
+**MCP-Native Architecture.** The system has first-class support for the Model Context Protocol, meaning any MCP-compatible tool or server integrates directly. This opens up a huge ecosystem of existing tools — file system access, database queries, API calls — without custom integration code. The plugin system also supports lifecycle hooks (PreToolUse, UserPromptSubmit) for fine-grained control.
 
-**Open Plugin Architecture.** Extension is straightforward with `plugin.json`-based configuration. Register custom tools, pull community skills via ClawHub, intercept lifecycle hooks like `PreToolUse` and `UserPromptSubmit`, or plug in your own memory store provider. The boundary between core and plugins is strict.
+**Multi-Frontend Support.** PilotDeck works across Web UI, CLI, and IM (instant messaging) frontends. The Web UI is built with React, Tailwind, and shadcn/ui. CLI access enables scripting and automation. IM integration means you can interact with agents through WeCom or Feishu, bringing AI productivity into your team's existing communication channels.
 
-**Multi-Frontend Access.** Run PilotDeck through its Web UI, CLI, or integrate it into IM platforms like WeChat and Feishu. The same workspace, memory, and routing logic works across all interfaces. For teams already using enterprise messaging, this means agents are one message away.
+**Open Plugin Architecture.** Extensions are defined via `plugin.json` with strict boundaries between the core and customization layers. You can register custom tools, pull community skills from ClawHub, intercept lifecycle events, or plug in your own memory store provider. The architecture is designed so the open-source core stays stable while plugins can iterate rapidly.
 
 ### Use Cases
 
-- **Multi-project fullstack development** — Manage React, NestJS, Django, and Go projects simultaneously with isolated agent contexts and no memory bleed between codebases.
-- **Long-running code refactoring tasks** — Kick off a refactoring job on a large codebase, walk away, and come back to completed deliverables with a summary report on disk.
-- **Cost-optimized LLM workflows** — Route simple code formatting and boilerplate to cheap models while reserving frontier models for architecture decisions and complex debugging.
-- **Content and document generation** — Generate research reports, whitepapers, or documentation through multi-step agent workflows that persist across sessions.
-- **AI engineering platform development** — Build and iterate on AI/ML platforms where the agent remembers previous design decisions and can maintain context across long development cycles.
+- **Multi-project development workflows** — Manage separate WorkSpaces for your React frontend, NestJS API, and infrastructure code without context pollution between them
+- **Long-running code analysis and documentation** — Run architecture analysis or doc generation overnight with always-on mode, collecting results as files by morning
+- **Cost-optimized AI-assisted development** — Use smart routing to burn cheap tokens on boilerplate generation while reserving frontier models for complex architectural decisions
+- **Team collaboration via IM** — Connect agents to WeCom or Feishu so non-technical team members can trigger AI workflows without leaving their chat app
+- **Research and competitive analysis** — Deploy agents to gather, synthesize, and format market research into structured deliverables while you focus on other work
+- **Automated content pipelines** — Use the MCP server and plugin system to build end-to-end content workflows from research to publication
 
 ### Pros and Cons
 
 Pros:
-- Smart routing benchmarks are real and quantified — 70% cost reduction on production workflows with specific dollar figures ($2.83 vs $12.58 for equivalent quality output).
-- White-box memory is genuinely useful. Being able to inspect, edit, and rollback agent memory entries addresses a real pain point that other tools ignore entirely.
-- Backed by Tsinghua THUNLP and OpenBMB, with active development from a team that has shipped multiple successful AI research projects (MiniCPM, UltraRAG).
-- MCP-native design means it plugs into the growing ecosystem of Model Context Protocol servers without custom adapters.
+- WorkSpace isolation solves real context pollution problems that plague every multi-project AI workflow. The scoped retrieval is architecturally sound, not a UI hack.
+- Smart routing benchmarks are compelling — 70%+ cost savings with equal or better quality is hard to argue with. The routing is transparent and configurable.
+- Backed by Tsinghua THUNLP and OpenBMB, which means the underlying NLP and agent research is rigorous. This isn't vibes-based engineering.
+- MCP-native design means you're not locked into PilotDeck's tool ecosystem. Any MCP server works out of the box.
 
 Cons:
-- Open-sourced on May 22, 2026 — this is barely two weeks old. Expect rough edges, incomplete documentation, and potential breaking changes in the near term.
-- The UI and docs have a strong Chinese-language bias. English documentation exists but is thinner, and some UI elements default to Chinese.
-- AGPL v3.0 license is restrictive for commercial use. If you're building a product that embeds PilotDeck, you'll need to evaluate the license implications carefully.
-- Docker and macOS/Linux focused. Windows developers will need WSL2 or a container-based setup.
+- AGPL-3.0 license is restrictive for commercial use. If you're building a product that embeds PilotDeck, you need to either open-source your code or negotiate a commercial license.
+- The project is less than a month old (launched May 22, 2026). API surface will change, documentation is still growing, and the community is young. Production use today is premature.
+- Primary documentation and community channels skew heavily Chinese-language. English docs exist but are less comprehensive. International contributors may face friction.
+- Requires Node.js 22 and has Git LFS dependencies for media assets, which adds setup complexity compared to simpler CLI tools.
 
 ### Getting Started
 
 ```bash
-# Option A: One-line install (macOS / Linux)
+# Option A: One-line install (macOS/Linux)
 curl -fsSL https://raw.githubusercontent.com/OpenBMB/PilotDeck/main/install.sh | bash
 
 # Start the server
-pilotdeck            # opens at http://localhost:3001
+pilotdeck            # starts at http://localhost:3001
 pilotdeck status     # check runtime status
 
 # Option B: From source
 git clone https://github.com/OpenBMB/PilotDeck.git
 cd PilotDeck
 npm install
-cd ui && npm install
+cd ui && npm install && cd ..
 
-# Configure your model provider (or use the Web UI settings panel)
-# Edit ~/.pilotdeck/pilotdeck.yaml:
-cat > ~/.pilotdeck/pilotdeck.yaml << EOF
-schemaVersion: 1
-agent:
-  model: deepseek/deepseek-v4-pro
-model:
-  providers:
-    deepseek:
-      protocol: openai
-      url: https://api.deepseek.com/v1
-      apiKey: YOUR_KEY_HERE
-EOF
+# Configure your model provider (~/.pilotdeck/pilotdeck.yaml)
+# Or configure visually in the Web UI settings panel
 
 # Start in dev mode
-cd ui && npm run dev    # http://localhost:5173
+cd ui && npm run dev     # http://localhost:5173
 
-# Option C: Docker Compose
+# Option C: Docker
 docker compose up -d
 ```
 
+Supported model providers include OpenAI, Anthropic, DeepSeek, Qwen, Kimi, MiniMax, and any OpenAI-compatible endpoint.
+
 ### Alternatives
 
-**Claude Code** — Anthropic's agent tool excels at single-session coding tasks with deep reasoning and tight IDE integration. It's more mature and polished than PilotDeck, but lacks workspace isolation, white-box memory, and multi-model routing. Choose Claude Code when you need the best single-model reasoning for focused coding sessions.
+**Claude Code** — Anthropic's CLI-based coding agent excels at single-session, code-focused tasks with deep reasoning. It's more polished for pure coding workflows but lacks WorkSpace isolation, multi-model routing, and background execution. Choose Claude Code when you need a focused coding session, not a persistent agent platform.
 
-**OpenCode** — A terminal-based coding agent with a focus on simplicity and the developer CLI experience. It's lighter weight and easier to get started with, but doesn't offer background execution, memory management, or cost optimization features. Choose OpenCode when you want a straightforward CLI agent without the orchestration overhead.
+**OpenHands (formerly OpenDevin)** — An open-source AI agent platform focused on software development tasks with a web UI and sandboxed execution. OpenHands has stronger code execution safety (Docker-based sandboxes) but doesn't offer PilotDeck's smart routing or white-box memory. Better choice if sandboxed code execution is your primary concern.
 
-**Claude Cowork** — Anthropic's project-level agent isolation tool that introduced the concept of per-project agent environments on desktop. It's more tightly integrated with the Claude ecosystem but less flexible in model choice and lacks the smart routing and always-on capabilities. Choose Cowork when you're already deep in the Anthropic ecosystem and want native integration.
+**CrewAI** — A multi-agent orchestration framework that lets you define agent teams with specific roles and collaboration patterns. CrewAI is more flexible for custom multi-agent architectures but requires more setup and doesn't ship a UI or memory management system. Better for developers who want to build custom agent pipelines from scratch.
 
 ### Verdict
 
-PilotDeck is the most interesting agent orchestration platform I've seen in 2026. The smart routing alone — cutting LLM costs by 70% while maintaining output quality — justifies giving it a serious look. The white-box memory system solves a problem that most agent tools haven't even acknowledged: you should be able to see and control what your AI remembers. The workspace isolation model maps directly to how developers actually work across multiple projects. It's barely two weeks old and shows it — the docs are rough, the English support is incomplete, and the AGPL license will scare off some commercial users. But the engineering underneath is solid, the backing team has real research credentials, and 2,700 stars in a week suggests the developer community sees the same potential I do. If you're running multiple AI-assisted projects and burning money on frontier models for every task, PilotDeck is worth evaluating now, even in its early state.
+PilotDeck is the most thoughtful take on "agent as a productivity platform" I've seen in the open-source space. The WorkSpace isolation model alone solves a problem that every developer running multiple AI tasks encounters daily, and the smart routing benchmarks — 77% cost savings at equal quality — make a strong economic case for the approach. It's too new for production use, and the AGPL license will be a dealbreaker for some commercial applications. But if you're a developer who's been running multiple AI coding sessions in parallel and frustrated by context bleed, unpredictable costs, and the "everything stops when I close the terminal" problem, PilotDeck is worth installing and experimenting with now. The Tsinghua/OpenBMB backing suggests this isn't going to be abandoned in three months, and 3,000 stars in under three weeks indicates real community momentum.
