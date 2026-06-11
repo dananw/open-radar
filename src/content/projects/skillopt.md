@@ -1,110 +1,101 @@
 ---
 name: skillopt
-description: "SkillOpt trains reusable agent skills through trajectory-driven edits with validation gates — think backprop for your AI agent prompts, not model weights."
+description: "SkillOpt by Microsoft trains reusable natural-language skills for frozen LLM agents using trajectory-driven edits and validation-gated updates — no fine-tuning required."
 url: https://github.com/microsoft/SkillOpt
-stars: 4257
-forks: 435
+stars: 5753
+forks: 564
 language: Python
-tags: ["ai-agents", "agent-skills", "llm-optimization", "microsoft", "self-evolving-agents"]
+tags: ["ai-agents", "llm", "optimization", "microsoft", "self-evolving"]
 featured: false
-publishedAt: 2026-06-02
+publishedAt: 2026-06-12
 ---
 
 ## SkillOpt
 
 ### Overview
 
-SkillOpt is a text-space optimizer from Microsoft Research that trains reusable natural-language skills for frozen LLM agents. It hit 4,200 GitHub stars in under a month after its May 2026 release, which tracks — developers have been hand-crafting agent prompts for two years now, and the process still feels like alchemy. SkillOpt replaces that intuition with a disciplined training loop: epochs, batches, learning rates, validation gates. The difference is that the thing being trained isn't a model weight. It's a markdown file.
+SkillOpt is a Microsoft Research project that treats agent skill documents as trainable parameters — applying the same discipline as neural network training (epochs, batch sizes, learning rates, validation gates) but without touching model weights. It launched in May 2026 and crossed 5,700 GitHub stars in its first month, which is remarkable for a research tool that doesn't have a flashy demo app or a VC-funded marketing push.
 
-The project comes out of Microsoft's applied AI research group and is backed by an arXiv paper (2605.23904) with ablations and per-cell results. That academic rigor shows up in the implementation — this isn't a prompt-tuning wrapper with a clever name. The system uses a separate optimizer model to generate bounded add/delete/replace edits on a single skill document, accepts edits only when they improve a held-out validation score, and deploys the result as a compact `best_skill.md` file (typically 300–2,000 tokens) that runs against the unchanged target model. Zero additional inference-time cost at deployment.
+The project comes from Yifan Yang and a team at Microsoft Research, alongside contributors from the broader agent ecosystem. The academic backing shows — there's a proper arXiv paper (2605.23904), a project page with interactive demos, and reproducible benchmarks. But what's interesting is how quickly the practical tooling followed the paper. The SkillOpt-Sleep plugin system (released June 8, 2026) already integrates with Claude Code, Codex, and Copilot, giving your local coding agent a nightly "sleep cycle" where it reviews past sessions, replays recurring tasks, and consolidates validated long-term skills.
 
-Across six benchmarks, seven target models, and three execution harnesses (direct chat, Codex CLI, Claude Code CLI), SkillOpt is best or tied-best on all 52 evaluated (model, benchmark, harness) cells. On GPT-5.5, it lifts average no-skill accuracy by +23.5 points in direct chat, +24.8 inside the Codex agentic loop, and +19.1 inside Claude Code. Those are significant gains — and they transfer across model scales and between harnesses without re-optimization.
+The core problem SkillOpt solves: when you give an LLM agent a skill document (a set of instructions, patterns, or strategies), that skill is usually static. You write it once, maybe refine it manually, and hope it works. SkillOpt automates that refinement loop. It runs the agent through tasks, scores the results, generates bounded text edits to the skill document, and only accepts changes that improve performance on held-out validation tasks. The output is a compact `best_skill.md` file (300–2,000 tokens) that you deploy alongside your unchanged model.
 
 ### Why it matters
 
-The agent ecosystem has a productivity ceiling problem. Developers spend hours crafting system prompts, iterating on tool descriptions, and tuning agent instructions through trial and error. When the underlying model changes, or you switch from Claude Code to Codex, those hand-tuned prompts often need rework. There's no systematic way to improve an agent's instructions over time.
+The AI agent space is moving fast, but most developers are still hand-crafting prompts and skill files through trial and error. You write a system prompt, test it, tweak it, test again. It's artisanal prompt engineering — no systematic optimization, no validation against regressions, no way to know if your changes actually help across different scenarios.
 
-SkillOpt fills that gap by treating agent skills as optimizable artifacts rather than static text. This connects to a broader shift in the AI developer tooling space — the move from "prompt engineering" as a manual craft to "prompt optimization" as an engineering discipline. We've seen early signals from projects like DSPy (compiler for language model programs) and TextGrad (automatic differentiation for text). SkillOpt takes a more practical angle: it doesn't try to compile or differentiate your prompts. It trains them the way you'd train a model — with data, evaluation, and iterative improvement — but the output is a markdown file you can read, version-control, and ship.
+SkillOpt brings machine-learning discipline to this process without requiring ML expertise. You don't need to understand gradient descent or backpropagation. You define your tasks, your scoring function, and let the optimizer iterate. The validation gate is the key innovation: changes to your skill document only get accepted if they improve performance on held-out tasks, preventing the kind of regression that happens when you optimize for one edge case and break three others.
 
-For fullstack developers building AI-powered features, this matters because agent reliability is the bottleneck. Your RAG pipeline works, your tool integrations are solid, but the agent still makes inconsistent decisions because its instructions are hand-written strings that nobody evaluates systematically. SkillOpt gives you a path to measurably better agent behavior without touching model weights or infrastructure.
+The numbers are hard to ignore. Across six benchmarks, seven target models, and three execution harnesses (direct chat, Codex CLI, Claude Code CLI), SkillOpt is best or tied-best on all 52 evaluated cells. On GPT-5.5, it lifts average no-skill accuracy by +23.5 points in direct chat, +24.8 in the Codex agentic loop, and +19.1 in Claude Code. Those aren't marginal gains — that's the difference between an agent that sometimes works and one that's reliably useful.
 
 ### Key Features
 
-**Trajectory-Driven Skill Editing.** The optimizer model doesn't rewrite the entire skill from scratch. It generates bounded edits — add, delete, or replace specific sections — based on scored execution trajectories from training runs. This is closer to how a developer actually improves documentation: you look at what failed, identify the gap in instructions, and fix that specific part. The bounded edit approach prevents the kind of catastrophic forgetting that happens when you regenerate an entire prompt.
+**Trajectory-Driven Skill Editing.** Instead of asking an LLM to "improve this prompt," SkillOpt runs the agent through actual tasks, collects scored trajectories, and uses a separate optimizer model to generate bounded add/delete/replace edits on the skill document. Each edit is specific, contextual, and traceable to a real execution outcome. This is fundamentally different from asking GPT to "make this better."
 
-**Validation-Gated Updates.** Every candidate edit must pass a held-out validation set before it's accepted. If the edit doesn't improve the validation score, it's rejected and added to a rejected-edit buffer. This prevents overfitting to the training distribution — the same principle as early stopping in neural network training, but applied to text. The rejected buffer also prevents the optimizer from cycling through the same bad ideas.
+**Validation-Gated Updates.** Every candidate edit must pass a held-out validation score before it's accepted. This is the same principle as validation sets in machine learning — you optimize on training data but gate on unseen data to prevent overfitting. In practice, this means your skill gets better at general tasks, not just the specific examples you tested.
 
-**Textual Learning Rate Budget.** SkillOpt caps how much the skill document can change per epoch, analogous to a learning rate in gradient descent. Large, sweeping edits are penalized. Small, targeted improvements are preferred. This keeps the training stable and prevents the optimizer from thrashing between completely different instruction strategies. It's a surprisingly effective control mechanism for text-space optimization.
+**SkillOpt-Sleep: Nightly Consolidation.** The Sleep plugin gives your coding agent a "sleep cycle" that harvests session transcripts, mines recurring tasks, replays them offline, and consolidates what it learns into validated long-term memory and skills. It works with Claude Code, Codex, and Copilot. The agent literally gets better the more you use it, with no manual intervention.
 
-**Zero Inference-Time Overhead.** The deployed artifact is a static markdown file — `best_skill.md`. You paste it into your agent's system prompt, and it runs against the unchanged target model. No additional API calls, no scoring models, no runtime infrastructure. The optimization cost is paid once during training. The deployment cost is zero. This is what makes SkillOpt practical for production use, not just research demos.
+**Multi-Backend Support.** SkillOpt works with OpenAI, Azure OpenAI, Claude, Qwen, and MiniMax backends out of the box. The optimizer model and the target model can be different — you can use a strong model to optimize skills for a cheaper, faster model you actually deploy. This separation is practical for production use.
 
-**Multi-Harness Transfer.** Skills trained on one execution harness (say, Codex CLI) transfer to others (Claude Code CLI, direct chat) without re-optimization. The paper shows consistent gains across harnesses, which means you can train once and deploy across your team's different tool setups. This is important for organizations where some developers use Claude Code and others use Codex or Cursor.
+**Benchmark Suite with Six Built-In Tasks.** The project includes six benchmarks covering different agent capabilities, plus a WebUI dashboard for monitoring training progress. You can also add custom benchmarks by creating a package with a dataloader, rollout function, and seed skill — the extensibility story is solid.
 
-**Multi-Provider Support.** The optimizer works with Azure OpenAI, Anthropic Claude, Qwen (via local vLLM), and MiniMax out of the box. You can use a strong model as the optimizer (GPT-5.5) while targeting a cheaper model for deployment. This split optimizer/target design is cost-efficient — you pay for expensive training runs with the optimizer model, but deploy the resulting skill on whatever model your budget allows.
-
-**Reproducible Training Pipeline.** The entire training loop is config-driven via YAML files. You specify your benchmark, data splits, optimizer model, target model, and hyperparameters in a config, and the training runs are reproducible. This is a significant step up from "I tweaked the prompt 47 times in the ChatGPT playground and this version seemed to work best."
+**Portable Skill Artifacts.** The deployed `best_skill.md` file is just markdown. It works with any model that can read a system prompt. Optimized skills transfer across model scales, between Codex and Claude Code harnesses, and to nearby benchmarks without re-optimization. There's no vendor lock-in, no special runtime, no SDK dependency at inference time.
 
 ### Use Cases
 
-- **Improving coding agent reliability** — If you're building features powered by Claude Code or Codex, SkillOpt can train agent skills that make the coding agent more consistent at your specific tasks (code review, refactoring, test generation) rather than relying on generic system prompts.
-- **RAG pipeline optimization** — Train skills that teach your retrieval-augmented agent how to synthesize answers from your specific document corpus. The validation gates ensure the skill actually improves accuracy on your domain, not just on generic benchmarks.
-- **Customer support automation** — For teams deploying LLM-powered support agents, SkillOpt can iteratively improve the agent's handling instructions based on real conversation trajectories and human feedback scores.
-- **Multi-model deployment strategies** — Use an expensive model (GPT-5.5) to optimize a skill, then deploy that skill against a cheaper model (GPT-4o-mini or Qwen) and still get meaningful accuracy improvements. The transfer works across model scales.
-- **Agent instruction version control** — Since the output is a markdown file, you can diff, review, and version-control your agent's optimized skills the same way you manage code. This fits naturally into existing GitOps workflows.
+- **Coding agent optimization** — Train your Claude Code or Codex setup to handle your team's specific patterns, codebase conventions, and recurring tasks. The Sleep plugin automates this over time.
+- **Customer support agents** — Optimize support bot skills for your specific product, tone, and escalation rules. Validation gates prevent the bot from getting worse at common queries while optimizing for edge cases.
+- **Research assistants** — Train an agent to follow your preferred methodology, citation style, and analysis framework. The skill document becomes a portable, optimizable representation of your workflow.
+- **Multi-model deployment** — Use an expensive model (GPT-5.5, Claude Opus) to optimize skills, then deploy the resulting `best_skill.md` with a cheaper model (GPT-4o-mini, Claude Haiku) for production inference. The skill carries the knowledge, not the model.
+- **Team skill sharing** — Optimize a skill document for your team's development workflow, commit it to your repo, and everyone benefits from the same optimized agent behavior without individual tuning.
 
 ### Pros and Cons
 
 Pros:
-- The results are real and reproducible — 52/52 best or tied-best cells across benchmarks, with per-cell results published in the paper. This isn't cherry-picked marketing data.
-- Zero deployment overhead is a killer feature. The trained skill is a static file. No runtime dependencies, no additional API costs, no infrastructure changes.
-- The multi-harness transfer means you're not locked into a single AI coding tool. Train once, use across Codex, Claude Code, and direct API calls.
-- Microsoft backing and MIT license give confidence that the project will be maintained and that you can use it commercially without legal headaches.
+- Validation-gated updates are the real breakthrough — they prevent the "optimize for one thing, break another" problem that plagues manual prompt engineering. The 0.00 → 1.00 improvement on deficient skills (with zero regressions on previously working ones) validates this approach.
+- The optimizer/target model split is pragmatic. You can use a frontier model to write skills for a model that costs 10x less to run, making this economically viable for production.
+- MIT licensed with PyPI distribution (`pip install skillopt`). The barrier to entry is low, and the WebUI dashboard makes training progress visible without parsing logs.
 
 Cons:
-- Requires API access to a strong model (GPT-5.5 or equivalent) for the optimizer role, which means real training costs. Budget-conscious teams may find the optimization loop expensive to run iteratively.
-- The setup is research-tool oriented — YAML configs, data splits, benchmark harnesses. It's not a polished developer product with a GUI. You need to be comfortable with Python, CLI tools, and experimental ML workflows.
-- The benchmarks are task-specific (SearchQA, ALFWorld, LiveMathematicianBench). Your mileage will vary on custom agent tasks — you'll need to build your own evaluation harness to get the full benefit.
+- The training loop requires significant API calls — each epoch involves multiple rollouts, reflections, and evaluations. Budget-conscious developers will burn through tokens fast, especially with frontier models as the optimizer.
+- The academic origin means the documentation leans toward benchmark reproduction rather than "here's how to optimize your specific use case." The gap between running the included benchmarks and applying this to your own agent workflow is non-trivial.
+- SkillOpt-Sleep is very new (released June 8, 2026). The plugins work, but the ecosystem is early. Expect rough edges and breaking changes in the next few months.
 
 ### Getting Started
 
 ```bash
-# Clone and install
+# Install from PyPI
+pip install skillopt
+
+# For the WebUI dashboard
+pip install -e ".[webui]"
+python -m skillopt_webui.app
+
+# Install SkillOpt-Sleep for Claude Code
+# (from the repo)
 git clone https://github.com/microsoft/SkillOpt.git
 cd SkillOpt
-pip install -e .
+# For Claude Code:
+/plugin marketplace add ./plugins/claude-code
+# Then run /sleep in your Claude Code session
 
-# Configure API credentials
-cp .env.example .env
-# Edit .env with your Azure OpenAI or other provider credentials
+# For Codex:
+bash plugins/codex/install.sh
+# Then run /sleep in your Codex session
 
-# Train a skill on SearchQA
-python scripts/train.py \
-    --config configs/searchqa/default.yaml \
-    --split_dir /path/to/your/searchqa_split \
-    --optimizer_model gpt-5.5 \
-    --target_model gpt-5.5
-
-# Train on ALFWorld (requires extra dependency)
-pip install -e ".[alfworld]"
-alfworld-download
-
-python scripts/train.py \
-    --config configs/alfworld/default.yaml \
-    --split_dir data/alfworld_path_split \
-    --optimizer_model gpt-5.5 \
-    --target_model gpt-5.5
+# Verify without API keys (deterministic proof)
+python -m skillopt_sleep.experiments.run_experiment --persona researcher --assert-improves
 ```
-
-The trained skill is output as `best_skill.md` — a plain markdown file you can read, edit, and paste into any agent's system prompt.
 
 ### Alternatives
 
-**DSPy** — Stanford's programming framework for optimizing language model pipelines. DSPy compiles your entire LM pipeline (retrieval, reasoning, output) into optimized modules using teleprompters. It's more general than SkillOpt — it optimizes full pipelines, not just skill documents — but it's also more complex to set up and requires you to express your agent logic as DSPy modules. Choose DSPy when you need to optimize an entire multi-step pipeline. Choose SkillOpt when you want a focused improvement on a single agent skill with minimal infrastructure changes.
+**DSPy** — Stanford's framework for programming (not prompting) language models. DSPy optimizes prompts through its own teleprompter system and is more mature with a larger community. Choose DSPy when you need a full programming framework for LLM pipelines with built-in optimization, not just skill document training. SkillOpt is more focused — it does one thing (optimize skill documents) with stronger validation guarantees.
 
-**TextGrad** — An automatic differentiation framework for text-based optimization. TextGrad treats text as differentiable and uses natural-language feedback as gradients. It's more theoretically elegant but less practical for agent skill optimization — the feedback signals are noisier and the optimization is less stable than SkillOpt's validation-gated approach. Choose TextGrad when you're doing research on text optimization. Choose SkillOpt when you want reproducible improvements to production agent skills.
+**PromptFlow** — Microsoft's own LLM workflow orchestration tool. PromptFlow is more of an end-to-end pipeline builder with evaluation and deployment features. It's better suited for building complex multi-step LLM applications. SkillOpt is the better choice when your primary goal is optimizing a single skill document through systematic iteration, not building a workflow.
 
-**Manual Prompt Engineering** — The status quo. Iterate on prompts in the ChatGPT playground, A/B test with your users, and hope for the best. This works for simple use cases but doesn't scale and isn't reproducible. Choose manual engineering when your agent task is simple and the stakes are low. Choose SkillOpt when you need measurable, transferable improvements to agent performance.
+**Manual Prompt Engineering with Evals** — Tools like Braintrust, Promptfoo, or custom eval harnesses let you test prompts systematically. This approach gives you full control but requires building your own optimization loop. Choose manual evals when you need fine-grained control over what "better" means, or when your evaluation criteria are too nuanced for automated scoring.
 
 ### Verdict
 
-SkillOpt is the most interesting thing to come out of the agent optimization space this year. The core insight — treat agent skills as trainable artifacts with the same discipline we apply to model weights — is obvious in retrospect but nobody had built a clean, reproducible system for it until now. The fact that it ships with a research paper, per-cell benchmark results, and support for multiple providers makes it feel like a real tool rather than a proof of concept. The 4,200-star growth in under a month suggests the developer community agrees. If you're building any kind of AI agent — coding assistants, support bots, RAG systems — and you're still hand-tuning prompts, you should spend an afternoon with SkillOpt. The optimization loop is real, the gains are measurable, and the deployment cost is zero.
+SkillOpt is the most rigorous take on agent skill optimization I've seen from any research lab. The validation-gated approach is genuinely novel — it's not just "ask an LLM to improve your prompt" but a systematic loop with real guarantees against regression. The numbers back it up: 52 out of 52 best-or-tied cells across benchmarks and models is hard to argue with. The SkillOpt-Sleep plugin is where this gets practically interesting for working developers — giving your Claude Code or Codex agent a nightly training loop that makes it better at your specific tasks over time. It's early, it's research-adjacent, and the token costs for training runs will make some teams hesitate. But if you're building serious agent workflows and you're tired of hand-tuning prompts through vibes and intuition, SkillOpt is worth the experiment. The 5,700 stars in a month suggest the developer community is paying attention.
