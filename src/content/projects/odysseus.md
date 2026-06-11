@@ -1,70 +1,70 @@
 ---
 name: odysseus
-description: "Odysseus is a self-hosted AI workspace with chat, agents, deep research, email, calendar, and memory — a local-first alternative to ChatGPT and Claude."
+description: "Odysseus is a self-hosted AI workspace with chat, agents, deep research, documents, email, and calendar — your private ChatGPT alternative that runs on your own hardware."
 url: https://github.com/pewdiepie-archdaemon/odysseus
-stars: 19959
-forks: 2440
+stars: 67982
+forks: 8510
 language: Python
-tags: ["ai-workspace", "self-hosted", "agents", "local-first", "privacy"]
+tags: ["ai-workspace", "self-hosted", "agents", "privacy", "open-source"]
 featured: false
-publishedAt: 2026-06-02
+publishedAt: 2026-06-12
 ---
 
 ## Odysseus
 
 ### Overview
 
-Odysseus is a self-hosted AI workspace that hit nearly 20,000 GitHub stars in its first 48 hours after launching on May 31, 2026. That's not a typo — twenty thousand stars in two days. For context, most successful open-source projects take months or years to reach that number. Odysseus did it over a weekend.
+Odysseus hit 68,000 GitHub stars in roughly two weeks after its May 31, 2026 launch. That kind of velocity is rare — it took EmDash two months to reach 10K, and most projects never get there at all. The growth tells you something real: developers and power users are hungry for a self-hosted AI workspace that doesn't funnel their data through someone else's servers.
 
-The project describes itself as "the self-hosted version of the UI experience you get from ChatGPT and Claude. But with more jank and fun." That self-deprecating honesty is refreshing. It's built on a Python FastAPI backend with a vanilla JavaScript frontend — no React, no Next.js, no framework-of-the-week. The architecture is deliberately simple: `app.py` as the entry point, modular `routes/` and `services/` directories, static files served directly. It uses SQLite by default for data storage and ChromaDB for vector memory.
+The project is built by pewdiepie-archdaemon and a small team of core contributors (afonsopc, redpersongpt, and others have been active since day one). The architecture is a Python FastAPI backend with a vanilla JavaScript frontend — no React, no Next.js, just modular JS in `/static/js/`. It uses SQLite by default with ChromaDB for vector memory, and the whole thing runs in Docker or natively on Linux, macOS, and Apple Silicon.
 
-The core problem Odysseus solves is the growing discomfort among developers and power users with sending all their data to cloud AI services. Every prompt, every document, every email summary — it all goes through someone else's servers. Odysseus lets you run the full AI workspace experience on your own hardware. Chat with any model (local or API), run agents with tool access, do deep research, manage email and calendar, write documents with AI assistance — all without your data leaving your machine. For teams handling sensitive code, legal documents, or proprietary research, that's not just a nice-to-have. It's a requirement.
+The core pitch: take the polished UX you get from ChatGPT and Claude's web interfaces, but run it on your own hardware with your own models. Odysseus connects to Ollama, vLLM, llama.cpp, OpenRouter, OpenAI, and GitHub Copilot — pick your providers in Settings and go. It's not just a chat wrapper either. The workspace includes an agent system built on opencode with MCP support, a deep research feature that synthesizes multi-source reports, a document editor where AI assists (not replaces) your writing, an IMAP/SMTP email client with AI triage, a CalDAV-synced calendar, notes with reminders, and a "Cookbook" that scans your hardware and recommends models that fit your VRAM.
 
 ### Why it matters
 
-The self-hosted AI tool space has been fragmented. You have Ollama for running models, Open WebUI for chat, various agent frameworks for tool use, and separate apps for everything else. Odysseus bundles all of that into a single workspace that feels cohesive. The "Cookbook" feature alone is worth watching — it scans your hardware, recommends models that fit your VRAM, and lets you click to download and serve them. No more guessing which GGUF quantization will work on your 8GB GPU.
+The AI tooling space is splitting into two camps: cloud-hosted SaaS (ChatGPT, Claude, Gemini) and self-hosted alternatives. Odysseus occupies the second camp aggressively. It's not trying to be a single-purpose tool — it's trying to be the operating system for your AI-assisted workflow, and it runs entirely on your infrastructure.
 
-What makes this project particularly interesting is the pace of community adoption. 20K stars in 48 hours suggests this hits a nerve. Developers are clearly hungry for a self-hosted alternative that doesn't feel like a toy. The ChatGPT and Claude interfaces have set a UX bar, and most open-source alternatives fall short. Odysseus doesn't try to be minimalist — it goes the other direction, packing in features like email triage, calendar sync, deep research, and persistent memory. Whether that bloat or completeness depends on your use case, but the ambition is undeniable.
+This matters for developers specifically because of the agent architecture. Odysseus agents have access to shell, files, web, MCP servers, skills, and persistent memory. You can hand it a task and let it run autonomously, which is the direction every major AI company is heading. But instead of paying per-token to a cloud provider, you run it locally with whatever model fits your hardware. The Cookbook feature makes this practical — it scans your GPU, checks VRAM, and recommends models with fit scores so you're not guessing.
 
-The timing connects to the broader local-first movement. Projects like Ollama have proven that running models locally is viable for many use cases. The missing piece was the workspace layer — the thing that makes local AI feel like a product, not a script. Odysseus fills that gap.
+The privacy angle isn't just paranoia. Enterprise teams, healthcare developers, legal tech, and anyone working with sensitive data has legitimate reasons to keep AI interactions off third-party servers. Odysseus makes that viable without sacrificing the UX polish that makes cloud tools appealing.
 
 ### Key Features
 
-**Multi-Provider Chat.** Connect to any LLM backend — vLLM, llama.cpp, Ollama, OpenRouter, OpenAI, or any OpenAI-compatible API. The provider setup happens inside the app's Settings panel, not in config files. You can switch between local models and cloud APIs without restarting anything. This flexibility means you're never locked into a single model provider.
+**Multi-Provider Chat.** Connect any combination of local and API models — Ollama, vLLM, llama.cpp, OpenRouter, OpenAI, GitHub Copilot. Add providers through the Settings UI, no config file editing required. Sessions persist locally so you can switch between models mid-conversation without losing context.
 
-**Agent Mode with Tool Access.** Built on top of the opencode project, the agent can use MCP tools, browse the web, read and write files, execute shell commands, and maintain persistent memory. It's not just a chatbot with a system prompt — it has real access to your system. The agent loop handles multi-step tasks autonomously, which makes it useful for actual development work, not just Q&A.
+**Agent System with MCP Support.** The agent mode hands tools to the AI and lets it execute tasks autonomously. It's built on opencode and supports MCP (Model Context Protocol), shell commands, file operations, web browsing, skills, and persistent memory. This is the feature that separates Odysseus from a simple chat frontend — it can actually do things, not just talk about them.
 
-**Cookbook — Hardware-Aware Model Management.** This is the feature that sets Odysseus apart from other self-hosted chat UIs. Cookbook scans your GPU VRAM, scores available models by fit (using the llmfit project), and lets you one-click download and serve the best options. It supports GGUF, FP8, and AWQ formats, and can serve models through vLLM or llama.cpp. For developers who want to run local models but don't want to become ML engineers, this is a massive time-saver.
+**Cookbook — Hardware-Aware Model Recommendations.** Built on llmfit, Cookbook scans your hardware, detects available VRAM, and recommends models that actually fit. It scores GGUF, FP8, and AWQ quantizations and can download and serve them through vLLM or llama.cpp with one click. No more guessing whether a 70B model will run on your 24GB card.
 
-**Deep Research.** Adapted from Alibaba's Tongyi DeepResearch, this feature runs multi-step research tasks that gather sources, read them, and synthesize findings into visual reports. It's not just "search and summarize" — it does genuine multi-hop reasoning across sources. For developers researching APIs, architecture decisions, or competitive landscapes, this saves hours of manual tab-hopping.
+**Deep Research.** Multi-step research runs that gather sources, read content, and synthesize findings into visual reports. Adapted from Tongyi DeepResearch (Alibaba's research agent). This is useful for developers evaluating libraries, understanding architecture decisions, or staying current with rapidly moving fields.
 
-**Persistent Memory and Skills.** Odysseus uses ChromaDB with fastembed (ONNX-based embeddings) for vector storage, combined with keyword retrieval. The agent remembers context across sessions and can develop skills over time. You can import and export memory, which matters for teams that want to share institutional knowledge across instances. This is the kind of feature that makes an AI workspace feel like it actually knows you.
+**Email with AI Triage.** Full IMAP/SMTP client with per-account routing and AI-powered features: urgency tagging, auto-summary, auto-reply drafts, and spam detection. CalDAV-aware for calendar integration. This turns Odysseus from an AI tool into an actual daily driver workspace.
 
-**Integrated Email and Calendar.** Full IMAP/SMTP email with AI-powered triage — urgency reminders, auto-tagging, auto-summary, auto-reply drafts, and spam detection. The calendar supports CalDAV sync with Radicale, Nextcloud, Apple, and Fastmail. These aren't afterthought features — they're designed to make Odysseus a genuine replacement for your daily productivity tools, not just an AI chat interface.
+**Persistent Memory and Skills.** ChromaDB-backed vector memory with fastembed (ONNX) embeddings. Your agent accumulates knowledge about your projects, preferences, and working patterns over time. Skills can be imported and exported. Memory retrieval uses both vector similarity and keyword matching for robustness.
 
-**Cross-Platform with Mobile Support.** Runs on Linux, macOS (with Metal GPU support via native mode), Windows, and Docker. The frontend is responsive and installable as a PWA, so it works well on phones. Apple Silicon users get a dedicated `start-macos.sh` script and can build a clickable app wrapper. The project clearly cares about meeting developers where they are, not forcing them into a specific setup.
+**Mobile-First Responsive Design.** The PWA works on phones with touch gestures, not just desktop browsers. Install it as an app on your phone and you have a full AI workspace in your pocket. This is surprisingly rare in self-hosted AI tools — most assume you're sitting at a desktop.
 
 ### Use Cases
 
-- **Local development assistant** — Run Odysseus alongside your IDE to chat with models, run agents for code tasks, and do research without sending proprietary code to cloud APIs.
-- **Team knowledge base** — Deploy on a shared server with per-user accounts. The persistent memory and skills system means the workspace gets smarter as your team uses it.
-- **Email and calendar hub** — Replace your email client with one that has AI triage built in. Auto-summarize long threads, draft replies, and get urgency alerts.
-- **Research and documentation** — Use Deep Research to gather and synthesize information for technical docs, architecture decisions, or competitive analysis.
-- **Model experimentation** — Cookbook makes it easy to try different local models for different tasks. Benchmark which model works best for your specific use case without manual setup.
+- **Full-stack developer productivity hub** — Chat with models about code, let agents run shell commands and file operations, research new frameworks, manage notes and tasks, all without switching between five different tools.
+- **Privacy-sensitive AI workflows** — Healthcare, legal, or enterprise teams who need AI assistance but cannot send data to OpenAI, Anthropic, or Google. Run everything on your own hardware behind your own firewall.
+- **Local model experimentation** — Use Cookbook to discover which models fit your GPU, test them side-by-side with the Compare feature, and pick the best one for your use case without burning API credits.
+- **Solo developer's command center** — Replace your separate email client, calendar, notes app, and AI chat with a single self-hosted workspace. The email triage alone saves time if you get high volumes of GitHub notifications and client communication.
+- **Team knowledge base with agent access** — Deploy Odysseus on a shared server, let team members build persistent memory around projects, and give the agent access to documentation and internal tools via MCP.
 
 ### Pros and Cons
 
 Pros:
-- Genuinely self-hosted with no telemetry or cloud dependencies. Your data stays on your hardware, period. The MIT license means you can modify and deploy it however you want.
-- Cookbook's hardware-aware model recommendation is unique in the space. It takes the guesswork out of running local models, which is the biggest barrier to adoption for most developers.
-- The feature set is ambitious — email, calendar, agents, deep research, memory, documents — and most of it actually works. This isn't a demo with placeholder features.
-- Explosive community growth (20K stars in 2 days) means the project has momentum and a large potential contributor base.
+- Feature density is remarkable — chat, agents, research, documents, email, calendar, notes in one self-hosted app. Most self-hosted AI tools cover one of these; Odysseus covers all of them.
+- The Cookbook hardware scanner removes the biggest friction point of running local models. Knowing what fits your GPU before downloading a 40GB file is genuinely useful.
+- AGPL-3.0 license means the code stays open even if someone tries to fork it into a closed product. The community can always maintain a free version.
+- Active development with 440+ commits from multiple contributors in under two weeks. The project isn't a solo show — there's real team momentum.
 
 Cons:
-- 416 open issues after 2 days signals that the project launched before it was fully stable. Expect rough edges, especially around the agent mode and email integration.
-- The "more jank and fun" self-description is honest — this is not a polished SaaS product. The UI is functional but not beautiful, and the documentation is minimal.
-- Running a full stack (Odysseus + ChromaDB + SearXNG + ntfy) requires meaningful system resources. This isn't a lightweight tool you run on a Raspberry Pi.
-- The JavaScript frontend with no framework means contributing to the UI requires working with vanilla JS patterns that many modern developers aren't used to.
+- Python/FastAPI backend with vanilla JS frontend means the codebase is less type-safe than a TypeScript monorepo. For a project this size, refactoring will get harder as contributions grow.
+- 1,183 open issues as of mid-June 2026 signals the project is moving faster than its issue triage capacity. Some bugs will linger.
+- No built-in visual page builder or drag-and-drop layout for the document editor. If you're expecting Notion-level polish, it's not there yet.
+- AGPL-3.0 is restrictive for commercial use — if you want to embed Odysseus in a commercial product, you need to either open-source your entire stack or negotiate a different license.
 
 ### Getting Started
 
@@ -76,9 +76,10 @@ cp .env.example .env
 docker compose up -d --build
 
 # Open http://localhost:7000
-# First login uses auto-generated admin password from docker compose logs
+# First login uses admin account with temp password printed in terminal
+# Change password in Settings after first login
 
-# Native Linux / macOS
+# Native Linux/macOS
 git clone https://github.com/pewdiepie-archdaemon/odysseus.git
 cd odysseus
 python3 -m venv venv
@@ -93,16 +94,18 @@ cd odysseus
 ./start-macos.sh
 ```
 
-After first login, configure your model providers in Settings. For local models, the Cookbook feature will scan your hardware and recommend compatible models. For cloud APIs, add your OpenAI, OpenRouter, or other provider keys.
+Configure models and providers inside the app at **Settings**. Add your OpenAI key, connect to a local Ollama instance, or point it at any OpenAI-compatible API endpoint.
 
 ### Alternatives
 
-**Open WebUI** — The most popular self-hosted chat interface for local models. It's more mature, has a larger community, and offers a cleaner UI. But it's focused purely on chat — no email, calendar, deep research, or agent tooling. Choose Open WebUI if you want a polished chat experience and don't need the workspace features.
+**Open WebUI** — The most popular self-hosted ChatGPT interface with a polished React frontend and strong Ollama integration. Open WebUI is more mature and has better multi-user support, but it's primarily a chat frontend — no email, calendar, document editing, or agent tools. Choose Open WebUI if you just want a clean chat interface and don't need the workspace features.
 
-**LibreChat** — A multi-provider chat interface with a React frontend and support for plugins, agents, and file analysis. LibreChat is more feature-complete for chat specifically and has better documentation. It's the better choice if you primarily need a ChatGPT-like interface with multiple model backends and don't care about the workspace integration.
+**LibreChat** — Another self-hosted chat UI that supports multiple providers and has a plugin system. LibreChat is TypeScript-based (Node.js + React + MongoDB) and has better enterprise features like LDAP auth and multi-user management. Better choice for teams that need role-based access control and a more traditional web app architecture.
 
-**Hermes Agent** — A different approach entirely — an AI agent that runs as a background process with tool access, scheduled tasks, and plugin support. Hermes is more focused on autonomous task execution than on being a workspace UI. Choose it if you want an agent that works for you rather than a workspace you work in.
+**Anything LLM** — A desktop-first self-hosted AI tool focused on document chat and RAG. Anything LLM has a cleaner UI for document-based workflows and better vector database options. Choose it if your primary use case is chatting with your documents rather than a full workspace with email, calendar, and agents.
 
 ### Verdict
 
-Odysseus is the most ambitious self-hosted AI project I've seen launch. 20K stars in 48 hours is not normal growth — it signals that a huge number of developers have been waiting for exactly this: a self-hosted AI workspace that bundles chat, agents, email, calendar, and research into one coherent product. The Cookbook feature for hardware-aware model management alone is a significant contribution to the local AI ecosystem. It's early, it's rough, and it has 416 open issues for a reason. But the architecture is sound, the feature set is real (not vaporware), and the MIT license means the community can shape it. If you're a developer who's been meaning to go local-first with your AI tools, Odysseus is worth setting up this weekend. Just don't expect production polish — expect something that works and is getting better fast.
+Odysseus is the most ambitious self-hosted AI project I've seen in 2026. The 68K stars in two weeks aren't hype — they're a signal that the self-hosted AI workspace category is real and underserved. The combination of chat, agents, deep research, email, calendar, and memory in a single self-hosted app is something nobody else has attempted at this level of integration. The Cookbook hardware scanner alone makes it worth trying if you have a GPU and want to run local models without the guesswork.
+
+It's early software with rough edges — the open issue count, the vanilla JS frontend, and the rapid feature additions all suggest the API surface is still settling. Don't bet your production workflow on it today. But for developers who want to replace their cloud AI subscriptions with a self-hosted alternative that actually feels like a workspace, not just a chat box, Odysseus is the project to watch. The community momentum suggests it'll be substantially more polished by Q3 2026.
