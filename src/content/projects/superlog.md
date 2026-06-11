@@ -1,79 +1,77 @@
 ---
 name: superlog
-description: "Superlog is an open-source agentic observability tool backed by Y Combinator that ingests OpenTelemetry data and uses AI agents to investigate production incidents automatically."
+description: "YC-backed open-source observability platform that uses AI agents to auto-investigate incidents and self-heal production systems from OpenTelemetry data."
 url: https://github.com/superloglabs/superlog
-stars: 296
-forks: 17
+stars: 760
+forks: 40
 language: TypeScript
-tags: ["observability", "opentelemetry", "ai-agents", "typescript", "react", "clickhouse"]
+tags: ["observability", "ai-agents", "opentelemetry", "self-healing", "typescript"]
 featured: false
-publishedAt: 2026-06-09
+publishedAt: 2026-06-12
 ---
 
 ## Superlog
 
 ### Overview
 
-Superlog is an open-source observability workspace that takes a different approach to the "too many alerts, not enough answers" problem plaguing every team running production services. Instead of just collecting telemetry data and hoping someone reads the dashboards, Superlog ingests traces, logs, and metrics through OpenTelemetry, groups noisy signals into actionable incidents, and then deploys AI agents to investigate those incidents while you sleep.
+Superlog is an open-source agentic telemetry system backed by Y Combinator (P26 batch). It ingests traces, logs, and metrics via OpenTelemetry, groups noisy signals into actionable incidents using AI, and then deploys autonomous agents to investigate and propose fixes — including opening pull requests on GitHub. The project launched in early June 2026 and has already crossed 760 stars, which is a strong signal for a developer tool in a space dominated by incumbents like Datadog and New Relic.
 
-The project launched publicly in early June 2026 and quickly hit 296 GitHub stars with active daily commits. It's backed by Y Combinator (P26 batch), which gives it more runway and credibility than the typical weekend observability project. The sole core contributor, arseniycodes, has pushed 85 commits in under a week — the kind of velocity that suggests either serious commitment or a very caffeinated human. The codebase is Apache 2.0 licensed.
+The team is small and focused. The primary maintainer, arseniycodes, has pushed 117 commits in the project's first two weeks. That velocity matters because observability tooling is notoriously complex — you need solid ClickHouse queries, reliable OTLP ingestion, and a frontend that doesn't choke on high-cardinality data. The codebase is a monorepo with a Vite/React web app, an Express API, an OTLP intake proxy, background workers for incident grouping and agent orchestration, plus Drizzle ORM migrations for Postgres and ClickHouse.
 
-The tech stack reads like a fullstack developer's wishlist: Vite and React for the frontend, a Node.js HTTP API, an OTLP intake proxy, background workers for incident grouping, Drizzle ORM with PostgreSQL for application data, and ClickHouse for the heavy-lifting telemetry queries. If you've ever struggled to get Datadog or New Relic to do what you actually need, Superlog's architecture is refreshingly straightforward — it's a monorepo you can read, fork, and extend.
+The core problem Superlog solves is alert fatigue. Every engineering team that runs production services knows the drill: you set up monitoring, you get flooded with alerts, you start ignoring them, and then something actually breaks at 3 AM and nobody notices. Superlog groups related telemetry signals into incidents automatically, so instead of 47 individual alerts about a database connection pool issue, you get one incident with context. Then it goes further — an AI agent investigates the incident, correlates traces with logs, checks recent deployments, and proposes a fix.
 
 ### Why it matters
 
-The observability market is dominated by three problems: vendor lock-in, per-host pricing that punishes scale, and alert fatigue that makes dashboards useless. Datadog's average customer spends $23,000/year according to their own S-1 filing, and most teams still can't answer "what broke and why" without a 30-minute investigation. OpenTelemetry has won the instrumentation war — it's the second-most active CNCF project after Kubernetes — but the tooling layer on top of it is still fragmented between Grafana, Jaeger, SigNoz, and a dozen others.
+The observability market is worth over $5 billion annually, and every major player — Datadog, Grafana Labs, New Relic, Dynatrace — is racing to add AI features. But these are closed-source, expensive platforms where AI capabilities are premium add-ons. Superlog flips that model: the AI agent is core to the product, and the whole thing is open source under Apache 2.0.
 
-Superlog positions itself as the missing "intelligence layer" on top of raw OTel data. The agentic investigation model is what makes it interesting: when an incident is detected, the system doesn't just page you. It runs an investigation agent that correlates traces, logs, and metrics, then produces a summary. The community edition ships with a local agent runner that records incident summaries, but the architecture supports pluggable investigation runtimes — meaning you can wire in your own LLM-powered agent or use their cloud offering.
+For fullstack developers running React frontends with Node.js, NestJS, Django, or Go backends, observability is no longer optional. The OpenTelemetry standard has won the instrumentation war, but the tooling story is fragmented. You either pay Datadog prices (which can run thousands per month for a medium-sized team), self-host the Grafana stack (Prometheus + Loki + Tempo, three separate systems to maintain), or cobble together something custom. Superlog offers a middle path: a single self-hosted platform that understands all three OTel signal types and adds intelligence on top.
 
-For fullstack developers running React frontends with NestJS, Django, or Go backends, Superlog's OpenTelemetry-native approach means you instrument once and get both the raw data and the AI-powered analysis. No proprietary SDKs, no vendor-specific query languages.
+The MCP server integration is particularly forward-looking. Superlog exposes its data through the Model Context Protocol, which means Claude, ChatGPT, Cursor, and other AI tools can query your production telemetry directly. Ask your coding agent "why are users seeing 500 errors on the checkout endpoint?" and it can pull real traces, correlate them with recent deploys, and give you an answer grounded in actual production data. This is where developer tooling is heading.
 
 ### Key Features
 
-**OpenTelemetry-Native Ingestion.** Superlog accepts traces, logs, and metrics through standard OTLP endpoints. If your app already emits OpenTelemetry data (and most modern frameworks do), you point your exporter at Superlog's intake proxy on port 4101 and you're done. No custom agents to install, no proprietary instrumentation libraries.
+**Agentic Incident Investigation.** When Superlog groups signals into an incident, it doesn't just send you a notification. An AI agent (powered by Claude) kicks off an investigation run: it pulls related traces and logs from ClickHouse, checks for correlated incidents, examines recent GitHub commits, and builds a structured analysis. The agent can propose fixes and even open a PR with the patch. This isn't a chatbot wrapper — it's a purpose-built investigation pipeline with tool access to your actual production data.
 
-**AI-Powered Incident Investigation.** The core differentiator. When signals are grouped into incidents, an agent runner kicks off to investigate. The community edition uses a local runner that correlates related telemetry and produces a structured summary. The architecture supports pluggable runtimes, so you can swap in Claude, GPT-4, or a custom model for deeper investigation.
+**OpenTelemetry-Native Ingestion.** Superlog speaks OTLP natively. Point your OpenTelemetry Collector (or any OTel-instrumented application) at the intake proxy on port 4101, and traces, logs, and metrics flow into ClickHouse. No proprietary agents, no vendor-specific SDKs. If your app already uses OpenTelemetry for instrumentation — and most modern frameworks support it out of the box — integration is a config change, not a code change.
 
-**ClickHouse-Backed Telemetry Queries.** Raw telemetry data lives in ClickHouse, which handles billions of rows with sub-second query times. This is the same engine Uber, Cloudflare, and eBay use for their observability data. You get fast queries without the per-GB pricing of hosted solutions.
+**Intelligent Signal Grouping.** The grouping agent uses LLM-powered fingerprinting to cluster related telemetry signals. A spike in HTTP 500 errors, a burst of database timeout logs, and a drop in request throughput get grouped into a single incident instead of three separate alerts. The fingerprinting system is in a dedicated package (`packages/fingerprint`), which means the grouping logic is testable and improvable independently from the rest of the system.
 
-**Signal Grouping and Deduplication.** Instead of flooding Slack with 47 alerts about the same underlying issue, Superlog fingerprints incoming telemetry and groups related signals into single incidents. The `packages/fingerprint` module handles the heavy lifting, reducing alert noise by consolidating related traces, logs, and metric spikes.
+**MCP Server for AI Tool Integration.** Superlog ships with a full MCP server that exposes tools for querying traces, logs, metrics, incidents, alerts, and dashboards. Your coding agent can ask "show me all errors on the /api/payments route in the last hour" and get structured data back. This bridges the gap between "AI coding assistant" and "AI that understands your production environment."
 
-**Slack and GitHub Integration.** Incidents surface in Slack with interactive modals for feedback and acknowledgment. The system also creates PRs with target branch pickers pulled from GitHub, so incident context flows directly into your development workflow. Recent commits show active work on Slack private channel support and PR diff rendering.
+**GitHub and Slack Integration.** When the auto-recovery agent proposes a fix, it can open a GitHub PR with the changes. Incidents get posted to Slack with context and severity. The Linear integration creates tickets for incidents that need human attention. These aren't bolt-on integrations — they're deeply woven into the agent's workflow, so the output is a proper PR with tests, not a code snippet pasted into a Slack message.
 
-**Monorepo Architecture You Can Fork.** The entire system is a pnpm monorepo with clear boundaries: `apps/web` (React frontend), `apps/api` (HTTP API), `apps/proxy` (OTLP intake), `apps/workers` (background jobs), `packages/db` (Drizzle schema), and `packages/fingerprint` (signal grouping). Each piece is independently understandable and modifiable.
+**Self-Hosted with Cloud Option.** The community edition runs entirely on your infrastructure: Docker Compose for local development, or deploy to your own servers. The data stays in your ClickHouse and Postgres instances. For teams that want managed infrastructure, Superlog Cloud offers a hosted version with a free tier. This dual model means you can start self-hosting and migrate to cloud later without changing your instrumentation.
 
-**Agent Skill Installation.** Superlog ships as a coding agent skill. Run `npx skills add superloglabs/skills --all` and your coding agent can instrument your project with Superlog in a single prompt. This is the kind of DX that makes adoption frictionless.
+**Pluggable Agent Runners.** The agent orchestration layer is abstracted behind a runner interface. The default community runner uses Claude for investigation and records a local incident summary. The architecture supports plugging in different LLM backends or custom investigation logic. This is important for enterprises that need to run agents against internal models or add domain-specific investigation steps.
 
 ### Use Cases
 
-- **Fullstack teams running microservices** — You have a React frontend talking to a NestJS or Go API, a PostgreSQL database, and maybe a Redis cache. Superlog ingests OTel data from all of them and correlates cross-service traces into single incidents, so you can see the full request path when something breaks.
+- **Production incident triage** — Teams drowning in alerts use Superlog to group related signals and get AI-generated incident summaries instead of manually correlating Grafana panels and log queries.
 
-- **Solo developers and small teams who can't afford Datadog** — The self-hosted community edition is free with no per-host pricing. You run it on your own infrastructure with Docker and PostgreSQL, and you get incident detection plus AI investigation without the $23K/year bill.
+- **Automated root cause analysis** — When a deployment causes performance regression, the agent correlates the timing with GitHub commits, examines the changed code paths in traces, and identifies the likely culprit.
 
-- **Teams adopting OpenTelemetry who need a backend** — If you've instrumented your app with OTel but are still piping data to a vendor dashboard you barely look at, Superlog gives you a local-first alternative with actual intelligence on top.
+- **AI-assisted debugging workflows** — Developers using Claude Code or Cursor can query production telemetry through the MCP server while debugging locally, bridging the gap between "this code looks wrong" and "this code is causing errors in production."
 
-- **AI-native development workflows** — If you're building with coding agents and want your observability to speak the same language, Superlog's agent skill approach and pluggable investigation runtimes fit naturally into that workflow.
+- **On-call engineer support** — Junior engineers handling incidents get structured investigation reports from the agent, reducing the time from alert to resolution and building institutional knowledge about common failure patterns.
 
-- **Incident response automation** — The agent runner architecture lets you build custom investigation logic. Instead of manually correlating logs and traces during an outage, the agent does it automatically and presents findings before a human even opens Slack.
+- **Compliance and audit trails** — Every agent investigation run is recorded with its inputs, reasoning, and proposed actions, creating an audit trail for how incidents were handled.
 
 ### Pros and Cons
 
 Pros:
-- Y Combinator backing (P26 batch) gives the project more credibility and runway than typical open-source observability tools. The team has funding to sustain development.
-- OpenTelemetry-native means zero vendor lock-in on the instrumentation side. Your OTel data works with Superlog, Grafana, Jaeger, or anything else that speaks OTLP.
-- ClickHouse for telemetry storage is a proven choice at scale — it's the same database powering observability at Uber and Cloudflare, with sub-second queries on billions of rows.
-- The monorepo architecture is clean and readable. Each app and package has a clear responsibility, making it easy to contribute or fork.
+- YC-backed with active development — 117 commits from the primary maintainer in two weeks suggests this isn't a weekend project that'll be abandoned next month.
+- OpenTelemetry-native means zero vendor lock-in on the instrumentation side. Switch from Datadog to Superlog without touching your application code.
+- The MCP integration is genuinely useful, not a checkbox feature. It turns your production telemetry into context that AI coding tools can reason about.
+- Self-hosted under Apache 2.0 gives you full control over your data — critical for teams in regulated industries.
 
 Cons:
-- 296 stars and a single core contributor means this is early-stage software. Production readiness is a real question — there are 36 open issues and the API surface is still settling.
-- No built-in dashboard for raw telemetry exploration yet. The current UI focuses on incidents, so if you need ad-hoc trace or log queries, you'll still reach for Grafana or Jaeger alongside Superlog.
-- ClickHouse adds operational complexity. It's another database to run, monitor, and back up. For small teams, the Docker compose setup works, but scaling ClickHouse in production requires real expertise.
+- 760 stars and two weeks old means this is very early. The API surface is still settling, and you'll hit rough edges. 13 open issues at launch suggests the team is aware of gaps.
+- ClickHouse dependency adds operational complexity. It's excellent for telemetry workloads but requires a different skill set than a standard Postgres-only deployment.
+- The AI agent features require an Anthropic API key (Claude). If you're trying to avoid external API dependencies or run fully air-gapped, the self-healing features won't work without modification.
 
 ### Getting Started
 
 ```bash
-# Prerequisites: Node.js 20+, pnpm 9+, Docker
-
 # Clone the repository
 git clone https://github.com/superloglabs/superlog.git
 cd superlog
@@ -81,38 +79,46 @@ cd superlog
 # Install dependencies
 pnpm install
 
-# Start the local stack (Postgres + ClickHouse via Docker)
+# Start the local stack (ClickHouse + Postgres + app)
 docker compose up -d
-
-# Run database migrations
 pnpm --filter @superlog/db db:migrate
-
-# Start development servers
 pnpm dev
 ```
 
-The local services will be available at:
+The local dev environment starts three services:
+- Web UI: http://localhost:5173
+- API: http://localhost:4100
+- OTLP intake: http://localhost:4101
 
-- **Web UI:** http://localhost:5173
-- **API:** http://localhost:4100
-- **OTLP Intake:** http://localhost:4101
+Point your application's OpenTelemetry exporter at the intake proxy:
 
-Point your application's OpenTelemetry exporter to `http://localhost:4101` and start seeing traces, logs, and metrics in the Superlog dashboard.
+```bash
+# For a Node.js app using OTel
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4101
+```
 
-To install as a coding agent skill:
+To add Superlog to your project using coding agent skills:
 
 ```bash
 npx skills add superloglabs/skills --all
 ```
 
+Run typechecks to verify your setup:
+
+```bash
+pnpm typecheck
+```
+
 ### Alternatives
 
-**SigNoz** — Another open-source, OpenTelemetry-native observability platform with a ClickHouse backend. SigNoz is more mature (3.5K+ GitHub stars, larger community) and has a more complete dashboard for trace and log exploration. Choose SigNoz if you need a full Grafana replacement today. Choose Superlog if the agentic investigation model appeals to you and you're willing to trade maturity for a more opinionated incident-focused workflow.
+**Grafana Stack (Prometheus + Loki + Tempo)** — The most popular open-source observability stack. More mature, larger community, and battle-tested at massive scale. But it's three separate systems to maintain, has no built-in AI investigation, and the query languages (PromQL, LogQL, TraceQL) have a steep learning curve. Choose Grafana if you need proven reliability at scale and don't mind the operational overhead.
 
-**Grafana + Loki + Tempo** — The open-source observability stack that most teams default to. Grafana gives you the most flexible dashboards, Loki handles logs cheaply, and Tempo does distributed tracing. It's battle-tested but requires assembling multiple tools and writing your own alerting rules. Superlog trades that flexibility for a more integrated, AI-augmented experience where incidents are detected and investigated automatically.
+**SigNoz** — Another open-source, OpenTelemetry-native alternative to Datadog. SigNoz is more mature (started in 2021) and offers both ClickHouse and Kafka-based backends. It has a cleaner UI for trace and log exploration but lacks the AI agent investigation and auto-recovery features. Choose SigNoz if you want a straightforward Datadog replacement without the AI layer.
 
-**Axiom** — A serverless, OpenTelemetry-native observability platform with a generous free tier. Axiom is fully managed (no self-hosting) and has excellent query performance on large datasets. Choose Axiom if you don't want to manage infrastructure. Choose Superlog if you need self-hosting, data sovereignty, or want to customize the investigation agent runtime.
+**Langfuse** — Open-source LLM observability platform focused on tracing AI application calls. Langfuse tracks token usage, latency, and cost for AI features but doesn't handle general application telemetry (HTTP requests, database queries, infrastructure metrics). Choose Langfuse if your observability need is specifically about monitoring AI/LLM usage, not general production health.
 
 ### Verdict
 
-Superlog is the most interesting take on observability I've seen in 2026. The core insight — that collecting data is a solved problem but investigating incidents is not — resonates with every developer who's been paged at 3 AM and spent 45 minutes manually correlating logs across three dashboards. The Y Combinator backing, clean monorepo architecture, and active daily development suggest this project has real legs. At 296 stars it's early, and you shouldn't migrate your production observability stack today. But if you're a fullstack developer running React with a Node.js, Django, or Go backend and you've been meaning to adopt OpenTelemetry, Superlog is worth watching closely. The agent-based investigation model is where observability needs to go, and Superlog is one of the first tools actually building toward that vision rather than just adding AI features to an existing dashboard.
+Superlog is the most interesting take on observability I've seen this year. The combination of OpenTelemetry-native ingestion, AI-powered incident grouping, and autonomous investigation agents addresses a real pain point that existing tools dance around. Every observability vendor is adding "AI features" as a premium upsell — Superlog makes the AI core to the product and gives you the source code.
+
+That said, this is a two-week-old project from a YC startup. The codebase is well-structured (proper test coverage, clean monorepo layout, typed throughout), but you're betting on a small team's ability to maintain and grow a complex distributed system. If you're comfortable with that risk — and if you're the kind of developer who runs open-source tools in production because you value control over convenience — Superlog is worth setting up alongside your existing monitoring. The MCP integration alone makes it useful even if you don't fully commit to it as your primary observability platform.
