@@ -1,133 +1,109 @@
 ---
 name: agent-reach
-description: "Agent Reach gives your AI agent instant access to Twitter, Reddit, YouTube, GitHub, Bilibili and 10+ platforms — one CLI install, zero API fees."
+description: "Agent Reach gives your AI coding agent internet access — read Twitter, YouTube, Reddit, GitHub, and 10+ platforms with zero API costs."
 url: https://github.com/Panniantong/Agent-Reach
-stars: 23043
-forks: 1950
+stars: 26573
+forks: 2177
 language: Python
-tags: ["ai-agents", "web-scraping", "mcp", "cli", "developer-tools"]
+tags: ["ai-agents", "developer-tools", "open-source", "automation", "web-scraping"]
 featured: false
-publishedAt: 2026-06-08
+publishedAt: 2026-06-12
 ---
 
 ## Agent Reach
 
 ### Overview
 
-Agent Reach is a Python CLI tool that gives your AI agent instant access to 15+ internet platforms — Twitter, Reddit, YouTube, GitHub, Bilibili, XiaoHongShu, LinkedIn, WeChat, and more — with zero API fees and a single install command. It hit 23,000 GitHub stars in just over three months since its February 2026 launch, making it one of the fastest-growing AI agent infrastructure projects this year.
+Agent Reach is a Python-based capability layer that gives your AI coding agent eyes on the entire internet. It hit 26,000 GitHub stars in under three months — a velocity that says more about the problem it solves than any marketing copy could. The tool acts as an installer, configurator, and router for a dozen upstream data sources, so your agent can read tweets, watch YouTube transcripts, search Reddit, browse Bilibili, parse RSS feeds, and query GitHub without you writing a single integration.
 
-The project is built by Panniantong, a developer who clearly got tired of re-configuring the same scraping and API tools every time they spun up a new AI agent. The frustration is real and shared: Twitter's API costs roughly $215/month for moderate usage, Reddit blocks server IPs with 403 errors, Bilibili geo-blocks overseas access, and XiaoHongShu requires login just to browse. Every platform has its own wall, and every developer has spent hours debugging configs to get their agent past even one of them.
+The project is built by Panniantong, a Chinese developer who clearly lives in the agent-first workflow daily. The README is refreshingly honest — it describes the tool as "vibe coded" and acknowledges imperfections. That transparency extends to the architecture: every platform channel has a primary and fallback backend, and when one breaks (like yt-dlp getting blocked by Bilibili's anti-scraping in June 2026), the team swaps in an alternative and pushes an update. Users don't need to do anything.
 
-Agent Reach solves this by acting as a scaffolding layer — it selects the best open-source tool for each platform, installs the dependencies, configures the connections, and registers a SKILL.md file so your agent knows what's available. After installation, the agent calls upstream tools directly (twitter-cli, yt-dlp, rdt-cli, gh CLI, Jina Reader, and others) without any wrapper overhead. The design is deliberately minimal: pick the right tool, wire it up, get out of the way.
+The core problem is straightforward but painful. AI agents are great at reasoning and code generation, but they're blind to the live internet. Ask Claude Code to check Twitter sentiment about a library, look up a YouTube tutorial, or search Reddit for bug reports, and it can't. Each platform has its own authentication requirements, rate limits, and anti-scraping measures. Setting up even one integration takes time. Agent Reach bundles 12+ platforms into a single `pip install` and one setup command.
 
 ### Why it matters
 
-The AI agent ecosystem has a blind spot. We've gotten remarkably good at building agents that write code, manage files, and reason through problems — but ask them to check what people are saying on Twitter about a product, or to watch a YouTube tutorial and summarize it, and they hit a wall. The information density on social platforms, video sites, and community forums is enormous, but accessing it programmatically requires navigating a maze of paid APIs, anti-bot protections, and authentication flows.
+We're in the middle of a shift where developers spend less time writing code and more time orchestrating AI agents that write code. But those agents are only as good as their context. A coding agent that can read your codebase but can't check GitHub issues, search Stack Overflow alternatives, or read relevant Twitter threads is working with half the picture.
 
-Agent Reach addresses this gap directly. It's not trying to be a framework or an abstraction layer — it's a scaffolding tool that makes the boring, repetitive setup work disappear. The "zero API fees" claim isn't marketing fluff: it uses open-source CLI tools (yt-dlp for video, Jina Reader for web pages, twitter-cli for tweets, feedparser for RSS) and free services (Exa for semantic search, Groq Whisper for podcast transcription). The only potential cost is a $1/month proxy for server-based Bilibili access.
+Agent Reach fills that gap without asking you to become a platform integration expert. It's free, open-source under MIT, and doesn't require paid API keys. The only cost is an optional $1/month proxy if your network blocks certain platforms. For developers using Claude Code, Cursor, Windsurf, or similar tools, this is the kind of infrastructure that compounds — once installed, every future agent session benefits from expanded internet access.
 
-For fullstack developers building AI-powered tools, this is the missing infrastructure piece. Your NestJS backend can shell out to `agent-reach doctor` to check channel health. Your React dashboard can display real-time Twitter sentiment because your agent can actually read tweets now. Your Django admin can pull in Reddit discussions about your product. The tool doesn't care what your stack is — it's a CLI that any language can call.
+The broader trend here is the emergence of "agent infrastructure" as a category. Tools like MCP servers, skill registries, and capability layers are becoming essential plumbing. Agent Reach sits in that infrastructure layer, and its rapid adoption suggests developers agree this is where the pain is.
 
 ### Key Features
 
-**One-Command Agent Setup.** Copy a single URL to your AI agent and it handles the entire installation — detecting your environment, installing CLI tools, configuring search engines, and registering skill files. No manual dependency management, no config file editing. The agent reads the install.md file and executes everything autonomously. This is the kind of developer experience that makes adoption frictionless.
+**Multi-Platform Capability Layer.** Agent Reach supports 12+ platforms out of the box: web pages (via Jina Reader), YouTube (yt-dlp), Twitter/X (twitter-cli), Reddit (OpenCLI), Bilibili (bili-cli), GitHub (gh CLI), RSS feeds (feedparser), Xiaohongshu, LinkedIn, V2EX, Xueqiu (stock data), and full-web semantic search via Exa. Each platform has a dedicated channel file that handles detection, installation, and routing.
 
-**15+ Platform Coverage with Zero Config.** Many platforms work immediately after install with no configuration at all. Web pages (via Jina Reader), YouTube subtitles (via yt-dlp), GitHub repos (via gh CLI), RSS feeds (via feedparser), and WeChat articles (via Exa) all work out of the box. Twitter, Reddit, and XiaoHongShu need cookie authentication — a two-minute process where you export from your browser using the Cookie-Editor Chrome extension.
+**Automatic Backend Selection with Fallbacks.** Every platform has an ordered list of backends. If the primary tool breaks — say a platform blocks the CLI or an upstream project goes dormant — Agent Reach probes the next candidate and promotes it. When yt-dlp got blocked by Bilibili's anti-scraping system in June 2026, the team switched to bili-cli as the primary backend. Users experienced zero downtime because the routing layer handled the transition.
 
-**Pluggable Channel Architecture.** Each platform is an independent channel file that maps to an upstream tool. Don't like the default Twitter tool? Swap twitter-cli for the official API. Prefer Firecrawl over Jina Reader? Replace the web.py channel. The architecture is deliberately transparent — you can see exactly which tool handles each platform and change it without affecting anything else. This is a scaffolding, not a framework.
+**One-Command Installation.** Copy a single URL to your AI agent and it installs everything: Python package, CLI tools (Node.js, gh CLI, mcporter), search engine configuration (Exa via MCP), and skill files for your agent. The agent reads the install instructions and executes them autonomously. No manual dependency management, no config file editing.
 
-**Built-in Diagnostics.** The `agent-reach doctor` command gives you a clear status report of every channel: what's ready, what needs configuration, and exactly how to fix it. No guessing, no digging through logs. Run it after installation to see your coverage at a glance, or run it when something breaks to pinpoint the issue.
+**Built-in Diagnostics.** The `agent-reach doctor` command checks every platform channel, reports which backends are active, identifies broken connections, and suggests fixes. When something stops working after a platform update, this is the first thing to run. It turns debugging from "why can't my agent read tweets?" into a structured report with actionable steps.
 
-**MCP Server Integration.** Agent Reach uses mcporter to connect to MCP (Model Context Protocol) servers for platforms that benefit from it — Exa for semantic web search, XiaoHongShu for social media access, Douyin for video parsing. This means your agent gets structured, typed tool calls rather than raw shell output, which improves reliability and error handling.
+**Zero API Cost Architecture.** Every backend is open-source and free. Twitter access uses cookie-based authentication through twitter-cli. YouTube uses yt-dlp's subtitle extraction. Web reading uses Jina Reader's free tier. Semantic search uses Exa through MCP with no API key required. The only potential cost is a residential proxy (~$1/month) for networks that block Reddit or Twitter.
 
-**SKILL.md Auto-Registration.** After installation, Agent Reach registers a SKILL.md file in your agent's skills directory. This file teaches the agent what platforms are available and which commands to use for each task. No manual prompt engineering — the agent reads the skill file and knows to call `twitter tweet URL` for tweets, `yt-dlp --dump-json URL` for video subtitles, and so on.
+**Agent-Agnostic Design.** Agent Reach works with any AI coding agent that can execute shell commands: Claude Code, Cursor, Windsurf, Codex, OpenClaw, and others. It installs SKILL.md files into your agent's skills directory, so the agent automatically knows which tool to invoke for each type of request. No agent-specific plugins or adapters needed.
 
-**Security-First Design.** Cookies and tokens stay local in `~/.agent-reach/config.yaml` with 600 permissions. A `--safe` mode prevents automatic system package installation. A `--dry-run` mode previews all changes before executing. The tool is fully open source and auditable, and each channel can be independently replaced if you don't trust a particular upstream tool.
+**Security-First Approach.** Credentials are stored locally in `~/.agent-reach/config.yaml` with 600 permissions (owner-only). A `--safe` mode prevents automatic system modifications during installation. A `--dry-run` mode previews all operations without executing them. The tool is fully open-source and auditable, and the docs explicitly warn against using primary accounts on platforms with cookie-based auth.
 
 ### Use Cases
 
-- **Product sentiment analysis** — Your agent monitors Twitter, Reddit, and XiaoHongShu for mentions of your product, aggregates sentiment, and delivers daily summaries to your Slack channel or Telegram group.
-
-- **Competitive intelligence** — Track what competitors are doing across GitHub (new releases, PR activity), YouTube (tutorial videos, demos), and tech forums (V2EX, Reddit) without manually checking each platform.
-
-- **Content research and summarization** — Feed your agent a YouTube tutorial URL and get a clean transcript and summary. Subscribe to RSS feeds from industry blogs and get weekly digests. Read WeChat articles that are normally locked behind the app.
-
-- **Developer workflow automation** — Your CI pipeline can use Agent Reach to check if a GitHub issue has relevant discussion on Reddit or Stack Overflow before auto-closing it. Your documentation bot can pull in real user feedback from social platforms.
-
-- **AI-powered market research** — Combine Exa's semantic search with platform-specific scrapers to build a comprehensive view of market trends, user pain points, and emerging technologies across the entire internet.
+- **Research before building** — Ask your agent to search Reddit, Twitter, and GitHub for opinions on a framework or library before committing to it. Get real developer sentiment, not just docs and marketing pages.
+- **Competitive analysis** — Have your agent read competitor product pages, social media discussions, and GitHub activity to build a picture of what others are doing in your space.
+- **Bug investigation** — When you hit an obscure error, your agent can search multiple platforms simultaneously for similar reports, Stack Overflow answers, and GitHub issues with relevant context.
+- **Content monitoring** — Subscribe to RSS feeds, track Twitter lists, or monitor subreddit discussions for topics relevant to your project or industry.
+- **Video tutorial summarization** — Extract YouTube subtitles and have your agent summarize technical tutorials, conference talks, or product demos without watching the full video.
+- **Chinese developer ecosystem access** — Bilibili, Xiaohongshu, V2EX, and Xueqiu integrations provide access to platforms that Western-focused tools typically miss entirely.
 
 ### Pros and Cons
 
 Pros:
-
-- Genuinely zero API fees for most use cases. The tool chains together free open-source projects (yt-dlp has 148K stars, Jina Reader has 9.8K) rather than building proprietary scrapers that could break or charge later.
-
-- The scaffolding architecture is the right abstraction level. It doesn't try to be a framework you lock into — it wires up best-in-class tools and gets out of the way. Swapping a channel's upstream tool is a single file change.
-
-- The `agent-reach doctor` diagnostics are genuinely useful. Instead of debugging "why can't my agent read tweets," you get a clear status report with actionable fix instructions. This saves hours of troubleshooting.
-
-- Works with any AI agent that can run shell commands — Claude Code, Cursor, Windsurf, OpenClaw, Hermes Agent. No vendor lock-in to a specific agent framework.
+- Solves a real, daily pain point for developers using AI agents — the gap between "smart at code" and "blind to internet" is the biggest limitation of current coding agents.
+- The fallback architecture is genuinely well-designed. When backends break, the routing layer adapts without user intervention. This is the kind of resilience that keeps tools useful long-term.
+- 100% free with no API costs, which is remarkable given the breadth of platform coverage. Most alternatives require paid Twitter API access or similar.
 
 Cons:
-
-- Cookie-based authentication for Twitter, Reddit, and XiaoHongShu carries account ban risk. The project recommends using throwaway accounts, which adds setup friction and limits the tool's usefulness for accessing your own social media data.
-
-- The tool is primarily maintained by one developer and the README is Chinese-first (English, Japanese, and Korean translations exist but are secondary). For non-Chinese-speaking developers, some platform-specific guidance and issue discussions may be harder to follow.
-
-- Server deployment requires a proxy ($1/month) for Bilibili and potentially other platforms that block datacenter IPs. Local development works fine, but production agent deployments on cloud servers face the same geo-blocking issues the tool aims to solve.
+- Heavy Chinese-market focus means some integrations (Bilibili, Xiaohongshu, Xueqiu) are less useful for Western developers, though the core platforms (Twitter, YouTube, Reddit, GitHub) work globally.
+- Cookie-based authentication for Twitter and Reddit carries account risk. The docs recommend using throwaway accounts, but that's still friction and potential for bans.
+- The "vibe coded" nature means code quality may vary. With 26K stars and 2K+ forks, the community will likely improve this over time, but early adopters should expect rough edges.
 
 ### Getting Started
 
 ```bash
-# Install via pip
-pip install https://github.com/Panniantong/agent-reach/archive/main.zip
+# Install Agent Reach
+pip install agent-reach
 
-# Run the auto-installer
-agent-reach install --env=auto
+# Run the installer (auto-detects environment)
+agent-reach install
 
-# Check what's ready
+# Or install in safe mode (no automatic system changes)
+agent-reach install --safe
+
+# Preview what installation would do
+agent-reach install --dry-run
+
+# Check status of all platform channels
 agent-reach doctor
 ```
 
-Or just copy this to your AI agent (Claude Code, Cursor, OpenClaw, etc.):
+Once installed, just tell your AI agent what you need:
 
 ```
-Install Agent Reach: https://raw.githubusercontent.com/Panniantong/agent-reach/main/docs/install.md
+"Search Twitter for opinions on this new React framework"
+"Read the README of this GitHub repo: owner/repo"
+"What does this YouTube video cover? https://youtube.com/watch?v=..."
+"Search Reddit for people discussing this bug"
+"Subscribe to this RSS feed and summarize recent entries"
 ```
 
-The agent will handle the entire setup automatically. After installation, try these commands:
-
-```bash
-# Read any web page as clean Markdown
-curl https://r.jina.ai/https://example.com
-
-# Get YouTube video subtitles
-yt-dlp --dump-json "https://youtube.com/watch?v=..."
-
-# View a GitHub repo
-gh repo view owner/repo
-
-# Read a tweet (after cookie setup)
-twitter tweet https://x.com/user/status/123456
-
-# Check all channel statuses
-agent-reach doctor
-```
-
-For Skill-based installation with Claude Code or OpenClaw:
-
-```bash
-npx skills add Panniantong/Agent-Reach@agent-reach
-```
+The agent reads the installed SKILL.md files and automatically routes each request to the right backend tool. No command memorization needed.
 
 ### Alternatives
 
-**Firecrawl** — A web scraping API with a managed cloud service. Firecrawl is more polished for single-platform web scraping and offers structured data extraction, but it's a paid service for anything beyond basic usage. Agent Reach covers more platforms (social media, video, forums) and is completely free. Choose Firecrawl when you need reliable, managed web scraping at scale; choose Agent Reach when you need broad platform coverage without API costs.
+**OpenCLI** — A browser-automation tool that gives AI agents access to web platforms through your existing browser session. OpenCLI is the backbone behind several of Agent Reach's backends (Reddit, Xiaohongshu, LinkedIn). Use OpenCLI directly if you only need one or two platforms and prefer a single tool rather than a meta-installer. It's more focused but requires more manual setup per platform.
 
-**Browser Use** — An AI agent framework that controls a real browser to interact with websites. Browser Use can handle login flows and dynamic JavaScript-heavy sites that CLI tools can't touch, but it's slow, resource-intensive, and fragile when sites change their UI. Agent Reach is faster and more reliable for read-only access because it uses purpose-built CLI tools rather than browser automation. Choose Browser Use when you need to interact with sites (fill forms, click buttons); choose Agent Reach when you need to read and search.
+**MCP Servers (various)** — Individual Model Context Protocol servers for specific platforms (GitHub MCP, Twitter MCP, etc.) provide direct integrations for agent frameworks that support MCP natively. Better choice if you're building a custom agent stack and want fine-grained control over each integration. The downside is you need to find, install, and configure each server separately — exactly the problem Agent Reach solves.
 
-**Tavily** — A search API built specifically for AI agents, offering structured search results with relevance scoring. Tavily is excellent for web search but doesn't cover social media platforms, video transcripts, or forum content. Agent Reach includes Exa for semantic search and adds 14 other platform channels on top. Choose Tavily when you only need web search and want a polished API; choose Agent Reach when your agent needs to access the broader internet ecosystem.
+**Manual CLI tooling** — You can always install yt-dlp, gh CLI, twitter-cli, and other tools individually and write your own shell scripts or agent skills. This gives maximum control but means you're maintaining the integration layer yourself. When platforms break APIs or change anti-scraping measures, you're on your own for fixes.
 
 ### Verdict
 
-Agent Reach is the kind of tool that makes you wonder why it didn't exist sooner. Every developer building AI agents has hit the same wall: the agent is smart but blind to the internet's richest information sources. Twenty-three thousand stars in three months tells you the pain point is real and the solution resonates. The scaffolding architecture is the right call — it doesn't try to be a framework you depend on, it just wires up the best open-source tools for each platform and registers a skill file. For fullstack developers adding AI agent capabilities to their React, NestJS, or Django applications, Agent Reach is the fastest path to giving your agent real internet awareness. The cookie-based auth for some platforms is a limitation, and the Chinese-first documentation might slow adoption outside Asia, but neither is a dealbreaker. Install it, run `agent-reach doctor`, and your agent goes from reading your local files to reading the entire internet in under five minutes.
+Agent Reach is the kind of tool that makes you wonder how you worked without it. If you're using any AI coding agent regularly, the inability to check the live internet is a daily frustration — and this solves it with a single install. The 26K stars in three months aren't hype; they're developers hitting the same wall and finding the same solution. The fallback architecture is the real standout feature — when backends inevitably break, the routing layer adapts without requiring you to debug anything. It's not perfect: the Chinese-market integrations add bulk for Western users, and cookie-based auth carries inherent risks. But for the core use cases — reading web pages, checking GitHub, extracting YouTube transcripts, searching Reddit — it works reliably and costs nothing. Install it, run `agent-reach doctor` once, and forget about it. Your agent will thank you.
