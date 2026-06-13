@@ -1,114 +1,140 @@
 ---
 name: forge
-description: "Forge is a Python reliability layer for self-hosted LLM tool-calling — boosting 8B models from single digits to 84% on multi-step agentic tasks with zero-config guardrails."
+description: "Python framework that makes self-hosted LLM tool-calling reliable — guardrails boost 8B models from 5% to 84% accuracy on agentic tasks."
 url: https://github.com/antoinezambelli/forge
-stars: 1981
-forks: 140
+stars: 2059
+forks: 144
 language: Python
-tags: ["llm", "tool-calling", "agents", "self-hosted", "guardrails", "python"]
+tags: ["ai-agents", "llm", "guardrails", "tool-calling", "self-hosted"]
 featured: false
-publishedAt: 2026-06-04
+publishedAt: 2026-06-13
 ---
 
 ## Forge
 
 ### Overview
 
-Forge is a Python framework that makes self-hosted LLM tool-calling reliable. It takes an 8B local model from single-digit accuracy to 84% across its 26-scenario evaluation suite — and lifts Sonnet 4.6 from 85% to 98% on the same workload. Those aren't marginal improvements. That's the difference between "this model can't do tool calls" and "this model ships to production."
+Forge is a Python reliability layer for self-hosted LLM tool-calling. It sits between your application and a local model server (Ollama, llama.cpp, vLLM) or Anthropic's API, applying guardrails that dramatically improve tool-calling accuracy. The headline number is hard to ignore: forge takes an 8B parameter local model from single-digit success rates to 84% across its 26-scenario evaluation suite. It even lifted Claude Sonnet 4.6 from 85% to 98% on the same workload.
 
-The project is built by Antoine Zambelli, and it's backed by a published IEEE paper: *Forge: A Reliability Layer for Self-Hosted LLM Tool-Calling.* Academic backing for an open-source tool is uncommon, and it matters here because the core technical claims — rescue parsing, retry nudges, synthetic tool injection — are peer-reviewed, not just marketing claims on a README.
+The project comes from Antoine Zambelli, who built it while working on production agentic systems where small local models kept failing at structured tool calls. The frustration was familiar to anyone who's tried to use an 8B model for anything beyond simple chat — the model knows what it wants to do but can't reliably format tool calls, handle multi-step sequences, or recover from malformed outputs. Forge addresses each of those failure modes with composable middleware: rescue parsing fixes broken JSON, retry nudges guide the model back on track after errors, and response validation catches hallucinated parameters before they reach your code.
 
-The fundamental problem Forge solves is that small local models are terrible at structured tool calling. They produce malformed JSON, pick the wrong format, hallucinate tool names, or just output bare text when they should be calling tools. Forge sits between your application and the model backend, intercepting every response and applying a stack of guardrails: response validation, rescue parsing for malformed outputs, retry loops with corrective nudges, and a synthetic `respond` tool that forces the model to choose between calling a tool and producing text. The result is a local 8B model that behaves like something much larger.
+The project hit the front page of Hacker News with 687 points, which tells you something about the demand for this kind of tooling. The "self-hosted AI" movement is growing fast, driven by privacy concerns, cost control, and the improving quality of small models. But the gap between "runs locally" and "works reliably in production" is still enormous. Forge is one of the first projects to systematically close that gap for tool-calling specifically.
 
 ### Why it matters
 
-The self-hosted LLM space is exploding. Ollama crossed 100 million downloads, llama.cpp powers everything from Raspberry Pi setups to enterprise GPU clusters, and tools like Continue, aider, and OpenCode are pushing local-first development workflows mainstream. But there's a dirty secret: small models are unreliable at the structured output that agentic workflows demand. You can run Mistral 3B locally, but try getting it to reliably call three tools in sequence and you'll spend more time debugging malformed responses than building features.
+The AI agent ecosystem is splitting into two camps: cloud-dependent systems that call OpenAI or Anthropic APIs, and self-hosted setups that run models locally. The cloud camp has better tool-calling reliability because frontier models are just better at structured output. The self-hosted camp has cost control, privacy, and offline capability — but their agents break constantly because 8B models are terrible at following tool-calling protocols.
 
-Forge fills exactly this gap. It doesn't try to be an agent orchestrator or a coding framework — it sits inside one agentic loop and makes tool calls work. That narrow scope is its strength. The proxy mode means you can point existing tools (aider, Continue, Cline, even Claude Code) at a Forge-guarded local model and get dramatically better results without rewriting anything.
+This gap is a real problem. A Django developer building an internal AI assistant for their team doesn't want to route every request through Anthropic's API. They want to run Mistral or Llama locally, define some tools (query the database, call the REST API, generate a report), and have the agent use them correctly. Without something like forge, that agent will hallucinate tool names, mangle JSON parameters, and fail to recover from errors 90% of the time.
 
-The timing matters too. Every coding agent is moving toward local model support — Cursor has local models, Continue is built around them, and the cost savings are enormous. But the reliability gap between local and cloud models on tool-calling tasks is what's holding adoption back. Forge directly attacks that gap with a concrete, measurable solution.
+Forge makes the self-hosted path viable for production use cases. The proxy server mode is particularly clever — you point existing tools like Continue, aider, or Claude Code at forge's proxy endpoint, and the client thinks it's talking to a much smarter model. No code changes, no SDK migration, just better results from the same hardware. For fullstack developers who already have a Python backend (Django, FastAPI, Flask), integrating forge's guardrails into their agent loops is straightforward.
 
 ### Key Features
 
-**Rescue Parsing.** When a model emits tool calls in the wrong format — JSON stuffed in a code fence, Mistral's `[TOOL_CALLS]name{args}` syntax, or Qwen's `<tool_call>` XML — Forge extracts the structured call and re-emits it in the canonical OpenAI `tool_calls` schema. This single feature accounts for the biggest practical improvement for Mistral-family models, which tend to produce well-structured tool calls in their own non-standard format.
+**Proxy Server Mode.** Drop-in proxy that speaks both OpenAI chat-completions and Anthropic Messages APIs. Point any compatible client at it — opencode, Continue, aider, even Claude Code — and forge applies guardrails transparently. The client thinks it's talking to a smarter model. Run it with `python -m forge.proxy` and route your existing tools through it without rewriting anything.
 
-**Synthetic `respond` Tool Injection.** Small models (~8B parameters) can't reliably decide between producing text and calling a tool. Forge solves this by injecting a synthetic `respond` tool whenever tools are present in the request. The model calls `respond` instead of generating bare text, and Forge strips it from the outbound response. The client sees a normal text completion and never knows the tool existed. This is the kind of pragmatic engineering that makes local models actually usable.
+**Rescue Parsing.** When a model returns malformed JSON in a tool call (missing quotes, trailing commas, wrong types), forge doesn't just fail. It attempts to fix the output using multiple parsing strategies — extracting partial parameters, inferring types from the schema, and reconstructing valid calls from broken ones. This alone recovers a significant percentage of would-be failures from small models.
 
-**Drop-In Proxy Server.** Run `python -m forge.proxy` and you get a server speaking both OpenAI's chat-completions API and Anthropic's Messages API (`/v1/messages`). Point any existing client at it — OpenAI-compatible tools, Claude Code, anything — and Forge applies guardrails transparently. The client thinks it's talking to a smarter model. No Python rewrite required.
+**Retry Nudges.** After a failed tool call, forge doesn't just retry with the same prompt. It injects a nudge message that explains what went wrong and how to fix it, giving the model context to self-correct. The nudges are parameterized — you can control how many retries to attempt and what feedback to include. This is the kind of detail that separates "works in a demo" from "works in production."
 
-**Multi-Backend Support.** Forge works with Ollama, llama-server (llama.cpp), Llamafile, vLLM, and Anthropic. The managed mode spins up backends automatically; external mode talks to whatever endpoint you point it at. The eval suite tests against multiple backends so you can pick the right one for your hardware. llama-server consistently produces the best results in Forge's evaluations, but Ollama is easier to set up for quick experiments.
+**Required Steps and Prerequisites.** While forge's guardrails work with zero configuration, you can optionally constrain the agent loop. Define required steps that must execute before the agent can terminate, set prerequisites (steps A and B must complete before C), and specify terminal tools that end the loop. This gives you explicit control over workflow structure without forcing it.
 
-**WorkflowRunner with Step Enforcement.** For multi-step agent loops, Forge's `WorkflowRunner` manages the full lifecycle: system prompts, tool execution, context compaction, and guardrails. You can define `required_steps` and `prerequisites` to enforce ordering constraints. The `SlotWorker` extension adds priority-queued access to a shared inference slot with auto-preemption — useful when multiple specialist workflows share a single GPU.
+**Composable Middleware Architecture.** Forge's guardrails are implemented as middleware that you can plug into your own orchestration loop. Use the rescue parser standalone, combine it with retry nudges, or layer in response validation — each piece works independently. If you already have an agent framework (LangChain, CrewAI, custom), you can adopt forge's reliability stack without migrating.
 
-**26-Scenario Evaluation Harness.** Forge ships with a comprehensive eval suite that measures tool-calling reliability across real scenarios — not synthetic benchmarks. Run `python -m tests.eval.batch_eval --config all --runs 50` to qualify any model-backend combination before deploying. The eval includes an OG-18 baseline tier and an 8-scenario advanced-reasoning tier for top-end separation. This is the kind of rigor you'd expect from an IEEE-published project.
+**SlotWorker for Multi-Agent GPU Sharing.** For teams running multiple specialized agents on shared hardware, SlotWorker provides priority-queued access to a single inference slot with auto-preemption. A high-priority agent can interrupt a lower-priority one, use the GPU, and let the interrupted agent resume. This is practical for production deployments where GPU resources are scarce.
 
-**Composable Middleware.** If you already have an orchestration loop and don't want to adopt Forge's `WorkflowRunner`, you can import the guardrails stack as middleware. Response validation, rescue parsing, step enforcement, and error tracking are independently composable. You control the loop; Forge validates the outputs.
+**Backend Flexibility.** Forge supports Ollama, llama-server (llama.cpp), Llamafile, vLLM, and Anthropic as backends. Switch between them by changing a config line. The eval suite shows llama-server performing best, but Ollama is easier to set up for development. Anthropic support means you can use forge's guardrails even with cloud APIs when you want the reliability boost.
 
 ### Use Cases
 
-- **Local coding agents** — Teams running aider, Continue, or Cline with local models can use the proxy mode to dramatically improve tool-calling reliability without changing their setup. Point the proxy at a Forge-guarded model and watch malformed responses drop.
+- **Internal AI assistants with tool access** — Give your team a chatbot that queries your Django database, calls your REST APIs, and generates reports. Forge's guardrails make small local models reliable enough for these structured tasks without burning API credits.
 
-- **Self-hosted chat assistants** — Customer support bots, internal knowledge bases, or personal assistants running on local hardware. Forge's guardrails make 8B models reliable enough for production use where tool calls trigger real actions (database queries, API calls, file operations).
+- **Code generation and refactoring tools** — Build a coding agent that reads files, makes edits, and runs tests. Point it through forge's proxy to get reliable tool-calling from a local model. The rescue parsing handles the messy JSON that code-focused models often produce.
 
-- **Multi-agent GPU sharing** — When multiple agent workflows need inference on a shared GPU, `SlotWorker` provides priority-queued access with auto-preemption. A critical production agent can preempt a background research task without manual orchestration.
+- **Data pipeline automation** — Create agents that extract data from multiple sources, transform it, and load it into your warehouse. Forge's required steps and prerequisites ensure the agent completes each stage before moving on, and retry nudges handle transient API failures.
 
-- **Prototype-to-production agent pipelines** — Use the eval harness to qualify model-backend combinations during development, then deploy with confidence. The 26-scenario suite catches reliability regressions before they hit production.
+- **Customer support with knowledge base lookup** — Deploy a support agent that searches your docs, retrieves relevant articles, and generates responses. Forge's guardrails prevent the agent from hallucinating search queries or returning malformed API calls.
 
-- **Claude Code with local models** — Set `ANTHROPIC_BASE_URL` to the Forge proxy and run Claude Code against a local model. Forge serves the Anthropic Messages API and applies guardrails, making the experience significantly more reliable than raw local inference.
+- **Self-hosted AI for regulated industries** — Healthcare, finance, and government teams that can't send data to external APIs can run local models with forge's guardrails, achieving reliability comparable to cloud models while keeping everything on-premises.
 
 ### Pros and Cons
 
 Pros:
-- Measurable, reproducible improvements backed by a published IEEE paper. The eval harness lets you verify claims against your own model-backend combinations instead of trusting marketing numbers.
-- The proxy mode requires zero code changes — point existing tools at the proxy and get better results. This is the lowest-friction path to reliable local model tool-calling available.
-- Five releases in two weeks (v0.7.0 through v0.7.4 as of June 2026) with substantive improvements each time. The project is moving fast without sacrificing quality.
-- MIT licensed with 865 deterministic unit tests. You can fork it, extend it, or contribute without worrying about licensing or test coverage.
+- The accuracy improvement is real and measurable. Taking an 8B model from single digits to 84% on structured tool-calling tasks is a game-changer for self-hosted AI. The eval suite with 26 scenarios gives you confidence the improvements generalize.
+- Proxy server mode is brilliant for adoption. You can improve your existing tools without rewriting code — just point them at forge's endpoint. This lowers the barrier dramatically compared to frameworks that require you to rebuild your agent from scratch.
+- Composable middleware means you're not locked in. Use the full framework or just the pieces you need. The architecture respects that most teams already have some agent infrastructure and don't want to replace it entirely.
 
 Cons:
-- Python 3.12+ requirement excludes teams stuck on older Python versions. The `pydantic` dependency adds another constraint for environments with strict dependency policies.
-- The eval suite uses Ministral-3-8B-Instruct as its primary benchmark model. Results on other architectures (Qwen, Llama, Gemma) may vary, and the MODEL_GUIDE.md doesn't cover every popular local model.
-- Not an agent orchestrator by design — if you need multi-agent graphs, DAG planners, or cross-agent coordination, you'll still need a framework like LangGraph or CrewAI alongside Forge. It solves one problem well but doesn't try to solve everything.
+- Python 3.12+ requirement excludes teams on older versions. Many production environments still run 3.10 or 3.11, and upgrading Python versions in existing projects isn't always trivial.
+- The project is relatively young (created February 2026). While the eval results are impressive, real-world edge cases in production agentic systems will surface issues that the test suite doesn't cover. Expect rough edges.
+- Documentation covers the basics well but lacks depth on advanced patterns — custom middleware composition, complex workflow topologies, and integration with existing orchestration frameworks. You'll spend time reading source code for anything beyond the quick-start examples.
 
 ### Getting Started
 
 ```bash
-# Install the core package
-pip install forge-guardrails
+# Install forge
+pip install forge-guardrails                # core only
+pip install "forge-guardrails[anthropic]"   # + Anthropic client
 
-# Or with Anthropic support
-pip install "forge-guardrails[anthropic]"
+# Set up a local model server (pick one)
+# Option A: llama-server (recommended for best results)
+llama-server -m path/to/model.gguf --jinja -ngl 999 --port 8080
 
-# Set up a backend (llama-server recommended for best results)
-# Download a model, then:
-llama-server -m path/to/Ministral-3-8B-Instruct-2512-Q8_0.gguf --jinja -ngl 999 --port 8080
-
-# Quick proxy mode — point any OpenAI-compatible client at localhost:8081
-python -m forge.proxy --backend-url http://localhost:8080 --port 8081
-
-# Or let Forge manage the backend automatically
-python -m forge.proxy --backend llamaserver --gguf path/to/model.gguf --port 8081
+# Option B: Ollama (easier setup)
+ollama pull ministral-3:8b-instruct-2512-q4_K_M
 ```
-
-Then configure your client to use `http://localhost:8081/v1` as the API base URL. For Claude Code, set `ANTHROPIC_BASE_URL=http://localhost:8081`.
-
-For direct Python usage:
 
 ```python
 import asyncio
-from forge import Workflow, ToolDef, ToolSpec, WorkflowRunner, LlamafileClient
+from pydantic import BaseModel, Field
+from forge import (
+    Workflow, ToolDef, ToolSpec,
+    WorkflowRunner, LlamafileClient,
+)
 
-# Define tools, pick a backend, run structured agent loops
-# See the User Guide for multi-turn and context management
+def get_weather(city: str) -> str:
+    return f"72°F and sunny in {city}"
+
+class GetWeatherParams(BaseModel):
+    city: str = Field(description="City name")
+
+workflow = Workflow(
+    name="weather",
+    description="Look up weather for a city.",
+    tools={
+        "get_weather": ToolDef(
+            spec=ToolSpec(
+                name="get_weather",
+                description="Get current weather",
+                parameters=GetWeatherParams,
+            ),
+            callable=get_weather,
+        ),
+    },
+    terminal_tool="get_weather",
+)
+
+runner = WorkflowRunner(client=LlamafileClient(base_url="http://localhost:8080"))
+result = asyncio.run(runner.run(workflow, "What's the weather in San Francisco?"))
+print(result)
+```
+
+For proxy mode (drop-in improvement for existing tools):
+
+```bash
+# Start the proxy between your client and model server
+python -m forge.proxy --backend http://localhost:8080 --port 9000
+
+# Point your existing tools at http://localhost:9000
 ```
 
 ### Alternatives
 
-**LangChain / LangGraph** — The dominant agent orchestration framework with a huge ecosystem. LangGraph handles multi-agent coordination, state machines, and complex workflow graphs that Forge explicitly doesn't try to solve. Choose LangGraph when you need agent orchestration; choose Forge when you need tool-calling reliability for a single agent loop.
+**Vercel AI SDK** — The go-to choice for TypeScript developers building AI features in Next.js apps. Vercel AI SDK handles model routing, streaming, and structured output beautifully, but it targets cloud APIs and doesn't address the reliability gap for small local models. Choose it when you're building in TypeScript and using cloud models exclusively.
 
-**Guardrails AI** — A validation framework focused on structured output schemas and content moderation. Guardrails AI is broader in scope (it handles RAG pipelines, content filtering, and output formatting) but doesn't address the specific problem of malformed tool calls from local models. Forge's rescue parsing and synthetic tool injection are more targeted solutions for the tool-calling reliability gap.
+**LangChain** — The most popular general-purpose AI framework, available in both Python and TypeScript. LangChain gives you agents, chains, tools, memory, and a massive integration ecosystem. But it doesn't specifically address tool-calling reliability for small models — its abstractions are higher-level and don't include rescue parsing or retry nudges. Choose LangChain when you need a full agent framework and are using models that already handle tool-calling well.
 
-**Outlines** — A library for structured generation from language models using constrained decoding. Outlines works at the token level to force valid JSON output, which is a different approach from Forge's post-hoc rescue parsing. Outlines requires model-level integration and doesn't work as a drop-in proxy. Choose Outlines when you control the inference stack and want guaranteed valid output; choose Forge when you need a transparent proxy that works with existing tools.
+**Outlines** — A Python library for structured generation from LLMs, using constrained decoding to force models to produce valid JSON. Outlines works at the token level (modifying the model's output distribution) while forge works at the response level (parsing and fixing after generation). Outlines requires more setup and model-server integration, but its approach can be more reliable for strict schemas. Choose Outlines when you need guaranteed-valid output and can control your inference server.
 
 ### Verdict
 
-Forge is the most practical open-source tool I've seen for making local LLMs usable in agentic workflows. The proxy mode alone — run one command, point your existing tools at it, get dramatically better results — makes it worth installing for anyone running local models. The fact that it's backed by a peer-reviewed paper and ships with a 26-scenario eval suite separates it from the wave of "reliability" tools that offer hand-wavy improvements. Five releases in two weeks signals a maintainer who's actively iterating, not just parking a repo. If you're building anything that involves local models and tool calls — coding agents, chat assistants, automation pipelines — Forge should be in your stack.
+Forge is the most practical tool I've seen for making self-hosted LLM agents actually work. The proxy mode alone justifies its existence — point your existing tools at it and get a measurable reliability boost without changing a line of code. The 84% accuracy number for 8B models isn't marketing fluff; it comes from a 26-scenario eval suite that the author publishes and maintains. At 2,059 stars and climbing after a 687-point HN front page, the project has clear momentum. If you're running local models for any kind of tool-calling agent — whether that's a Django management command, a FastAPI service, or a standalone automation script — forge should be in your stack. The composable middleware architecture means adoption is incremental: start with the proxy, graduate to WorkflowRunner, and pull in individual guardrails as needed. The Python 3.12+ requirement and the project's youth are real limitations, but the results speak for themselves.
