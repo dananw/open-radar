@@ -1,107 +1,106 @@
 ---
-name: diffusionstudio-lottie
-description: "Text-to-Lottie is an open-source skill that lets coding agents generate production-ready Lottie animations from natural language — React + Skia CanvasKit player with hot-reload."
+name: lottie
+description: "Generate production-ready Lottie animations from text prompts using AI coding agents like Claude Code and Codex — a YC-backed open-source animation harness."
 url: https://github.com/diffusionstudio/lottie
-stars: 1155
-forks: 64
+stars: 2518
+forks: 133
 language: TypeScript
-tags: ["animations", "lottie", "ai-agents", "frontend", "react"]
+tags: ["animations", "lottie", "ai-agents", "design-tools", "motion-graphics"]
 featured: false
-publishedAt: 2026-06-10
+publishedAt: 2026-06-14
 ---
 
-## Text-to-Lottie
+## Diffusion Studio Lottie (Text-to-Lottie)
 
 ### Overview
 
-Text-to-Lottie is a developer tool that turns natural language prompts into production-ready Lottie animations. It works as a skill for coding agents — Claude Code, Codex, and similar tools — combined with a full-screen Skia-powered player built in React and TypeScript. Describe the animation you want, the agent writes the Lottie JSON, and the dev server hot-reloads it for instant preview.
+Text-to-Lottie is an open-source harness that lets you generate production-ready Lottie animations using natural language prompts through coding agents like Claude Code and Codex. It crossed 2,500 GitHub stars in its first ten days after launching on June 4, 2026, which is a pretty strong signal that developers were waiting for something like this.
 
-The project launched on June 4, 2026, and crossed 1,000 GitHub stars within four days. That velocity makes sense when you consider what it replaces: the typical workflow for getting a Lottie animation into a product involves hiring a motion designer, going through After Effects, exporting with Bodymovin, and iterating through email threads. Text-to-Lottie compresses that into a conversation with your coding agent.
+The project comes from Diffusion Studio, a Y Combinator-backed company (W24 batch) focused on programmatic video and motion graphics tooling. They already built a video rendering engine, and this Lottie tool is their latest move into making motion design accessible to developers who aren't After Effects power users. The team maintains an active Discord community and ships updates frequently — the repo saw commits daily in its first two weeks.
 
-The architecture is straightforward. The player uses Skia's Skottie module via `canvaskit-wasm` — not the more common `lottie-web` JavaScript runtime. This matters because Skia's renderer is significantly more performant and handles complex animations that `lottie-web` chokes on. The control surface is React with shadcn/ui and Tailwind CSS 4, with a Vite dev server that watches `public/lottie.json` and full-reloads on save. There's also a properties panel driven by a sidecar `controls.json` file that lets you expose animation parameters as sliders — useful for fine-tuning without touching JSON.
+The core problem is familiar to anyone who's built a modern web app: you need a loading spinner, a success checkmark animation, or a page transition effect, and the options are either buying a stock animation from LottieFiles, wrestling with After Effects and Bodymovin, or just skipping animations entirely because the workflow is too painful. Text-to-Lottie eliminates that friction. You describe what you want, your coding agent generates the animation JSON, and you drop it into your React, React Native, Flutter, iOS, or Android app with a few lines of code.
 
 ### Why it matters
 
-Animations in web applications have always been a handoff bottleneck. Designers create them in After Effects or Figma, export as Lottie, and developers integrate the JSON files. When something needs to change — timing, colors, easing — the cycle starts over. Text-to-Lottie eliminates that handoff for standard motion work. A frontend developer can describe "a bouncing loading spinner with a spring curve and blue-to-purple gradient" and get a working animation in seconds.
+Lottie has become the de facto standard for lightweight vector animations across platforms. Airbnb created it, and now it's embedded in virtually every mobile and web framework. But the creation workflow has always been the bottleneck. Designers use After Effects, export via Bodymovin, and hand off JSON files to developers. That pipeline breaks down when you need a quick animation, when your team doesn't have a dedicated motion designer, or when you want to iterate rapidly on animation concepts.
 
-This connects to a broader shift in how developers interact with creative assets. The same pattern is emerging across the ecosystem: tools like v0 for UI components, Cursor for code generation, and now Text-to-Lottie for animations. The common thread is that coding agents are becoming production-capable creative partners, not just code autocomplete. The Lottie skill format — a structured prompt with JSON schema rules that guides the agent's output — is the interesting technical contribution here. It's a template for how to make agents produce valid, renderable artifacts rather than plausible-looking text.
+Text-to-Lottie connects to a broader shift happening right now: coding agents are moving beyond writing code into creative production. Claude Code can already generate SVGs, write CSS animations, and scaffold entire UIs. Adding Lottie animation generation to that workflow is a natural extension. The tool provides a structured harness — not just raw generation — that includes an inspector and editor so you can refine what the agent produces. That "generate then tweak" loop is how developers actually want to work.
 
-The timing is also relevant because Lottie adoption is accelerating. LottieFiles reports over 300,000 animations uploaded to their platform, and the format is now supported natively in iOS (Core Animation), Android (Lottie for Android), and web (lottie-web / Skottie). Having a fast path from idea to working animation file removes friction from a format that was already winning.
+For fullstack teams building React apps, NestJS backends, or Go services with frontend components, this means you can add polished micro-interactions without pulling in a designer for every small animation need. The generated animations are standard Lottie JSON files — they work with lottie-web, lottie-react-native, the Lottie iOS/Android SDKs, and Flutter's lottie package. No vendor lock-in, no proprietary format.
 
 ### Key Features
 
-**Agent-Native Skill Architecture.** The project ships as a structured skill file (`SKILL.md`) that you install with `npx skills add diffusionstudio/lottie`. This file contains the complete Lottie JSON specification distilled into rules that coding agents can follow — required top-level fields, layer types, transform blocks, shape mechanics, and animation keyframe formats. It's not just documentation; it's a prompt engineering artifact designed to produce valid Lottie output from an LLM.
+**Agent-Native Workflow.** Text-to-Lottie is designed as a "skill" that plugs into coding agents. You install it with `npx skills add diffusionstudio/lottie`, and your agent immediately understands how to generate Lottie animations. The skill provides context, constraints, and a structured generation process so the agent produces valid, renderable animation JSON rather than hallucinated output.
 
-**Skia Skottie Renderer.** Unlike most web Lottie players that use the `lottie-web` JavaScript library, this player renders through Skia's Skottie module via `canvaskit-wasm`. Skia is the same rendering engine behind Chrome, Android, and Flutter. The result is smoother playback for complex animations and better handling of effects like masks, mattes, and expressions that `lottie-web` renders inconsistently.
+**Built-in Animation Inspector and Editor.** The harness doesn't just generate a JSON file and leave you alone. It sets up a local development server with a player where you can preview, inspect, and edit the generated animation. You can adjust timing curves, modify keyframes, change colors, and tweak properties without regenerating from scratch. This iterative workflow is what separates it from a simple "text to animation" demo.
 
-**Hot-Reload Dev Loop.** Write the animation JSON to `public/lottie.json`, and a Vite plugin detects the change and full-reloads the browser. No manual refresh, no build step. The agent writes the file, you see the result. This tight feedback loop is what makes iterative animation authoring practical — you describe, agent generates, you see it, you refine.
+**SVG-to-Animation Conversion.** Feed it an SVG path and the agent can generate animations that follow the path geometry. This is particularly useful for logo animations, icon transitions, and signature-style reveal effects. The agent respects the original SVG geometry and applies motion design principles like ease-in-out timing and directional reveals.
 
-**URL-Based Frame Control.** The player accepts query parameters for deterministic playback control: `?frame=300` seeks to frame 300 and pauses, `?paused=1` starts paused. Combined with a `data-testid="lottie-canvas"` hook on the canvas, this lets automated agents take screenshots at specific frames for visual verification. No console bridge or slider interaction needed.
+**Cross-Platform Output.** The generated Lottie JSON files work everywhere Lottie is supported. The README includes copy-paste integration examples for vanilla HTML with lottie-web, React Native with lottie-react-native, React Native Skia with Skottie, iOS Swift with the Lottie SDK, Android Kotlin, and Flutter. One generation, every platform.
 
-**Properties Panel with Slot System.** Animations can declare slottable properties — colors, positions, text — via a `slots` map in the Lottie JSON. The player reads these and renders a sidebar with labeled sliders and color pickers. A sidecar `controls.json` file describes the UI metadata (labels, ranges, step sizes). This means non-technical team members can tweak animations without understanding the underlying JSON structure.
+**Motion Design Language Support.** The prompt guide encourages using proper motion design terminology — ease-in, ease-out, camera pushes, pans, zooms, and rig-like motion through group transforms. This means if you know basic animation vocabulary, you get significantly better results. The agent understands these concepts and translates them into correct Lottie keyframe data.
 
-**Export with Customized Values.** The properties panel includes a download button that serializes the current slot values back into a copy of the original Lottie JSON. Designers or PMs can adjust colors and timing through the UI, export the result, and hand it off for production use — no code changes required.
+**Transparent Background and Property Controls.** By default, animations render with transparent backgrounds so they layer cleanly over any UI. You can also request explicit controls for properties like background color, animation speed, and loop behavior. If you need the animation to be customizable at runtime, you tell the agent which properties to expose as controls, and it structures the JSON accordingly.
 
 ### Use Cases
 
-- **Loading and empty states** — Generate branded loading spinners, skeleton screens, and empty-state illustrations without waiting for a motion designer. Describe the style, the agent produces the animation.
-- **Onboarding flows** — Create step-by-step animated guides with smooth transitions between states. The properties panel lets product managers adjust timing and colors.
-- **Micro-interactions** — Button hover effects, success checkmarks, error shakes, notification toasts. Small animations that make a UI feel polished but rarely justify a motion design cycle.
-- **Marketing landing pages** — Hero section animations, feature callouts, and animated icons that would traditionally require After Effects and a designer.
-- **Prototyping and user testing** — Quickly generate animation variants for A/B testing. Change easing curves, durations, and visual styles through prompts rather than keyframe editing.
+- **Loading and empty state animations** — Replace generic spinners with branded, context-aware animations for your React or Next.js app. Describe your brand colors and style, and get a custom loading animation in minutes instead of hours.
+
+- **Onboarding and tutorial sequences** — Build step-by-step animated walkthroughs for mobile apps. Generate individual Lottie files for each onboarding screen, then sequence them with your app's navigation logic.
+
+- **Success and error state feedback** — Create satisfying checkmark animations for form submissions, playful error illustrations for 404 pages, or confetti bursts for achievement unlocks. These micro-interactions significantly improve perceived app quality.
+
+- **Logo and brand animations** — Convert your SVG logo into an animated reveal for splash screens, loading states, or marketing pages. The SVG-to-animation path ensures the result respects your actual brand geometry.
+
+- **Icon transition effects** — Generate animated transitions between icon states (hamburger to X, play to pause, bookmark empty to filled). These are notoriously tedious to build by hand but straightforward to describe in natural language.
+
+- **Marketing and social media assets** — Produce animated graphics for landing pages, social posts, and email headers without hiring a motion designer. Export as Lottie JSON for web or render to video for platforms that don't support Lottie.
 
 ### Pros and Cons
 
 Pros:
-- Eliminates the animation handoff bottleneck for standard motion work. A frontend developer can go from "I need a bouncing loader" to a working Lottie file in under a minute.
-- The Skia renderer handles complex animations that `lottie-web` fails on — masks, mattes, and expressions render consistently across browsers.
-- The skill format is a genuinely useful pattern for agent-tool integration. It's structured enough to produce valid output but flexible enough for creative variation.
-- MIT licensed and actively maintained with 8 commits in the first week after launch.
+- **Legitimate production output, not a toy.** The generated animations are standard Lottie JSON that works with every major rendering library. You're not locked into a proprietary viewer or format — these files go straight into production apps.
+- **YC-backed team with existing infrastructure.** Diffusion Studio already builds programmatic video tools, so they understand the motion graphics pipeline. This isn't a weekend project — there's a real company and product roadmap behind it.
+- **Agent-native design is forward-looking.** As coding agents become standard development tools, having a structured skill for animation generation means the workflow improves automatically as the underlying models get better.
 
 Cons:
-- The project is five days old as of this writing. The API surface, skill format, and player controls are likely to change significantly.
-- Complex, narrative animations (character animation, detailed illustrations) still need a human motion designer. The tool works best for abstract, geometric, and UI-focused animations.
-- The Skia CanvasKit WASM binary is ~8MB, which adds weight to your dev environment. Production deployments would need to consider this.
-- No built-in integration with LottieFiles or other animation asset platforms. You're working with raw JSON files.
+- **Quality depends heavily on prompt specificity.** Vague prompts produce generic animations. You need to describe timing, easing, and visual style with some precision to get good results. The prompt guide helps, but there's a learning curve.
+- **Complex animations still need After Effects.** Character animations, physics-based simulations, and multi-layered compositions with masking and effects are beyond what text prompts can reliably describe. This tool excels at UI micro-interactions, not Pixar-quality motion graphics.
+- **Early-stage project with active development.** The harness was released June 4, 2026, so expect breaking changes, missing edge cases, and evolving APIs. Production use today requires tolerance for rapid iteration.
 
 ### Getting Started
 
 ```bash
-# Install the skill in your coding agent
+# Install the skill in your coding agent environment
 npx skills add diffusionstudio/lottie
 
-# Or clone the player project directly
-npx degit diffusionstudio/lottie my-animation
-cd my-animation
-npm install    # copies CanvasKit wasm into /public via postinstall
-npm run dev
-```
+# Then prompt your agent (Claude Code, Codex, etc.)
+# Example: "Create a Lottie animation of a loading spinner with a
+# blue gradient that pulses between 50% and 100% opacity.
+# Use ease-in-out timing, 60fps, 2-second loop."
 
-Open the printed local URL. Then ask your coding agent to generate an animation:
+# The agent will:
+# 1. Set up the generation harness
+# 2. Generate the Lottie JSON
+# 3. Open a local inspector for preview/editing
 
-> "Create a Lottie animation of a pulsing blue circle that expands and contracts with a smooth ease-in-out curve, 60fps, 2 seconds long."
+# Use in a web project:
+# Add lottie-web to your project
+npm install lottie-web
 
-The agent writes `public/lottie.json`, the dev server hot-reloads, and you see the result. Iterate from there.
-
-To expose editable properties, create a `public/controls.json` alongside the animation:
-
-```json
-{
-  "controls": [
-    { "sid": "fill-color", "label": "Circle Color", "type": "color" },
-    { "sid": "pulse-speed", "label": "Pulse Speed", "type": "number", "min": 0.5, "max": 3, "step": 0.1 }
-  ]
-}
+# Then in your React component:
+# import lottie from 'lottie-web';
+# lottie.loadAnimation({ container: ref, animationData: jsonData, loop: true, autoplay: true });
 ```
 
 ### Alternatives
 
-**LottieFiles** — The dominant platform for Lottie animations with a massive library of pre-made animations and an online editor. LottieFiles is better when you need to browse existing animations or use their After Effects plugin for professional motion design work. Text-to-Lottie is better when you need custom animations generated from descriptions without leaving your development environment.
+**LottieFiles** — The largest marketplace for pre-made Lottie animations with over 500,000 assets. Choose LottieFiles when you need a specific animation style quickly and are willing to browse a catalog rather than generate something custom. The free tier covers most use cases, but premium animations and advanced editing require a subscription. LottieFiles also offers a web-based editor for modifying existing animations, which is useful when you find something close to what you need but want to adjust colors or timing.
 
-**Rive** — A newer animation tool with its own runtime that supports state machines, mesh deformation, and bone-based animation. Rive's editor is more powerful than anything you'd generate with an LLM, and its runtime is smaller than CanvasKit. Choose Rive when you need interactive, stateful animations that respond to user input. Choose Text-to-Lottie when you need quick, declarative animations that work with the existing Lottie ecosystem.
+**Rive** — A real-time interactive animation tool with its own rendering runtime. Rive is the right choice when you need animations that respond to user input — button hover states, scroll-driven effects, game-like interactions. Its State Machine lets you define animation logic declaratively. The trade-off is that Rive uses a proprietary format and runtime, so you're adding a dependency and file size that Lottie's ecosystem avoids. For static or looping UI animations, Lottie is lighter and more portable.
 
-**lottie-web + After Effects** — The traditional workflow: a motion designer creates animations in After Effects and exports via the Bodymovin plugin. This still produces the highest-quality results for complex, narrative animations. But it requires specialized skills, expensive software ($23/month for After Effects), and a multi-person workflow. Text-to-Lottie handles the 80% case — UI animations, loading states, micro-interactions — without that overhead.
+**Motion (Framer Motion)** — A React animation library for declarative, component-level animations. Motion is the answer when your animations are tightly coupled to React state — mount/unmount transitions, gesture-driven interactions, layout animations. It doesn't generate standalone animation files, so it's not a replacement for Lottie when you need cross-platform asset reuse. But for React-specific animation logic, Motion's API is more ergonomic than managing Lottie instances manually.
 
 ### Verdict
 
-Text-to-Lottie is the kind of tool that makes you rethink where the boundaries of a frontend developer's job are. Five days old, 1,100 stars, and it already solves a real problem: the tedious handoff between "I need an animation" and "I have a working Lottie file." The Skia renderer is a smart technical choice, and the agent skill format is the most interesting part — it's a clean pattern for making LLMs produce valid, structured creative output rather than hallucinated JSON. Don't bet your production animation pipeline on it yet; it's too early and the API will change. But for prototyping, internal tools, and quick UI polish, this is worth installing today. The fact that it works inside your existing coding agent workflow — no After Effects, no Figma export, no designer Slack DMs — is the real selling point.
+Text-to-Lottie is the most practical AI-for-design tool I've seen land in the developer ecosystem. It solves a real workflow problem — the gap between wanting a quick animation and actually producing one — without introducing proprietary formats or vendor dependencies. The generated output is standard Lottie JSON that works everywhere, the agent-native installation is a single command, and the built-in inspector means you're not flying blind on what the AI produced. At 2,500 stars in ten days with YC backing and daily commits, the momentum is real. If you're building React, React Native, or Flutter apps and you've ever hesitated to add an animation because the creation workflow was too annoying, this tool removes that excuse. The quality ceiling is limited by what you can describe in text, so don't expect it to replace a skilled motion designer for complex work — but for the 80% of UI animations that are loading states, success feedback, and icon transitions, it's genuinely good enough to ship.
