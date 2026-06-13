@@ -1,102 +1,109 @@
 ---
 name: duckle
-description: "Duckle is a local-first ETL/ELT studio with visual pipeline design, 290+ connectors, DuckDB execution, and an offline AI assistant — all in a 30MB desktop app."
+description: "Duckle is a local-first ETL/ELT studio with a visual pipeline designer, 290+ connectors, and a built-in AI assistant — all running on DuckDB in a 65 MB desktop app."
 url: https://github.com/SouravRoy-ETL/duckle
-stars: 326
-forks: 23
+stars: 432
+forks: 28
 language: Rust
-tags: ["data-engineering", "etl", "duckdb", "local-first", "ai-assistant"]
+tags: ["etl", "data-pipeline", "duckdb", "rust", "tauri", "local-first"]
 featured: false
-publishedAt: 2026-06-08
+publishedAt: 2026-06-13
 ---
 
 ## Duckle
 
 ### Overview
 
-Duckle is a local-first, open-source ETL/ELT desktop studio that compiles visual pipelines to SQL and executes them through DuckDB. It hit 326 GitHub stars within three weeks of its May 2026 launch, which is notable for a data engineering tool without a VC-funded marketing push. The project is created by Sourav Roy, a data engineer who's been building pipeline tooling and clearly got tired of the tradeoffs between heavyweight enterprise ETL platforms and lightweight but limited alternatives.
+Duckle is an open-source, local-first ETL/ELT studio that compiles visual data pipelines to SQL and runs them through DuckDB. It hit 400 GitHub stars within three weeks of its late-May 2026 launch, which is notable for a data engineering tool without a VC marketing budget or a YC pedigree.
 
-The core problem Duckle addresses is the gap between "I need to move and transform data across 10 sources" and "I don't want to set up Airflow, spin up a cloud instance, or write 500 lines of pandas." Most developers working with data pipelines today either over-engineer with distributed systems they don't need, or under-engineer with scripts that break silently. Duckle sits in the middle: a visual canvas where you drag sources, transforms, and sinks, wire them together, and press Run. The graph compiles to real SQL — visible on every node — and executes through DuckDB's vectorized columnar engine. A 5-million-row join across CSV, Parquet, DuckDB, and SQLite tables runs in milliseconds.
+The project is built by Sourav Roy and ships as a single-file desktop application (~65 MB) powered by Rust, Tauri v2, React 19, and TypeScript. The stack choice is deliberate: Tauri gives you a native shell without the Electron bloat, Rust handles the heavy lifting (connectors, WASM UDFs, the MCP server), and React renders the visual canvas. DuckDB is the execution engine — vectorized, columnar, and fast enough that a 5-million-row join finishes in seconds on a laptop.
 
-The app itself is a ~30MB Tauri binary built with Rust and React 19. No Docker containers, no JVM, no Node.js server to babysit. Download it, launch it, start building pipelines. That simplicity is the point.
+The core pitch: data pipeline tools have been split between heavy enterprise platforms (Informatica, Talend, Matillion) that require servers and cloud accounts, and lightweight CLI tools that are fast but give you no visual feedback. Duckle sits in the middle. You get a drag-and-drop canvas with live SQL previews on every node, 290+ connectors that work today (not "coming soon"), and an AI assistant that runs entirely on your CPU. No cloud dependency, no API keys required for the core product, no telemetry.
 
 ### Why it matters
 
-The data engineering tooling landscape has a persistent problem: the powerful tools are complex, and the simple tools are fragile. Apache Airflow and dbt are excellent for teams with dedicated data engineers, but they require infrastructure, configuration, and ongoing maintenance. On the other end, writing Python scripts with pandas works until it doesn't — no lineage, no previews, no scheduling, and definitely no collaboration.
+The data engineering tooling space has been quietly consolidating around two poles: cloud-native platforms that lock you into someone else's infrastructure, and open-source CLI frameworks (dbt, dlt, Airflow) that assume you're comfortable writing YAML and Python. Duckle takes a different bet — that visual pipeline design doesn't have to mean opaque, and local-first doesn't have to mean limited.
 
-Duckle represents a local-first philosophy that's gaining traction across developer tools. The same way Figma moved design from desktop to browser and then back to desktop with better performance, data tooling is moving back toward local execution. DuckDB is the catalyst here — it's an embedded analytical database that runs columnar queries at near-native speed without a server. Duckle builds on that foundation and adds the visual layer, the connector catalog, and the AI assistant that makes it usable by developers who aren't SQL experts.
+What makes this interesting for fullstack developers specifically is the connector breadth. Need to pull data from Stripe, transform it, and push it into pgvector for RAG indexing? That's three nodes on a canvas, no code. Need to join a Postgres table with a Parquet file from S3 and write the result to Snowflake? Drag, wire, run. The 290+ connectors include SaaS REST APIs (Salesforce, HubSpot, Shopify, Notion, Airtable), streaming brokers (Kafka, NATS, RabbitMQ), vector databases (pgvector, Qdrant, Weaviate, Milvus), and traditional databases — all without installing a single driver.
 
-The AI angle is worth highlighting. Duckie, the built-in assistant, runs Qwen 2.5 Coder 1.5B through llama.cpp entirely on your CPU. No API keys, no cloud round-trips, no telemetry. Describe a pipeline in English and it generates valid JSON that drops onto the canvas. This is the kind of practical AI integration that actually changes workflows — not a chatbot bolted onto a dashboard, but an assistant that understands the pipeline DSL and produces executable output.
+The AI angle is also worth noting. Duckle's built-in assistant (Duckie) runs Qwen 2.5 Coder 1.5B through llama.cpp, entirely offline. You describe a pipeline in English, it generates the JSON definition, and you drop it onto the canvas. The MCP server integration means Claude, ChatGPT, and other AI tools can also interact with your pipelines programmatically. For developers building RAG systems or cleaning data for AI models, Duckle has dedicated transforms for chunking, embedding, PII redaction, semantic deduplication, and vector similarity search — all composable visually.
 
 ### Key Features
 
-**Visual Pipeline Designer with Live SQL Preview.** Every node on the canvas compiles to SQL that you can inspect in real time. Drag a CSV source, connect it to a filter, then a join, then a Parquet export — and watch the generated SQL update at each step. This transparency is critical for debugging and learning. You're never staring at a black box wondering what's happening under the hood.
+**290+ Connectors at Install Time.** Duckle ships with connectors for files (CSV, Parquet, JSON, Excel, Avro, XML), databases (Postgres, MySQL, SQLite, MongoDB, Cassandra, Elasticsearch, Redis), cloud warehouses (Snowflake, BigQuery, Redshift, Databricks), streaming platforms (Kafka, NATS, GCP Pub/Sub, RabbitMQ, Kinesis), SaaS APIs (Stripe, Salesforce, HubSpot, Shopify, Notion, Jira, Slack), and vector databases (pgvector, Qdrant, Weaviate, Milvus, Pinecone). No driver installation needed — they're baked into the binary.
 
-**290+ Connectors Out of the Box.** Files (CSV, Parquet, JSON, Excel), SQL databases (Postgres, MySQL, SQLite, DuckDB), data warehouses (BigQuery, Snowflake, Redshift), lakehouses (Delta, Iceberg), object stores (S3, GCS, Azure Blob), NoSQL (MongoDB, Redis), streaming brokers (Kafka), SaaS APIs (REST and GraphQL), vector databases, and even FTP and IMAP. Each connector is tested and working today, not listed as "coming soon" on a roadmap.
+**Visual Pipeline Canvas with Live SQL.** Every node on the drag-and-drop canvas shows the generated SQL in a Plan tab and a live row sample in a Preview tab. You can see exactly what the engine is doing at each stage. Pipelines compile to real DuckDB SQL — there's no hidden abstraction layer or proprietary query language.
 
-**Duckie AI Assistant (Fully Offline).** Powered by Qwen 2.5 Coder 1.5B running through llama.cpp as a local subprocess on 127.0.0.1. Describe your pipeline in plain English, and Duckie streams back a valid pipeline definition. One click inserts it onto the canvas with positioned nodes and wired edges. The model downloads once (~1.1 GB) and then runs entirely on your CPU. Disconnect your WiFi and it keeps working.
+**Duckie AI Assistant (Fully Local).** The built-in chat sidebar runs Qwen 2.5 Coder 1.5B through llama.cpp on your CPU. Describe a pipeline in plain English, and Duckie streams back a valid JSON pipeline definition. One click drops it onto the canvas. No API key, no network calls, no cloud dependency. For developers who prefer cloud models, the assistant supports any OpenAI-compatible endpoint (Ollama, OpenAI, Cohere, etc.).
 
-**Git-Friendly Workspaces.** Pipelines, connections, contexts, and schedules persist as plain files in a folder you choose. Diff them, branch them, review them in PRs. Built-in GitHub and GitLab integration means your data pipelines get the same version control treatment as your application code. This is how data work should be managed.
+**AI-Native Data Transforms.** Six AI-specific transforms ship today: Vector Similarity Search (cosine/L2/inner product), Full-Text Search (BM25), Embeddings (OpenAI-compatible), LLM Transform (per-row chat completions with column templates), Text Chunker (RAG-ready, pure local), and PII Redact (regex-based email/phone/SSN/card detection). Three need a model API; three are pure-local.
 
-**Built-in Scheduler and Triggers.** Run pipelines on cron schedules or trigger them from external events without deploying to a separate orchestration platform. For small teams and local workflows, this eliminates the need for Airflow or Prefect for basic scheduling needs.
+**Git-Friendly Workspace.** Pipelines, connections, context variables, and routines persist as plain JSON and Markdown files in a folder you choose. Diff them, branch them, review them in PRs. The workspace is a first-class citizen, not an afterthought.
 
-**DuckDB Execution Engine.** All pipeline execution runs through DuckDB's vectorized, columnar engine. No hidden state, no intermediate databases to manage. A clean-and-export job that crawls in a pandas script finishes in milliseconds. The engine installs on first launch with a guided step — no manual configuration.
+**Single-File Binary with Embedded Runner.** The ~65 MB download includes the visual designer, the headless pipeline runner, and the MCP server. Export a pipeline as a self-contained executable — engine, DuckDB CLI, extensions, and pipeline definition all in one file. Copy it to a server and run or schedule it.
 
-**60 UI Languages with RTL Support.** The entire interface — topbar, palette, chat assistant, properties panel — ships localized in 60 languages including Arabic, Hebrew, Persian, and Urdu with proper right-to-left layout. This is unusual for a data tool and signals serious attention to global developer experience.
+**MCP Server for AI Tool Integration.** Duckle ships with a built-in MCP (Model Context Protocol) server so Claude, ChatGPT, and other AI tools can create, inspect, and run pipelines programmatically. This bridges the gap between visual pipeline design and AI-assisted data engineering.
 
 ### Use Cases
 
-- **Data migration projects** — Moving data from legacy SQL databases to modern warehouses or lakehouses. The visual canvas makes complex transformation logic auditable, and the 290+ connectors handle the source/target combinations that would require custom scripts otherwise.
-- **ETL for AI/ML pipelines** — Cleaning and preparing training data before it reaches your models. The vector database connectors (Pinecone, Weaviate, Qdrant, Chroma) and the AI-native transforms make it straightforward to prepare embeddings and structured data for RAG systems.
-- **Business intelligence prep** — Joining data from SaaS tools, databases, and spreadsheets into clean datasets for dashboards. The visual mapper handles multi-way joins without writing SQL, and the live preview catches data quality issues before they propagate.
-- **Local data exploration and prototyping** — Quick ad-hoc analysis across multiple data sources without spinning up infrastructure. The DuckDB engine handles millions of rows locally, and the AI assistant helps developers who know what they want but aren't fluent in SQL syntax.
-- **Small-team data ops** — Teams without dedicated data engineers who need reliable, scheduled data pipelines. The built-in scheduler and Git integration provide production-grade workflow without the operational overhead of distributed systems.
+- **RAG data preparation** — Pull documents from multiple sources (S3, Notion, Confluence), chunk them, embed them via OpenAI-compatible APIs, deduplicate semantically, and push to pgvector or Qdrant. All visual, no Python scripts.
+
+- **SaaS data consolidation** — Join Stripe billing data with HubSpot CRM records and a Postgres user table, transform and deduplicate, and land the result in Snowflake or BigQuery for analytics. Replace a pile of cron jobs and scripts with one visual pipeline.
+
+- **Streaming ETL** — Consume from Kafka or NATS JetStream, apply transforms (filter, map, aggregate), validate data quality, and write to multiple sinks in parallel. The Parallelize node fans out branches across CPU cores automatically.
+
+- **Data cleaning for ML** — Profile every column (null %, distinct counts, quartiles), validate with range/uniqueness/regex checks, route failures to a reject port, normalize types and encodings, and export clean training data. The Column Profile and Fuzzy Deduplicate transforms are purpose-built for this.
+
+- **Local-first data exploration** — Drop a CSV or Parquet file onto the canvas, apply filters and joins, and preview results instantly. No server setup, no cloud account, no waiting. The 60-language UI makes it accessible to international teams.
 
 ### Pros and Cons
 
 Pros:
-- Genuinely local-first with no cloud dependency. The AI assistant, the execution engine, and the workspace all run on your machine. This matters for data privacy, offline work, and avoiding vendor lock-in.
-- The 290+ connector catalog is impressive for a project three weeks old. Most "290 connector" claims in the data tool space include aspirational entries — Duckle's are tested and working, with 170+ integration tests backing them.
-- Active development with multiple commits daily. The June 7 commits alone added SFTP support and fixed Parquet/CSV edge cases. This isn't a weekend project that will go dormant.
-- The ~30MB binary size is remarkably small for what it includes. Compare to Electron-based alternatives that eat 500MB+ of disk space.
+
+- The connector breadth is genuinely impressive for a beta project. 290+ working connectors — including SaaS APIs, streaming brokers, vector databases, and geospatial formats — covers most real-world data pipeline needs without writing custom code.
+- Local-first architecture means zero cloud dependency for the core product. The AI assistant runs on your CPU, pipelines execute through embedded DuckDB, and workspaces are plain files. Your data never leaves your machine unless you explicitly configure a cloud sink.
+- The visual canvas with live SQL previews is a significant UX improvement over CLI-first tools. You can see exactly what SQL each node generates and preview row samples at every stage.
+- Dual-licensed MIT/Apache-2.0 with 170+ integration tests across all three platforms. The CI runs on both GitHub Actions and GitLab CI.
 
 Cons:
-- Public beta status means the API surface is still evolving. Breaking changes are likely before 1.0. Production use requires tolerance for updates that might change pipeline formats.
-- Single-machine by design. If your data volumes exceed what one laptop can handle, you'll need to point Duckle's output at a warehouse or lakehouse. It won't scale horizontally, and it's honest about that.
-- The AI assistant's 1.5B parameter model is good for straightforward pipelines but will struggle with complex multi-step transformations. You'll still need to understand SQL for advanced use cases.
-- Desktop-only — no web version, no collaborative editing. If your team needs real-time co-editing on pipelines, you'll need a different tool.
+
+- Beta status means rough edges. The API surface may change before 1.0, and some connectors (Pinecone, Chroma, LanceDB) are still in preview. The roadmap lists several planned features (Python UDFs, plugin marketplace) that don't exist yet.
+- Desktop-only deployment. There's no web UI or server mode for team collaboration. If your team needs shared pipeline editing or a centralized scheduler, you'll need to wait for future releases or build around the CLI runner.
+- The local AI assistant (Qwen 2.5 Coder 1.5B) is small. It works for simple pipeline descriptions but may struggle with complex multi-step transformations. The "bring your own model" option mitigates this, but then you're back to needing an API key.
 
 ### Getting Started
 
 ```bash
 # Download the latest release from GitHub
-# https://github.com/SouravRoy-ETL/duckle/releases
+# https://github.com/SouravRoy-ETL/duckle/releases/tag/v0.3.0
 
-# Or build from source
+# macOS (Apple Silicon)
+chmod +x Duckle-macos-arm64 && ./Duckle-macos-arm64
+
+# Linux (x86_64) — requires WebKitGTK 4.1
+chmod +x Duckle-linux-x64 && ./Duckle-linux-x64
+
+# Windows — double-click the .exe (SmartScreen warning on first run)
+
+# First launch: install DuckDB engine (~30 seconds)
+# Optional: install Duckie AI Assistant (~1.1 GB, 5-10 min)
+
+# Build from source (for development)
 git clone https://github.com/SouravRoy-ETL/duckle.git
 cd duckle
-cargo tauri dev
-
-# The app launches with a guided setup:
-# 1. Choose a workspace folder (pipelines save here as plain files)
-# 2. DuckDB installs automatically on first launch
-# 3. Optionally download the AI model (~1.1 GB) for Duckie assistant
-
-# Create your first pipeline:
-# - Drag a source node (e.g., CSV file) onto the canvas
-# - Add transforms (Filter, Map, Join)
-# - Connect to a sink (Parquet, database, API)
-# - Click Run to execute
+npm install
+cd apps/desktop/src-tauri
+cargo build --release
 ```
 
 ### Alternatives
 
-**Apache Airflow** — The industry standard for workflow orchestration. Airflow is more powerful for distributed, multi-team deployments with complex dependency graphs. But it requires a scheduler, metadata database, and worker infrastructure that's overkill for local data work. Choose Airflow when you need multi-node orchestration and have a team to maintain it.
+**Airbyte** — The most popular open-source data integration platform with 400+ connectors. Airbyte is more mature and has a larger community, but it requires a server (Docker or cloud) and its connector quality varies widely. Choose Airbyte when you need a production-grade, team-shared data platform with a web UI and API.
 
-**dbt (data build tool)** — dbt excels at SQL-based data transformation with version control, testing, and documentation. It's the right choice when your workflow is SQL-first and you want a mature ecosystem of packages and best practices. Duckle is better when you need visual pipeline design, non-SQL sources, or a drag-and-drop interface for team members who aren't SQL power users.
+**dlt (data load tool)** — A Python-first EL framework that's lightweight and developer-friendly. dlt is great for programmatic pipelines and integrates well with dbt and Airflow, but it has no visual designer and requires writing Python code. Choose dlt when you prefer code-first data pipelines and already have a Python-centric data stack.
 
-**Meltano** — An open-source ELT platform from the Singer ecosystem. Meltano is strong on extractors and loaders with a CLI-first approach and good CI/CD integration. Choose Meltano when you prefer code-over-CLI workflows and want to leverage the Singer connector ecosystem. Duckle wins on visual design, built-in transforms, and the offline AI assistant.
+**Meltano** — Singer-based ELT platform backed by dbt Labs. Meltano has a large tap/target ecosystem and good CLI ergonomics, but the Singer connector quality is inconsistent and the visual tooling is minimal. Choose Meltano when you want a CLI-first tool with a large (if uneven) connector catalog.
 
 ### Verdict
 
-Duckle is the most interesting data engineering tool I've seen this year. The combination of visual pipeline design, DuckDB execution, 290+ connectors, and a fully offline AI assistant in a 30MB binary is genuinely compelling. It's not trying to replace Airflow or dbt for enterprise deployments — it's solving the problem of "I need to move and transform data without setting up infrastructure." The local-first philosophy is the right call for this use case, and the active development (multiple commits per day, rapid connector expansion) suggests the project has real momentum. If you're a fullstack developer who regularly works with data across multiple sources and you're tired of writing one-off scripts, Duckle is worth installing today. The beta status means you should expect rough edges, but the core experience — drag, connect, run — already works well enough for real data work.
+Duckle is the most ambitious local-first data tool I've seen this year. The combination of a visual canvas, 290+ connectors, DuckDB execution, and a fully local AI assistant in a 65 MB binary is a compelling pitch — especially for developers who are tired of managing Airbyte instances or writing boilerplate Python ETL scripts. It's beta software, so expect rough edges and API changes. But if you're building RAG pipelines, consolidating SaaS data, or just need a fast way to explore and transform datasets on your laptop, Duckle is worth the download. The 400+ stars in three weeks suggest the data engineering community agrees.
