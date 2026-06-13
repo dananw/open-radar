@@ -1,70 +1,71 @@
 ---
-name: shadcn-improve
-description: "shadcn/improve is an agent skill that audits your codebase with expensive AI models and writes self-contained implementation plans for cheaper models to execute."
+name: improve
+description: "Improve is an agent skill by shadcn that audits codebases with expensive AI models and writes executable plans for cheaper models to implement — smart cost optimization for AI-assisted development."
 url: https://github.com/shadcn/improve
-stars: 334
-forks: 9
+stars: 2446
+forks: 87
 language: TypeScript
-tags: ["ai-agents", "code-audit", "developer-tools", "multi-model", "agent-skills"]
+tags: ["ai-agents", "code-audit", "developer-tools", "cost-optimization", "open-source"]
 featured: false
-publishedAt: 2026-06-10
+publishedAt: 2026-06-13
 ---
 
-## shadcn/improve
+## Improve
 
 ### Overview
 
-shadcn/improve landed on GitHub on June 10, 2026, and hit 334 stars within hours. That's not surprising — it's built by shadcn, the developer behind shadcn/ui, arguably the most influential React component library of the last three years. When shadcn ships something, the frontend community pays attention immediately.
+Improve is an agent skill that audits any codebase and writes self-contained implementation plans for cheaper AI models to execute. Created by shadcn — the developer behind the massively popular shadcn/ui component library (55K+ stars) — it launched on June 10, 2026, and crossed 2,400 GitHub stars in three days. That kind of velocity tracks with shadcn's track record: when he ships something, the developer community pays attention.
 
-The tool is an agent skill — a plugin for AI coding agents like Claude Code, Codex, and others that support the Agent Skills format. Its job is simple but powerful: use your most expensive, most capable model to audit a codebase, generate findings across nine categories, and then write self-contained implementation plans that cheaper models can execute independently. The expensive model does the thinking. The cheap model does the typing. You review and merge.
+The core insight is simple but powerful: not every AI coding task needs the same model. Understanding a codebase, judging what's worth fixing, and writing a precise spec requires deep reasoning. Executing a well-written plan with exact file paths, code excerpts, and verification commands is mechanical work. Improve splits these two responsibilities cleanly. Your most capable model (Claude Opus, GPT-4o, Gemini Ultra) handles the intelligence-heavy audit phase. Cheaper models (Claude Sonnet, GPT-4o-mini, open-source alternatives) handle execution. The result is better outcomes at a fraction of the cost.
 
-This is a response to a real problem developers face daily. Running a top-tier model like Claude Opus or GPT-4.5 on an entire codebase is expensive — easily $5-20 per audit on a medium-sized project. But the intelligence those models bring to understanding architecture, spotting subtle bugs, and prioritizing improvements is genuinely better than what smaller models can do. shadcn/improve formalizes the workflow of using expensive models where their intelligence compounds (analysis and planning) and cheaper models where raw capability matters less (implementing a well-specified plan).
+The tool works as a skill in any agent that supports the Agent Skills format — Claude Code, Cursor, Codex, and others. It writes plans as plain markdown files in a `plans/` directory, so any agent or human can pick them up. There's no lock-in, no proprietary format, no cloud dependency. Install with `npx skills add shadcn/improve`, point it at your repo, and it starts working.
 
 ### Why it matters
 
-The multi-model workflow is becoming the default for professional AI-assisted development, but most developers are doing it ad hoc. They run an expensive model, copy-paste findings into a new session with a cheaper model, lose all the context, and get mediocre results. shadcn/improve solves this by making the output of the expensive model — the plan — completely self-contained. Every plan includes exact file paths, current-state code excerpts, repo conventions, verified build/test/lint commands, and machine-checkable done criteria. A cheaper model (or a human, or a different agent entirely) can pick up any plan and execute it without access to the original audit session.
+AI-assisted coding has a cost problem. Developers running Claude Opus or GPT-4o for every task — including mechanical refactors, simple bug fixes, and boilerplate generation — are burning through API credits faster than necessary. A single deep audit of a medium-sized codebase can cost $5-15 with a top-tier model. Running that same model to execute the 15 plans it produced? That's another $30-75 you didn't need to spend.
 
-This connects to a broader shift in how developers think about AI tooling. The one-model-does-everything approach is giving way to specialized workflows where different models handle different phases. shadcn/improve is the first tool I've seen that makes this workflow explicit, reproducible, and agent-native. It's not a linter, not a static analyzer, not a code review bot. It's a strategic planning layer that sits between your codebase and your execution agents.
+Improve addresses this by formalizing a pattern many senior developers already use informally: think hard first, then delegate the grunt work. The difference is that Improve makes this workflow systematic and reproducible. It produces plans specifically designed for weaker models — self-contained, with inlined context, verification gates, and explicit STOP conditions so a smaller model doesn't improvise when it hits something unexpected.
 
-The fact that it works across any language and any framework makes it especially relevant for fullstack teams. Your React frontend, NestJS API, Django admin, and Go microservices all get audited with the same rigor, and the plans respect each project's actual conventions rather than applying generic best practices.
+This also connects to a broader trend in the AI tooling space: the shift from "one model does everything" to multi-model orchestration. Microsoft's SkillOpt trains reusable natural-language skills for frozen LLM agents. Anthropic's tooling increasingly separates planning from execution. Improve brings this same principle to the individual developer workflow, and it does it in a way that's immediately practical rather than theoretical.
+
+The shadcn name carries significant weight here. His component library is embedded in virtually every modern React project. If he's building tooling for a multi-model development workflow, that's a signal the ecosystem is moving in this direction.
 
 ### Key Features
 
-**Nine-Category Audit System.** The tool fans out parallel subagents across correctness, security, performance, test coverage, tech debt, dependencies and migrations, developer experience, documentation, and strategic direction. Each finding includes file:line evidence, impact assessment, effort estimate, and confidence rating. This isn't a glorified linter — it's a structured code review that covers what human reviewers miss when they're tired or rushing.
+**Multi-Model Cost Optimization.** The fundamental design separates expensive reasoning from cheap execution. You run `/improve` with your best model to generate an audit and plans, then hand those plans to cheaper models via `/improve execute 001`. The skill dispatches executors in isolated git worktrees, reviews their diffs against the plan, and reports back with an approve/revise/block verdict. You keep control of merging.
 
-**Vetting Layer That Eliminates False Positives.** Subagents over-report by design. The advisor model then re-reads every cited location itself before showing you anything. False positives get dropped silently, wrong attributions get corrected, and rejections get recorded so they don't come back in future runs. On shadcn/ui itself, the tool rejected findings like an `https_proxy` environment variable flagged as an SSRF vulnerability — correctly identifying it as a standard proxy convention that every CLI honors.
+**Nine-Category Parallel Audit.** The audit fans out parallel subagents across correctness, security, performance, test coverage, tech-debt, dependencies and migrations, developer experience, documentation, and direction (feature suggestions). Every finding carries file:line evidence, impact assessment, effort estimate, and confidence score. This isn't a superficial lint — it reads your code and makes specific, evidence-backed claims.
 
-**Self-Contained Executable Plans.** Every plan is a standalone markdown file with everything a cold-start executor needs: exact file paths, current-state code excerpts, the repo's conventions with an exemplar file reference, verified build/test/lint commands as verification gates, and explicit STOP conditions for when reality doesn't match the plan. No "as discussed above" — no session memory required.
+**Self-Healing Plan Validation.** Subagents over-report by design. The advisor re-reads every cited location before showing findings to you. False positives get dropped silently. Wrong attributions get corrected. Rejections get recorded with reasons so they don't reappear in future runs. This vetting step is what makes the output trustworthy enough to hand to a weaker model.
 
-**Prioritized Findings Table.** Results land in a table ordered by leverage — impact divided by effort, weighted by confidence. You pick which findings become plans. The tool doesn't try to fix everything; it tells you where your effort has the highest return and lets you decide.
+**Executable Plan Format.** Plans are written for the weakest plausible executor — a model that has never seen the advisor session and may be significantly smaller. Each plan inlines exact file paths, current-state code excerpts, repo conventions with exemplar files, and verified build/test/lint commands as verification gates. No "as discussed above" references. No ambiguity. The executor never has to guess whether it succeeded.
 
-**Branch-Scoped Auditing.** `/improve branch` audits only what your current branch changes. This is the workflow I'd actually use daily — before opening a PR, run a focused audit on the diff. It catches things that slip through code review when the PR is large or the reviewer is unfamiliar with the area.
+**Intent-Aware Reconnaissance.** Before auditing, Improve maps the repo's stack, conventions, and build commands. It also ingests intent documents — ADRs, PRDs, CONTEXT.md, DESIGN.md, PRODUCT.md — so decided tradeoffs aren't re-flagged as findings and direction suggestions stay grounded in stated product intent. If your repo already documents its decisions, the tool respects them.
 
-**Plan Reconciliation.** `/improve reconcile` refreshes the backlog: verifies what landed, refreshes what drifted, unblocks what got stuck. This turns one-off audits into a persistent improvement backlog that tracks reality over time. Plans don't go stale silently — the tool tells you when they need updating.
+**Plan Lifecycle Management.** Plans aren't fire-and-forget. The `/improve reconcile` command processes what happened since the last run: verifies DONE plans still hold, investigates BLOCKED ones and rewrites around obstacles, refreshes drifted plans, and retires findings that got fixed independently. Each plan stamps the git commit it was written against, so executors run a mechanical drift check before touching anything.
 
-**GitHub Issues Integration.** Pass `--issues` to any command and plans get published as GitHub issues automatically. This bridges the gap between AI-generated insights and your team's existing project management workflow. No more copying findings into Jira manually.
+**GitHub Issues Integration.** Pass `--issues` to publish plans directly as GitHub issues with the same self-contained body. This means any agent or human can pick up work where it already lives — in your issue tracker — rather than hunting through a plans directory.
 
 ### Use Cases
 
-- **Pre-PR code quality gate** — Run `/improve branch` before opening a pull request to catch issues that automated linters and human reviewers miss. Especially useful on large diffs where context-switching fatigue causes reviewers to rubber-stamp.
-- **Legacy codebase triage** — Run `/improve deep` on a codebase you've inherited to get a prioritized map of technical debt, security issues, and performance problems. The findings table gives you a concrete starting point instead of the overwhelming "refactor everything" feeling.
-- **Cost-optimized AI development workflow** — Teams spending $50+/day on AI coding agents can use expensive models only for the audit phase and dispatch cheaper models (Claude Sonnet, GPT-4o-mini) for implementation. The plans are good enough that even significantly cheaper models produce quality output.
-- **Security audit for startups** — Run `/improve security` before a launch or funding round to surface vulnerabilities, insecure dependencies, and authentication gaps. The evidence-based findings are more actionable than generic SAST tool output.
-- **Onboarding new team members** — The audit output serves as a structured codebase orientation. New engineers can read the findings table to understand where the bodies are buried without reading every file.
+- **Pre-PR code review** — Run `/improve branch` before opening a pull request. It scopes the audit to just what your branch changes and produces targeted improvement plans for anything it catches.
+- **Legacy codebase onboarding** — New team members (or AI agents) can run `/improve deep` to get a comprehensive audit with prioritized findings. The plans serve as guided exploration of what needs attention.
+- **Cost-conscious AI development workflows** — Teams spending $200+/month on API credits can use Improve to route 80% of execution work to cheaper models while keeping top-tier reasoning for the audit phase.
+- **Security and performance audits** — Run `/improve security` or `/improve perf` for focused deep-dives. Findings include specific file locations and evidence, not generic advice.
+- **Open source project maintenance** — Maintainers can run `/improve next` to get feature suggestions grounded in the codebase's actual patterns and stated direction, then publish the best ones as issues for community contributors.
+- **CI/CD integration** — Run `/improve reconcile` on a schedule to keep a living backlog of improvement plans that track with the codebase's evolution.
 
 ### Pros and Cons
 
 Pros:
-- Built by shadcn, who has a track record of shipping tools that actually get adopted. shadcn/ui has 80K+ stars and is used by companies from Vercel to Shopify. This isn't a random side project.
-- The multi-model cost optimization is real. Teams report 60-80% reduction in AI agent costs by routing planning through expensive models and execution through cheaper ones, with no quality loss on well-specified tasks.
-- Works with any language, any framework, any agent. The plans are plain markdown — no vendor lock-in, no proprietary plan format. A human can execute them just as easily as an AI agent.
-- The vetting layer that eliminates false positives is a genuine differentiator. Most code analysis tools drown you in noise; this one curates aggressively.
+- The multi-model strategy genuinely reduces costs. Running a capable model only for planning and cheaper models for execution can cut API spend by 60-80% on codebase improvement tasks, based on the cost differential between Opus-tier and Sonnet-tier models.
+- Plans are designed to be self-contained and machine-verifiable, which means they actually work when handed to weaker models — unlike most AI-generated code suggestions that assume context the executor doesn't have.
+- The shadcn pedigree means the tool is well-designed and likely to maintain momentum. The skill format makes it portable across agents.
 
 Cons:
-- Brand new (released today, June 10, 2026). Zero open issues likely means it hasn't been battle-tested by the community yet, not that it's bug-free. Expect rapid iteration and breaking changes.
-- Requires Agent Skills support in your coding agent. Claude Code and Codex CLI support it natively, but if you're using Cursor, Windsurf, or other tools, you'll need to check compatibility.
-- The quality of plans depends heavily on the expensive model's capability. Using a weaker model for the audit phase produces weaker plans, and the tool doesn't warn you about this — you need to know which model to configure.
-- No pricing transparency. The tool itself is free and MIT-licensed, but the cost of running expensive models on large codebases can be significant. Budget $5-20 per deep audit on a medium-sized project.
+- Three days old as of this writing. The 6 open issues suggest the API surface is still settling, and there's no published benchmark data on how well cheaper models execute the plans.
+- Requires a capable model for the audit phase, so there's a minimum cost floor. Running `/improve deep` on a large codebase with Claude Opus could cost $10-20 per run.
+- The tool deliberately never modifies source code — it only writes plans. Developers looking for a "fix everything" tool will be disappointed. The extra step of handing plans to an executor adds friction.
 
 ### Getting Started
 
@@ -72,46 +73,35 @@ Cons:
 # Install the skill
 npx skills add shadcn/improve
 
-# Run a full audit in your agent (Claude Code, Codex, etc.)
-# The agent will recognize /improve as an available command
-/improve
-
-# Quick pass — cheaper, just hotspots and top findings
+# Run a quick audit (cheaper pass — hotspots and top findings only)
 /improve quick
 
-# Deep audit — exhaustive, every package and category
-/improve deep
+# Run a full audit → prioritize findings → select which to plan
+/improve
 
-# Security-focused audit
-/improve security
+# Execute a specific plan with a cheaper model
+/improve execute 001
 
-# Audit only your current branch changes
+# Before a PR — audit only what your branch changes
 /improve branch
 
-# Generate plans for findings 1, 3, and 5
-# (after reviewing the findings table, tell the agent)
-# "plan 1, 3 and 5"
-
-# Execute a plan with a cheaper model
-/improve execute 001
+# Clean up the plan backlog
+/improve reconcile
 
 # Publish plans as GitHub issues
 /improve --issues
-
-# Refresh the plan backlog
-/improve reconcile
 ```
 
-Plans land in `plans/` as standalone markdown files. Each includes file paths, code excerpts, verification commands, and done criteria.
+Plans are written to `plans/` as markdown files. Read them, review them, and hand them to any agent or human executor.
 
 ### Alternatives
 
-**CodeRabbit** — An AI code review tool that runs on pull requests automatically. CodeRabbit is better for continuous, automated PR reviews integrated into your CI pipeline. Choose it when you want every PR reviewed without manual invocation. shadcn/improve is better when you want strategic, prioritized improvement plans rather than line-by-line PR comments.
+**Sweep AI** — A GitHub-integrated AI tool that turns issues into pull requests automatically. Sweep is more end-to-end (issue → PR) but less transparent about what it's doing under the hood. Choose Sweep when you want full automation and trust the tool to both plan and implement. Choose Improve when you want control over the planning phase and cost optimization across model tiers.
 
-**Amazon CodeGuru** — AWS's ML-powered code reviewer focused on Java and Python. CodeGuru excels at finding resource leaks, security issues, and performance problems in AWS-integrated applications. Choose it if you're deep in the AWS ecosystem and want production telemetry-informed recommendations. shadcn/improve is more flexible — it works across any stack and produces actionable plans, not just findings.
+**CodeRabbit** — An AI code review tool that runs automatically on pull requests. CodeRabbit is better for CI-integrated review workflows where you want automated feedback on every PR. Improve is better for proactive codebase improvement — finding and planning fixes before they become PRs.
 
-**Qodo (formerly CodiumAI)** — Generates tests and does code analysis with AI. Qodo is stronger on test generation specifically, with tight IDE integration for VS Code and JetBrains. Choose it when your primary need is improving test coverage. shadcn/improve covers a broader surface area (nine categories including strategy and direction) and produces plans rather than patches.
+**Codium PR-Agent** — Open-source AI tool for pull request analysis, review, and description generation. PR-Agent focuses on the PR lifecycle (review, describe, improve suggestions) while Improve focuses on the pre-PR phase (audit the whole codebase, produce improvement plans). They're complementary rather than competing.
 
 ### Verdict
 
-This is the most pragmatic AI development tool I've seen this month. shadcn has a habit of shipping tools that solve real problems without unnecessary complexity — shadcn/ui proved that — and improve follows the same pattern. The core insight (use expensive models for planning, cheap models for execution) is obvious in hindsight but nobody had formalized it into a reusable workflow before. At 334 stars on day one, it's clearly resonating. The main risk is immaturity — this is literally hours old as I write this — but the design is sound, the documentation is thorough, and the backing of shadcn's reputation means the community will adopt and stress-test it quickly. If you're using AI coding agents professionally and you haven't optimized your model routing strategy yet, this is the tool to start with.
+Improve is the most practical tool I've seen for making AI-assisted development cost-effective at scale. The insight — use expensive models where intelligence compounds, cheap models everywhere else — is obvious in hindsight but nobody had formalized it into a reusable workflow until now. The self-contained plan format with verification gates is the key engineering decision: it's what makes the whole multi-model strategy actually work rather than producing plans that fall apart in execution. Three days old and 2,400 stars isn't just hype — it's recognition that this pattern fills a real gap. If you're running AI coding agents daily and watching your API bill climb, install this today. The audit alone is worth it, even if you never hand a plan to a cheaper model.
