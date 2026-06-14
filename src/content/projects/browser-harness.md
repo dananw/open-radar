@@ -1,128 +1,105 @@
 ---
 name: browser-harness
-description: "Browser Harness is a self-healing CDP harness from the browser-use team that lets AI agents control your real Chrome browser — zero abstractions, zero config."
+description: "Self-healing browser harness that connects LLMs directly to Chrome via CDP — no middleware, no abstractions, just raw browser control for AI agents."
 url: https://github.com/browser-use/browser-harness
-stars: 14287
-forks: 1323
+stars: 14800
+forks: 1391
 language: Python
-tags: ["browser-automation", "ai-agents", "cdp", "developer-tools", "testing"]
+tags: ["browser-automation", "ai-agents", "cdp", "playwright", "web-scraping"]
 featured: false
-publishedAt: 2026-06-03
+publishedAt: 2026-06-14
 ---
 
 ## Browser Harness
 
 ### Overview
 
-Browser Harness is a thin, editable Python harness that connects an LLM directly to your real Chrome browser via the Chrome DevTools Protocol (CDP). It launched in mid-April 2026 and crossed 14,000 GitHub stars within five weeks. That kind of velocity makes sense when you look at the parent project — browser-use has nearly 97,000 stars and is one of the most popular AI agent frameworks on GitHub.
+Browser Harness is a Python tool that gives AI coding agents direct control of your real browser through Chrome DevTools Protocol. It crossed 14,000 GitHub stars in under two months, which tracks with the broader explosion in AI agent tooling during early 2026. The project comes from the Browser Use team, the same group behind the popular browser-use library for web agents.
 
-The project comes from the browser-use team, led by gregpr07 and MagMueller, who built the original browser-use library that made LLM-driven browser automation accessible. Browser Harness is their answer to a specific frustration: every other browser automation tool for AI agents adds layers of abstraction between the agent and the browser. Playwright wrappers, Selenium drivers, custom rendering engines — each layer introduces bugs, latency, and failure modes that don't exist in the real browser. Browser Harness cuts through all of that with a single websocket to Chrome. Nothing in between.
+The core idea is radical simplicity: one websocket to Chrome, nothing between the agent and the browser. No middleware servers, no abstraction layers, no framework-specific adapters. The agent writes the automation code it needs during execution, and the harness improves itself every run. If the agent needs to upload a file and the helper doesn't exist yet, it creates one. Next time, the helper is already there.
 
-The core idea is that the harness improves itself during execution. When the agent encounters a task it can't handle — uploading a file through a custom dialog, navigating a complex multi-step form, dealing with a CAPTCHA — it writes the missing helper code into `agent-workspace/agent_helpers.py` and continues. The next time it hits that same pattern, the helper is already there. Over time, your workspace accumulates a library of battle-tested interaction patterns specific to the sites you actually use.
+This approach solves a real problem in the AI agent space. Most browser automation tools assume the automation script is written ahead of time. But AI agents are inherently exploratory — they don't know what they'll need until they're in the middle of a task. Browser Harness embraces that reality. The harness ships with about 1,000 lines of core code across four files, plus a workspace where the agent accumulates site-specific knowledge over time.
 
 ### Why it matters
 
-Fullstack developers spend an absurd amount of time on browser-related tasks that should be automated: end-to-end testing, form submissions, data extraction, deployment verification, admin panel operations. Playwright and Puppeteer are powerful but require writing and maintaining brittle selector-based scripts. Browser Harness takes a fundamentally different approach — instead of scripting the browser step by step, you describe what you want in natural language and the agent figures out how to do it.
+Browser automation for AI agents is becoming a critical infrastructure layer. Every coding agent, from Claude Code to Codex to Cursor, needs to interact with the web at some point — checking documentation, testing UIs, filling forms, scraping data. The existing options fall into two camps: heavyweight frameworks like Playwright and Puppeteer that require pre-written scripts, and thin wrappers that break on real-world sites.
 
-What sets this apart from other AI browser tools is the domain skills system. The repository ships with community-contributed playbooks for over 90 sites — GitHub, LinkedIn, Amazon, Gmail, StackOverflow, Salesforce, Shopify, and dozens more. Each skill teaches the agent the selectors, flows, and edge cases for a specific site. When you run a task against GitHub, the agent reads the GitHub domain skill first and already knows how to handle GitHub's specific UI patterns. The skills are generated by the harness itself during real usage, not hand-authored, which means they reflect what actually works in the browser rather than what a developer thinks should work.
+Browser Harness sits in a useful middle ground. It connects to your actual Chrome instance (the one you're already logged into), so the agent has access to your sessions, cookies, and extensions. This matters because most useful web tasks require authentication. Nobody wants to re-login to every service just to run an automated check.
 
-For teams building AI agents, this is infrastructure. The harness provides a reliable, self-healing interface between language models and the web — the same web your users interact with. If you're building an agent that needs to book flights, file expense reports, or scrape product listings, Browser Harness gives you that capability without maintaining a separate automation stack.
+The self-healing architecture is the differentiator. When the agent encounters a new UI pattern — a date picker, a file upload dialog, a shadow DOM component — it writes the interaction code and files it as a reusable "interaction skill." These skills accumulate in the workspace and are shared across sessions. The agent learns your specific environment over time, rather than rediscovering the same DOM quirks every run.
+
+For fullstack developers, this tool bridges the gap between writing code and verifying it works. You can tell your AI agent "test the login flow on localhost:3000" and it will actually do it, using your real browser, with your real dev server running.
 
 ### Key Features
 
-**Direct CDP Connection.** One websocket to Chrome, nothing between. The harness connects to your already-running browser via Chrome's remote debugging protocol, so it sees exactly what you see — same cookies, same extensions, same login state. No headless browser simulation, no fingerprinting issues, no "this site doesn't work in automated browsers" problems.
+**Direct CDP Connection.** Browser Harness connects to Chrome via the DevTools Protocol websocket — the same protocol Chrome's own DevTools uses. There's no Playwright or Puppeteer layer in between. This means zero overhead and full access to every CDP capability, including network interception, performance profiling, and security domain events.
 
-**Self-Healing Agent Workspace.** When the agent encounters an interaction it can't handle, it writes the missing helper into `agent_helpers.py` and continues execution. The workspace accumulates reusable patterns over time. Upload a file once and the agent figures out the file picker; next time it already knows the flow. This is the key architectural insight — the harness gets better the more you use it.
+**Self-Improving Agent Workspace.** The `agent-workspace/` directory is where the harness accumulates knowledge. `agent_helpers.py` contains reusable Python functions the agent writes during execution. Domain-specific skills live under `agent-workspace/domain-skills/<site>/`, with per-site playbooks for GitHub, LinkedIn, Amazon, and other complex sites. Each skill teaches the agent the selectors, flows, and edge cases for a specific site.
 
-**Community Domain Skills.** Over 90 site-specific playbooks under `agent-workspace/domain-skills/`, covering sites like GitHub, LinkedIn, Amazon, Gmail, Reddit, Salesforce, and Shopify. Each skill documents selectors, navigation flows, and edge cases. Enable with `BH_DOMAIN_SKILLS=1` and the agent loads the right skill automatically based on the target domain.
+**Remote Browser Support.** For parallel sub-agents or headless deployment, Browser Harness supports Browser Use Cloud's free tier (3 concurrent browsers with proxies and CAPTCHA solving). Each sub-agent gets its own isolated browser instance via a distinct `BU_NAME`. You can reuse cloud profiles that are already logged into services, or sync local Chrome profiles to the cloud.
 
-**Remote Browser Support.** Run browsers in the cloud via Browser Use Cloud's free tier (3 concurrent browsers, proxies, CAPTCHA solving). Each remote browser gets its own isolated profile. The harness supports parallel sub-agents, each connecting to a distinct remote browser via a `BU_NAME` environment variable. Useful for headless server deployments and multi-agent workflows.
+**Interaction Skills Library.** The `interaction-skills/` directory contains documented solutions for common browser mechanics: dialogs, tabs, dropdowns, iframes, uploads, drag-and-drop, shadow DOM, scrolling, screenshots, and more. When the agent gets stuck on a specific UI pattern, it reads the relevant skill file instead of guessing.
 
-**Heredoc-First API.** Every interaction uses a simple heredoc pattern: `browser-harness <<'PY' ... PY`. No imports, no setup boilerplate, no daemon management. The daemon auto-starts on first call and auto-stops on shutdown. This makes it trivial to integrate into scripts, CI pipelines, and agent tool chains.
+**Zero Configuration Start.** The entire setup is: clone the repo, run `uv tool install -e .`, and connect Chrome's remote debugging. The harness auto-discovers Chrome instances, manages daemon lifecycle, and handles updates. The `--doctor` command reports version, install mode, daemon state, and Chrome connection status.
 
-**Interaction Skills Library.** Beyond domain-specific skills, the harness includes reusable interaction patterns for common UI mechanics — dialogs, tabs, dropdowns, iframes, file uploads, drag-and-drop. When the agent struggles with a specific mechanic, it consults the interaction-skills directory before trying to figure things out from scratch.
-
-**Agent Framework Agnostic.** Works with Claude Code, Codex, OpenCode, Gemini CLI, and any other agent that can execute shell commands. The harness is a CLI tool on `$PATH` — call it from any agent, any language, any environment. No SDK dependency, no API key required for local usage.
+**Heredoc Interface.** All browser commands are issued via heredoc Python blocks: `browser-harness <<'PY' ... PY`. This prevents shell quote mangling inside Python strings and JavaScript snippets, which is a common pain point with other CLI-driven browser tools. The daemon starts automatically on first invocation.
 
 ### Use Cases
 
-- **End-to-end testing for web applications** — Write test scenarios in natural language and let the agent execute them against your staging environment. The agent sees the real browser, interacts with real DOM elements, and reports what it finds. No more maintaining brittle Playwright selectors that break every sprint.
-
-- **Web scraping and data extraction** — Extract structured data from complex, JavaScript-heavy sites that don't expose clean APIs. The agent navigates pagination, handles infinite scroll, and extracts the data you need. Domain skills for sites like LinkedIn, Amazon, and eBay handle the tricky parts.
-
-- **Automating repetitive admin tasks** — Fill out forms, upload documents, navigate multi-step workflows in admin panels, CRM systems, and internal tools. The agent writes helpers for your specific admin interface and reuses them on subsequent runs.
-
-- **Multi-agent browser workflows** — Run parallel sub-agents, each controlling its own isolated browser in the cloud. One agent scrapes competitor pricing while another checks your production deployment while a third fills out expense reports. All via Browser Use Cloud's free tier.
-
-- **Rapid prototyping of browser-based agents** — Instead of building a custom browser automation stack for your agent product, use Browser Harness as the browser interface layer. The self-healing workspace means your prototype gets more reliable with every user interaction.
+- **End-to-end testing of web applications** — Tell the agent to "test the checkout flow on localhost:3000" and it navigates your real app, fills forms, clicks buttons, and reports failures. Works with React, Next.js, Django, or any web framework running locally.
+- **Web scraping authenticated pages** — The agent uses your logged-in Chrome session to scrape data behind login walls. No need to manage cookies or tokens separately.
+- **Automating repetitive web tasks** — Filing expenses, updating dashboards, posting content across platforms. The agent learns the flow once and repeats it.
+- **Debugging production issues** — Connect to a staging or production browser session and have the agent reproduce user-reported bugs, capture screenshots, and inspect network requests.
+- **AI agent browser capabilities** — Integrate with Claude Code, Codex, or any coding agent that needs to interact with the web as part of a larger task.
 
 ### Pros and Cons
 
 Pros:
-- Zero abstractions between agent and browser — direct CDP means it works with any site your Chrome can access, including sites that block headless browsers and automation tools.
-- The self-healing workspace is genuinely useful. After a few sessions, the agent stops making the same mistakes because it writes and reuses its own helpers. This compounds over time.
-- 90+ community domain skills mean the agent starts with real knowledge of popular sites rather than having to learn from scratch every time.
-- Free cloud browser tier (3 concurrent, proxies, CAPTCHA solving) removes the infrastructure barrier for teams that want headless or remote execution.
+- Connects to your real Chrome instance with existing sessions and cookies, eliminating the authentication setup problem that plagues every other browser automation tool.
+- The self-healing architecture means the harness gets better over time. Domain skills accumulate and are shared across sessions, reducing repeated failures on the same sites.
+- Extremely thin core (~1,000 lines) means it's easy to understand, debug, and extend. No framework magic, no hidden state.
 
 Cons:
-- Python-only core. If your stack is TypeScript/Node.js or Go, you're calling it as a subprocess, not importing it as a library. Fine for CLI usage, less ideal for tight integration.
-- The "agent writes its own helpers" model means your workspace accumulates code that no human reviewed. In practice this works well, but debugging a failed helper the agent wrote three weeks ago can be confusing.
-- Requires Chrome with remote debugging enabled. Firefox and Safari support doesn't exist. If your testing matrix includes multiple browsers, this only covers Chromium-based ones.
+- Python-only tooling. If your stack is TypeScript/Node.js, you're shelling out to Python every time. No native JavaScript API.
+- The "agent writes its own code" model means the quality of automation depends heavily on the LLM's coding ability. Cheaper or smaller models may produce fragile helpers.
+- Browser Use Cloud's free tier is limited to 3 concurrent browsers. Heavy usage requires paid tiers or self-hosted infrastructure.
 
 ### Getting Started
 
 ```bash
-# Clone and install
+# Clone and install as an editable tool
 git clone https://github.com/browser-use/browser-harness
 cd browser-harness
 uv tool install -e .
-
-# Verify it's on PATH
 command -v browser-harness
 
-# Enable Chrome remote debugging (Chrome 144+):
-# Navigate to chrome://inspect/#remote-debugging
-# Tick the "Discover network targets" checkbox
+# Enable Chrome remote debugging (one-time setup)
+# Navigate to chrome://inspect/#remote-debugging and tick the checkbox
 
-# Run your first task
+# Test the connection
 browser-harness <<'PY'
-new_tab("https://news.ycombinator.com")
+new_tab("https://example.com")
 wait_for_load()
 print(page_info())
 PY
 
-# Enable domain skills for site-specific knowledge
-export BH_DOMAIN_SKILLS=1
+# Register as a global skill for Claude Code
+# Add to ~/.claude/CLAUDE.md:
+# @~/Developer/browser-harness/SKILL.md
 
-# Register as a Claude Code skill
-mkdir -p ~/.claude/skills
-ln -sf "$PWD/SKILL.md" ~/.claude/skills/browser-harness.md
-```
-
-For remote browsers with Browser Use Cloud:
-
-```bash
-# Get a free API key at cloud.browser-use.com/new-api-key
-export BROWSER_USE_API_KEY="your-key"
-
-browser-harness <<'PY'
-start_remote_daemon("work")
-PY
-
-BU_NAME=work browser-harness <<'PY'
-new_tab("https://github.com/trending")
-print(page_info())
-PY
+# Or for Codex
+mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills/browser-harness"
+ln -sf "$PWD/SKILL.md" "${CODEX_HOME:-$HOME/.codex}/skills/browser-harness/SKILL.md"
 ```
 
 ### Alternatives
 
-**Playwright** — Microsoft's browser automation framework with excellent TypeScript support, multi-browser coverage (Chromium, Firefox, WebKit), and a mature ecosystem. Playwright gives you deterministic, scriptable control over the browser with auto-waiting and built-in assertions. Choose Playwright when you need reliable, repeatable test automation across multiple browsers and want full control over every interaction. Browser Harness is better when you want the agent to figure out the interactions on its own.
+**Playwright** — Microsoft's browser automation framework with excellent cross-browser support and a mature API. Playwright is the right choice when you need deterministic, pre-scripted test suites that run in CI. Browser Harness is better when the automation needs to be adaptive and exploratory, which is the case for AI agents.
 
-**browser-use (parent project)** — The original browser-use library that started it all, with 97K stars. It's a higher-level Python library that wraps Playwright with LLM-powered agent logic, providing a cleaner API for building browser agents. Choose browser-use when you're building a custom agent product and want a programmatic Python API. Browser Harness is the right choice when you want a CLI tool that any agent can call, with direct CDP access and no Playwright dependency.
+**browser-use** — The parent project's main library for building web agents with LangChain and other frameworks. browser-use provides a higher-level API with built-in LLM integration. Browser Harness is the lower-level tool that browser-use agents use under the hood — choose it when you want direct control without the framework abstraction.
 
-**Stagehand by Browserbase** — A TypeScript-first browser automation framework designed for AI agents, with built-in session management and cloud browser infrastructure. Stagehand has a cleaner TypeScript API and better integration with Node.js agent frameworks. Choose Stagehand if your agent stack is TypeScript-native and you want a more opinionated, managed approach to browser automation.
+**Puppeteer** — Google's Node.js library for controlling Chrome. Puppeteer is mature and well-documented, making it a solid choice for straightforward automation scripts. But it requires pre-written code and doesn't have the self-improving agent workspace that makes Browser Harness unique.
 
 ### Verdict
 
-Browser Harness is the most pragmatic approach to AI-driven browser automation I've seen. The "no abstractions, one websocket to Chrome" philosophy is refreshing in a space full of wrapper libraries that each add their own failure modes. The self-healing workspace is not just a gimmick — after a week of daily use, the agent genuinely stops repeating mistakes because it builds up a library of proven interaction patterns. The 14K stars in five weeks, backed by the browser-use team's track record with their 97K-star parent project, suggest this has real staying power. If you're a fullstack developer who needs to automate browser tasks — whether for testing, scraping, or building agent products — Browser Harness deserves a spot in your toolkit. The fact that it works with any agent framework via CLI and has a free cloud browser tier makes the barrier to entry essentially zero. Start using it today; your future self will thank you when the agent already knows how to handle that weird file upload dialog in your admin panel.
+Browser Harness is the most practical tool I've seen for giving AI agents real browser control. The 14,800 stars in two months reflect genuine developer demand — every coding agent needs to touch the web eventually, and the existing options are either too heavy (Playwright test suites) or too brittle (thin API wrappers). The self-healing workspace model is the right architecture for agent-driven automation because it acknowledges that agents don't know what they need ahead of time. If you're building with Claude Code, Codex, or any AI coding agent and you need web interaction capabilities, this should be your first stop. The thin core, MIT license, and active development from the Browser Use team make it a safe bet for production use.
