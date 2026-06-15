@@ -1,74 +1,71 @@
 ---
 name: kimi-code
-description: "Kimi Code CLI is MoonshotAI's terminal-based AI coding agent with video input, subagents, and single-binary distribution — 1.5K stars in 10 days."
+description: "Kimi Code CLI is MoonshotAI's open-source AI coding agent for the terminal — single-binary install, video input, subagents, and IDE integration via ACP."
 url: https://github.com/MoonshotAI/kimi-code
-stars: 1593
-forks: 152
+stars: 2407
+forks: 275
 language: TypeScript
-tags: ["ai-agent", "cli", "terminal", "coding-assistant", "typescript"]
+tags: ["ai-coding-agent", "cli", "terminal", "moonshot", "developer-tools"]
 featured: false
-publishedAt: 2026-06-03
+publishedAt: 2026-06-15
 ---
 
 ## Kimi Code CLI
 
 ### Overview
 
-Kimi Code CLI is an AI coding agent that runs entirely in your terminal. Built by MoonshotAI — the Beijing-based company behind the Kimi model family that's been making waves in the Chinese and international AI markets — it launched on May 22, 2026 and crossed 1,500 GitHub stars within its first ten days. That kind of velocity usually means the tool is solving a real problem, or at least solving it in a way that developers find compelling.
+Kimi Code CLI is an AI coding agent that runs entirely in your terminal. Built by MoonshotAI — the Chinese AI lab behind the Kimi series of models — it crossed 2,400 GitHub stars within three weeks of its late May 2026 launch. That's a strong signal for a tool entering a crowded field that already includes Claude Code, Codex CLI, and Gemini CLI.
 
-The project is written in TypeScript and distributed as a single binary. No Node.js installation required, no PATH wrangling, no global npm module conflicts. You run an install script and you get a `kimi` command. That's it. The TUI (terminal user interface) is built on top of `pi-tui`, a purpose-built terminal UI library, and starts in milliseconds. For developers who live in the terminal and want an AI assistant that doesn't pull them into a browser or VS Code extension, the ergonomics are solid.
+The project is open source under the MIT license and written in TypeScript. What sets it apart from the growing pile of terminal AI agents is the installation story: it ships as a single binary. No Node.js runtime, no global npm modules, no PATH conflicts. You run one install script and you're done. For developers tired of managing Node.js versions just to run their coding tools, this is a real quality-of-life improvement.
 
-The core pitch: Kimi Code reads your codebase, edits files, runs shell commands, searches across your project, fetches web pages, and makes decisions about what to do next based on the feedback it receives. It works out of the box with MoonshotAI's Kimi models but supports other compatible providers through configuration. The CLI ships with three built-in subagents — `coder`, `explore`, and `plan` — that can operate in isolated contexts while keeping your main conversation thread clean. That subagent architecture is what separates it from simpler "chat with your code" tools.
+MoonshotAI's background matters here. They're not a startup trying to ride the AI wave — they've been building large language models since 2023, and their Kimi models have consistently ranked well on coding benchmarks. Kimi Code CLI is the consumer-facing product of that research, and it shows in the tool's ability to handle complex, multi-file refactoring tasks without losing context.
 
 ### Why it matters
 
-The AI coding agent space in mid-2026 is crowded. Claude Code, Cursor, GitHub Copilot, Windsurf, Aider, Continue — the list keeps growing. But most of these tools either tie you to a specific IDE (Cursor, Windsurf) or a specific model provider (Claude Code). Kimi Code CLI is interesting because it's a terminal-native agent from a major AI lab that's explicitly model-agnostic in its design. You can use it with Kimi's models, but the architecture supports any compatible provider.
+The terminal AI coding agent space is getting crowded fast. Claude Code from Anthropic, Codex CLI from OpenAI, Gemini CLI from Google — every major AI lab now has a terminal agent. But most of them share the same friction points: complex installation, Node.js dependency chains, and limited IDE integration. Kimi Code CLI addresses all three, and it does so while being fully open source.
 
-More importantly, MoonshotAI has the resources and the model quality to sustain a project like this. Kimi's models have been competitive on coding benchmarks, and the company has been shipping aggressively — their Kimi K2 model launched to strong reviews earlier in 2026. When a well-funded AI lab open-sources its coding agent, it's worth paying attention. They're not building this as a hobby project; it's a strategic play to get developers into their ecosystem.
+The broader trend here is the convergence of AI agents and developer tooling. We're past the era of "AI as autocomplete" — these agents read entire codebases, run shell commands, search files, and make multi-step decisions. Kimi Code CLI pushes this further with features like video input (drop a screen recording and let the agent understand what you're trying to build) and subagents that can work in parallel on different parts of a problem. These aren't gimmicks. Video input solves the "I can't describe this UI bug in words" problem that every frontend developer knows.
 
-The video input feature is a signal of where AI coding tools are heading. You can drop a screen recording into the chat and let the agent watch what you're describing instead of trying to explain a UI bug or a workflow in text. It sounds like a gimmick until you try to describe a complex CSS layout issue to an AI in words. Multimodal input for coding tasks is going to be table stakes within a year, and Kimi Code has it now.
+For fullstack web developers specifically, the ACP (Agent Client Protocol) integration is the headline feature. You can drive Kimi Code CLI sessions directly from Zed, JetBrains, or any ACP-compatible editor. That means your AI agent isn't confined to a terminal pane — it's a first-class citizen in your IDE, with access to your project context, your cursor position, and your editing workflow.
 
 ### Key Features
 
-**Single-Binary Distribution.** The install process is a one-liner curl script on macOS/Linux or an irm command on Windows PowerShell. No runtime dependencies, no version managers, no "please install Node.js 24 first." The binary is self-contained and the TUI launches in milliseconds. This matters more than people think — every additional setup step is a user who bounces.
+**Single-Binary Distribution.** Install with one command on macOS, Linux, or Windows. No Node.js required, no global module conflicts, no PATH gymnastics. The binary is self-contained and ready to run immediately. This is a significant departure from tools like Claude Code and Codex CLI that require Node.js runtimes and npm installs.
 
-**Subagent Architecture.** Kimi Code ships with three built-in subagents: `coder` for writing and editing code, `explore` for navigating and understanding codebases, and `plan` for breaking down complex tasks. Each subagent runs in an isolated context, so your main conversation doesn't get cluttered with intermediate exploration steps. You can dispatch subagents in parallel, which means the agent can be investigating your test setup while simultaneously drafting a new module.
+**Video Input Support.** Drop a screen recording, demo clip, or GIF into the chat and the agent processes it visually. This is genuinely useful for frontend work — show it a broken layout, a reference design, or a user flow recording, and it translates visual information into code changes. You can turn a screen recording into working code or a reference clip into a LUT.
 
-**Video Input Support.** Drop a screen recording or demo clip into the terminal chat, and the agent processes it as a visual input. This is genuinely useful for UI debugging, describing workflows that are hard to put into words, or showing the agent what a bug looks like rather than trying to describe it. Not many terminal tools support this yet.
+**Subagents for Parallel Work.** The tool ships with built-in `coder`, `explore`, and `plan` subagents that run in isolated contexts. The main conversation stays clean while subagents handle focused tasks in parallel. This is particularly useful for large refactoring jobs where you need to understand the codebase structure before making changes.
 
-**AI-Native MCP Configuration.** The `/mcp-config` command lets you add, edit, and authenticate Model Context Protocol servers conversationally. No hand-editing JSON config files. This is a small thing that removes a real friction point — MCP configuration is one of the most complained-about parts of setting up AI coding tools.
+**AI-Native MCP Configuration.** Add, edit, and authenticate Model Context Protocol servers conversationally using `/mcp-config`. No hand-editing JSON files, no debugging connection strings. The agent understands MCP configuration as a first-class operation and guides you through setup interactively.
 
-**Lifecycle Hooks.** You can configure local commands to run at key points during the agent's execution cycle. Use them to gate risky tool calls (like `git push` or database migrations), audit the agent's decisions, trigger desktop notifications when a long task completes, or connect to your own automation pipelines. The hook system gives you guardrails without micromanaging every action.
+**Purpose-Built TUI.** The terminal UI is optimized for long, focused agent sessions. It starts in milliseconds and is built on `pi-tui`, a custom terminal framework. The interface is designed for the specific workflow of AI-assisted coding — not a generic terminal multiplexer repurposed for chat.
 
-**Blazing-Fast Startup.** The TUI is ready in milliseconds. Starting a session never feels heavy. In a world where some AI tools take 5-10 seconds to initialize, this matters for developer flow state.
+**IDE Integration via ACP.** Kimi Code CLI speaks the Agent Client Protocol, so ACP-compatible editors like Zed and JetBrains can drive sessions over stdio. Log in once in the terminal, then point your editor at `kimi acp` — no extra authentication needed. This bridges the gap between terminal-first agents and IDE-native workflows.
 
-**Built-in Documentation and Command Reference.** The project ships with comprehensive docs covering getting started, interaction patterns, session management, configuration files, and a full command reference. The docs are available online and kept in sync with the codebase.
+**Lifecycle Hooks and Plugin Ecosystem.** Run local commands at key points to gate risky tool calls, audit decisions, trigger desktop notifications, or connect to custom automation. Install skills, MCP servers, and data sources from the marketplace or any GitHub repo, with trust levels surfaced for each installation.
 
 ### Use Cases
 
-- **Fullstack developers exploring unfamiliar codebases** — Use the `explore` subagent to map out a project's architecture, understand dependency relationships, and identify key entry points before making changes. Works especially well with monorepos and multi-service setups.
-
-- **Terminal-native developers who want AI assistance without leaving their workflow** — If you use tmux, Neovim, or a minimal editor setup, Kimi Code fits into your existing terminal workflow without requiring an IDE switch.
-
-- **Teams debugging complex visual issues** — The video input feature lets you record a bug, drop it into the chat, and have the agent analyze the visual behavior alongside the code. Useful for CSS layout problems, animation glitches, and UI state issues.
-
-- **Developers building multi-step automation** — The lifecycle hooks and subagent dispatch make it possible to build sophisticated workflows: code review gates, automated testing sequences, or deployment validation chains that the agent orchestrates.
-
-- **Projects using MCP-compatible tools** — The conversational MCP configuration makes it straightforward to connect Kimi Code to databases, APIs, and other tools that expose MCP servers, without wrestling with JSON config files.
+- **Fullstack web development** — Navigate complex codebases spanning React frontends, NestJS backends, and database schemas. The agent reads context across file types and can run build commands to verify changes.
+- **Frontend debugging with visual input** — Record your screen showing a CSS layout bug or an animation glitch, drop it into the chat, and let the agent diagnose and fix the issue from the visual reference.
+- **Multi-file refactoring** — Use subagents to plan the refactoring strategy while the main agent executes changes, keeping the workflow organized across large codebases.
+- **IDE-driven AI coding** — Run Kimi Code CLI as an agent server in Zed or JetBrains via ACP for a seamless coding experience without switching between terminal and editor.
+- **Automated code review and testing** — Set up lifecycle hooks to automatically run linters, tests, or security scans after each agent action, creating a gated development workflow.
+- **Rapid prototyping** — Describe what you want in natural language, let the agent scaffold the project structure, install dependencies, and generate boilerplate code across the full stack.
 
 ### Pros and Cons
 
 Pros:
-- Single-binary distribution eliminates the installation friction that plagues most Node.js-based CLI tools. Run the install script, get the command. No runtime dependencies to manage.
-- The subagent architecture is genuinely useful for complex tasks. Being able to dispatch `explore` and `coder` agents in parallel while keeping the main conversation clean is a real productivity multiplier.
-- Video input is a forward-looking feature that most competitors don't offer yet. For visual debugging, it's more practical than describing UI issues in text.
-- Backed by MoonshotAI, a well-funded AI lab with competitive models. This isn't a side project that'll be abandoned in three months.
+- Single-binary installation eliminates the Node.js dependency chain that plagues competing tools. Install in seconds, not minutes.
+- Video input is a genuinely novel feature for terminal coding agents. The ability to show rather than tell solves real communication problems in UI development.
+- Full open source under MIT license with active development from a well-funded AI lab. The 2,400+ stars in three weeks suggest strong community interest.
+- ACP integration means the tool works in your IDE, not just in a terminal pane. This is where AI coding tools need to go.
 
 Cons:
-- The primary model backend is MoonshotAI's Kimi, which may not be available or performant in all regions. The documentation mentions other compatible providers, but the out-of-the-box experience is optimized for Kimi models.
-- 98 open issues after just 10 days suggests the project is evolving rapidly, which means breaking changes are likely. Not ideal for teams that need stability.
-- The TUI-based interface, while fast, doesn't offer the rich diff views and inline editing that IDE-integrated tools like Cursor provide. For heavy refactoring sessions, you might still want a visual editor.
-- Relatively new project with a small contributor base (mostly MoonshotAI engineers). Community ecosystem and third-party integrations are still nascent.
+- Default model is MoonshotAI's Kimi, which may not match Claude or GPT-4 for all coding tasks. You can configure other providers, but the out-of-box experience is optimized for Kimi models.
+- The project is less than a month old. The API surface, configuration options, and subagent behavior are likely to change significantly.
+- Documentation is solid but the ecosystem is thin — fewer community skills, MCP servers, and integrations compared to Claude Code or Codex CLI.
+- MoonshotAI is a Chinese company, which may raise data privacy concerns for some organizations. The tool can be configured with alternative providers to address this.
 
 ### Getting Started
 
@@ -76,36 +73,52 @@ Cons:
 # Install on macOS or Linux
 curl -fsSL https://code.kimi.com/kimi-code/install.sh | bash
 
+# Or use Homebrew
+brew install kimi-code
+
 # Verify installation
 kimi --version
 
-# Start an interactive session in your project
+# Start in a project directory
 cd your-project
 kimi
 
-# Inside Kimi Code, login on first launch
+# First launch — login with OAuth or API key
+# Inside the interactive UI, run:
 /login
 
 # Try your first task
 > Take a look at this project and explain its main directories.
 
-# Configure MCP servers conversationally
-/mcp-config
-
-# Use subagents for parallel work
-> [Use the explore subagent to map the auth flow, then have the coder subagent add refresh token support]
+# Use as an ACP agent server for IDE integration
+kimi acp
 ```
 
-For npm-based installation, upgrade, or uninstall, see the [Getting Started guide](https://moonshotai.github.io/kimi-code/en/guides/getting-started).
+For Zed integration, add this to `~/.config/zed/settings.json`:
+
+```json
+{
+  "agent_servers": {
+    "Kimi Code CLI": {
+      "type": "custom",
+      "command": "kimi",
+      "args": ["acp"],
+      "env": {}
+    }
+  }
+}
+```
 
 ### Alternatives
 
-**Claude Code** — Anthropic's terminal-based coding agent, arguably the market leader in this space. Claude Code has a larger community, more mature tooling, and direct access to Claude's models which are generally considered top-tier for coding. Choose Claude Code if you're already in the Anthropic ecosystem or want the most battle-tested terminal agent available.
+**Claude Code** — Anthropic's terminal coding agent and the current market leader. Claude Code has the most mature ecosystem, the strongest model (Claude Opus), and the largest community. It requires Node.js and an Anthropic API key. Choose Claude Code when model quality is your top priority and you're already in the Anthropic ecosystem.
 
-**Aider** — An open-source AI pair programming tool that works in the terminal with multiple LLM providers. Aider has been around longer, has a more established community, and offers fine-grained control over which files the AI can edit. Choose Aider if you want maximum model flexibility and don't need the subagent architecture or video input features.
+**Codex CLI** — OpenAI's terminal agent, optimized for GPT-4 and o-series models. Similar feature set to Claude Code but with OpenAI's model family. Installation requires Node.js. Choose Codex CLI when you're committed to OpenAI's models and want tight integration with their API platform.
 
-**OpenCode** — Another terminal-based AI coding agent that emphasizes simplicity and model agnosticism. OpenCode is lighter-weight and has fewer features, but it's also less opinionated about how you work. Choose OpenCode if you want a minimal agent that gets out of your way.
+**Gemini CLI** — Google's entry in the terminal agent space, leveraging Gemini models with generous free-tier quotas. Less mature than Claude Code but improving rapidly. Choose Gemini CLI when you want a free or low-cost option and Google's large context windows are useful for your workflow.
 
 ### Verdict
 
-Kimi Code CLI is the most interesting terminal AI agent launch since Claude Code. The single-binary distribution, subagent architecture, and video input features are genuinely differentiated, not just marketing copy. At 1,593 stars in 10 days, the developer community is clearly paying attention. The main risk is maturity — 98 open issues and a young community mean you're an early adopter, not a safe corporate bet. But if you're a fullstack developer who lives in the terminal and wants an AI coding agent that doesn't force you into an IDE, Kimi Code is worth trying right now. The MoonshotAI backing gives it a better-than-average chance of sustained development, and the features it ships today — particularly the subagent dispatch and lifecycle hooks — feel like where all terminal agents will be in six months.
+Kimi Code CLI is the most interesting new entry in the terminal AI agent space since Claude Code. The single-binary install alone makes it worth trying — I'm tired of managing Node.js versions just to run my coding tools. The video input feature is genuinely useful for frontend work, not a marketing gimmick. And the ACP integration for Zed and JetBrains shows that MoonshotAI understands where this category needs to go: out of the terminal pane and into the IDE.
+
+The tool is young — less than a month old — so expect rough edges and breaking changes. The default Kimi models are competitive but not best-in-class for all coding tasks. But the MIT license, active development, and 2,400+ stars in three weeks suggest this project has real momentum. For fullstack web developers who want an open-source, easy-to-install terminal agent with IDE integration, Kimi Code CLI deserves a spot in your toolkit alongside Claude Code or Codex CLI. Try it on your next side project before committing to it for production work.
