@@ -1,103 +1,132 @@
 ---
 name: wasp
-description: "Wasp is a Rails-like full-stack framework for React, Node.js, and Prisma — build production web apps with declarative config instead of boilerplate."
+description: "Wasp is a Rails-like full-stack framework for React, Node.js, and Prisma — build production web apps with a declarative DSL that handles auth, jobs, RPC, and deployment automatically."
 url: https://github.com/wasp-lang/wasp
-stars: 18384
-forks: 1447
+stars: 18398
+forks: 1448
 language: TypeScript
 tags: ["fullstack", "react", "nodejs", "prisma", "typescript", "framework"]
 featured: false
-publishedAt: 2026-06-09
+publishedAt: 2026-06-16
 ---
 
 ## Wasp
 
 ### Overview
 
-Wasp — short for Web Application Specification — is a full-stack framework that lets you build React and Node.js web apps using declarative TypeScript config files instead of wiring together dozens of libraries yourself. It has 18,384 GitHub stars and 1,447 forks as of June 2026, with active development pushing out releases every few weeks (v0.23.0 dropped in April 2026).
+Wasp — short for Web Application Specification — is a full-stack framework that lets you build React + Node.js web apps using a declarative DSL. It has 18,400 GitHub stars and 115 contributors as of mid-2026, with the latest release (v0.24.0) shipping just days ago on June 11. The project started in 2020 and has been steadily gaining traction, but the last six months have seen a noticeable acceleration in adoption.
 
-The project started in 2020 by Matija Šnajder and Martin Šošić, two Croatian engineers who were tired of setting up the same auth, routing, database, and deployment plumbing on every new project. Y Combinator backed them in 2021. That matters because YC doesn't fund frameworks unless they see real traction — and Wasp has been growing steadily since, with the team now shipping from Zagreb and San Francisco.
+The framework was created by Matija Šnajder and Martin Šošić, two Croatian developers who met at university and spent years building internal tools before deciding the full-stack JavaScript ecosystem needed a better abstraction layer. The core team is now around 10 people, backed by Y Combinator (W21 batch) and recently closed a seed round. What makes their background relevant is that they didn't come at this from an academic compiler perspective — they came from building real production apps and getting frustrated with the same boilerplate problems every time.
 
-The core problem Wasp solves is the "full-stack setup tax." Every time you start a new React + Node.js project, you spend days configuring authentication (Passport, NextAuth, Clerk), database access (Prisma, Drizzle, TypeORM), API routes (Express, Fastify, tRPC), email sending (Nodemailer, Resend), background jobs (BullMQ, Inngest), and deployment (Docker, Vercel, Railway). Wasp gives you all of that in a single declarative spec file. You write 30 lines of config that would take 300+ lines of boilerplate across 10 different libraries.
+Here's the pitch in concrete terms: a typical full-stack React/Express app needs authentication setup (Passport or NextAuth configuration), API route wiring with type generation, database migrations, background job infrastructure, email sending, and deployment scripts. That's weeks of plumbing before you write your first feature. Wasp encodes all of that in a single `main.wasp.ts` specification file. You declare your entities, routes, queries, mutations, and auth methods. The compiler generates the full application source — frontend, backend, and deployment config — in a `.wasp/` directory you can inspect. Your actual business logic lives in regular `.ts` and `.tsx` files that the spec references.
 
 ### Why it matters
 
-The JavaScript ecosystem is drowning in choice. A 2025 State of JS survey found that the average full-stack project uses 15-20 npm packages just for infrastructure — auth, ORM, API layer, state management, deployment config. That's before you write a single feature. Wasp collapses that into a single framework with opinionated defaults, similar to what Rails did for Ruby in 2004 or Django did for Python in 2005.
+The full-stack framework space has been dominated by Next.js for the last few years, and Next.js is excellent at what it does. But Next.js is fundamentally a frontend framework that happens to run server-side code. It doesn't solve auth, background jobs, email, or database management for you — you still wire those together yourself. Wasp occupies a different position: it's closer to Rails or Django in philosophy, but built on the React/Node.js/Prisma stack that most JavaScript developers already know.
 
-What makes Wasp especially relevant right now is its AI story. The framework ships with official AI agent plugins for Cursor, Claude Code, and other coding assistants. Because Wasp's spec file describes your entire app architecture in one place, AI agents have dramatically better context about your project. Instead of guessing which auth library you're using or how your API routes are structured, the agent reads your `.wasp.ts` file and knows exactly what you're building. Multiple developer surveys in early 2026 showed that developers using structured spec-driven frameworks reported 40-60% better results from AI coding assistants compared to those working in unstructured codebases.
+This matters more now than it did two years ago because of AI coding agents. Tools like Cursor, Claude Code, and GitHub Copilot work dramatically better when they have a structured specification to reason about instead of an ad-hoc collection of config files. Wasp's declarative DSL gives AI agents a single file that describes the entire application architecture — entities, auth, routes, operations, jobs — which produces more accurate code generation and fewer hallucinated imports. The team has published official AI agent plugins for Cursor and Claude Code, acknowledging this as a core use case rather than an afterthought.
 
-This isn't theoretical. The Wasp team actively positions the framework as "built for the AI era," and the spec-driven approach is genuinely the right abstraction for agent-assisted development. If you're building web apps with AI coding tools, the framework choice matters more than it used to.
+The framework also fills a gap for solo developers and small teams who want Rails-level productivity in the JavaScript ecosystem. Django and Rails developers switching to React/Node.js often feel the tooling regression acutely — they go from having auth, ORM, admin panels, and background jobs built in to configuring each piece separately. Wasp gives them that integrated experience without leaving the JavaScript ecosystem.
 
 ### Key Features
 
-**Declarative App Specification.** Your entire app — routes, pages, queries, mutations, auth config, email templates, background jobs — lives in a single `main.wasp.ts` file. The compiler reads this spec and generates the full-stack source code. You write your business logic in regular React and Node.js files and reference them from the spec. This separation means the framework understands your app's architecture at a meta level, which is why AI agents work so well with it.
+**Declarative Full-Stack Specification.** The `main.wasp.ts` file is the heart of the framework. You define your app's routes, queries, mutations, entities, and auth configuration in a single DSL. The compiler then generates the complete React frontend, Express backend, Prisma schema, and deployment configuration. This isn't code generation in the "scaffold and forget" sense — the generated code stays in sync as you modify the spec. Think of it as a smarter configuration layer that actually understands your entire application.
 
-**Full-Stack Auth Out of the Box.** Wasp includes authentication with email/password, Google, GitHub, Discord, and key-based login built in. You get user entities, session management, login/signup pages, and `authRequired` route guards with a few lines of config. No Passport.js configuration, no session store setup, no JWT management. The auth system integrates with Prisma so your User model is just another database entity.
+**Built-in Authentication.** Wasp ships with full-stack auth that includes email/password, Google, GitHub, Discord, and Keycloak providers out of the box. You get signup, login, password reset, email verification, and role-based access control without installing a single auth library. The auth integrates at the framework level, so type-safe `useAuth()` hooks on the client and `ctx.user` on the server just work. For a solo developer building a SaaS, this alone saves days of integration work.
 
-**End-to-End Type Safety.** Define a query on the server and call it on the client — TypeScript types flow automatically. Change a database field and your IDE flags every affected client call. This isn't just nice-to-have; it catches real bugs before they reach production. The type generation runs on save, so the feedback loop is instant.
+**End-to-End Type Safety.** Define a Prisma entity in your spec, write a query function on the server, and call it from React with full TypeScript types — no codegen step, no manually maintained types. Wasp's compiler generates the RPC layer with proper input/output types, so renaming a field in your database breaks your frontend at compile time, not at runtime in production. The RPC mechanism uses TanStack Query under the hood, giving you automatic caching, refetching, and optimistic updates.
 
-**Automatic Cache Invalidation.** When you declare a query with its entities, Wasp knows which database tables that query depends on. When a mutation modifies a Task entity, every query that touches Tasks gets its cache invalidated automatically. This is the kind of feature that takes days to get right with React Query or SWR, and Wasp just does it.
+**Background Jobs.** The framework includes a built-in job system backed by PgBoss (PostgreSQL-based) that supports scheduled, delayed, and recurring jobs. Declare a job in your spec, implement the handler in TypeScript, and Wasp manages the queue, retries, and failure handling. No need to set up Redis, BullMQ, or Celery separately. For most web apps, this is more than sufficient and eliminates an entire infrastructure category.
 
-**Built-In Background Jobs.** Define async jobs in your spec file with configurable retry logic, delays, and scheduling. No need to set up BullMQ, Redis, or a separate worker process. Jobs run in the same Node.js server during development and can be scaled to dedicated workers in production.
+**Single-Command Deployment.** Wasp apps deploy to any platform — Fly.io, Railway, Netlify, or your own VPS — with `wasp deploy`. The CLI generates the correct Docker configuration, environment variable setup, and build scripts for your target platform. This isn't vendor lock-in disguised as convenience; you can inspect and modify every generated file. The deployment abstraction handles the boring parts (build optimization, static asset hosting, database connection pooling) without hiding them.
 
-**Single-Command Deployment.** `wasp deploy` generates Docker images and deploys to Fly.io, Railway, or any Docker-compatible host. The build output is standard Node.js — no proprietary runtime. You can also eject from the deployment system entirely and manage your own infrastructure.
+**AI Agent Integration.** The official Wasp Agent Plugins for Cursor and Claude Code leverage the declarative spec to give AI coding tools full context about your application architecture. Instead of the AI guessing at your auth setup or API structure from scattered files, it reads the spec and generates code that fits your existing patterns. The team reports this produces significantly better results than feeding AI agents a Next.js project with ad-hoc configuration.
 
-**AI Agent Plugin System.** Official plugins for Cursor, Claude Code, Copilot, and other coding assistants give AI tools structured context about your project. The agent reads your spec file, understands your data model, auth setup, and API surface, then generates code that actually fits your architecture instead of generic boilerplate.
+**No Lock-in Architecture.** Every Wasp project contains a `.wasp/` directory with the generated source code — React components, Express routes, Prisma schema, Dockerfiles. You can read it, modify it, or eject entirely. The framework doesn't hide the stack behind an abstraction you can't escape. If Wasp disappeared tomorrow, your app would still compile and run with minor adjustments.
 
 ### Use Cases
 
-- **SaaS MVPs and side projects** — Get a full-stack app with auth, database, API, and deployment running in under an hour. Perfect for validating ideas quickly without spending a week on infrastructure.
-- **Internal tools and dashboards** — The auth system and database integration mean you can build admin panels, CRMs, and data tools without wiring up separate auth and API layers.
-- **AI-assisted development workflows** — If you're using Claude Code or Cursor heavily, Wasp's structured spec gives AI agents dramatically better project context than ad-hoc codebases.
-- **Team projects with mixed experience levels** — Junior developers can write React components and Node.js logic while the framework handles the complex infrastructure decisions. The spec file acts as living documentation of the entire app architecture.
+- **SaaS MVPs and side projects** — Solo developers or small teams building a web app with auth, database, and background jobs. Wasp eliminates weeks of boilerplate so you can focus on product features. The typical Wasp starter template includes everything you need for a functional SaaS in under 50 lines of spec code.
+
+- **Internal tools and admin dashboards** — Teams that need CRUD-heavy applications with role-based access control. The built-in auth and Prisma ORM make it straightforward to build data management interfaces without reinventing the permission system each time.
+
+- **AI-assisted development workflows** — Developers using Cursor, Claude Code, or Copilot who want better code generation accuracy. The declarative spec gives AI agents structured context about the entire application, reducing hallucinated imports and inconsistent patterns.
+
+- **Teams migrating from Rails/Django to JavaScript** — Backend developers who want Rails-level productivity in the React/Node.js ecosystem. Wasp's philosophy mirrors Rails' convention-over-configuration approach, making the transition more natural than learning Next.js + separate auth + separate ORM + separate job queue.
+
+- **Rapid prototyping for client work** — Agencies and freelancers who need to spin up functional prototypes quickly. The single-command deployment and built-in features mean you can go from idea to deployed demo in hours, not days.
 
 ### Pros and Cons
 
 Pros:
-- Eliminates the "which library should I use" decision fatigue for auth, ORM, API, jobs, and email. One framework, one set of docs, one upgrade path.
-- The declarative spec approach is genuinely novel and produces cleaner project structure than manually wiring together 15 packages.
-- AI coding agents produce significantly better output when they can read a structured spec file instead of inferring architecture from scattered config files.
-- Active community with 4,500+ Discord members and regular releases every 2-4 weeks. The team responds to issues quickly.
+- Dramatically reduces boilerplate for full-stack JavaScript apps. Auth, RPC, jobs, and email are built in — you write business logic, not infrastructure glue code.
+- The declarative spec file gives AI coding agents structured context that produces more accurate code generation compared to ad-hoc project structures.
+- No vendor lock-in. The generated code is real, readable, and portable. You can deploy anywhere and inspect everything in `.wasp/`.
+- Active development with v0.24.0 released June 2026, 115 contributors, and an engaged Discord community. The roadmap is public and consistently updated.
 
 Cons:
-- Still pre-1.0 (v0.23.0 as of April 2026), which means breaking changes happen regularly. The migration guides are solid, but you'll be updating your code every few months.
-- The custom spec language (`.wasp.ts` files) adds a learning curve. You need to understand Wasp's DSL before you can be productive, unlike vanilla React + Express where you just write JavaScript.
-- Lock-in risk is real despite the "no lock-in" marketing. While you can eject, the generated code is verbose and tightly coupled to Wasp's patterns. Migrating away would be a significant effort.
-- npm downloads are still modest at ~9K/month, which means fewer community resources, tutorials, and Stack Overflow answers compared to Next.js or Remix.
+- Still in beta. Breaking changes happen between versions, and the upgrade path can require manual intervention. Not ideal for apps that need to run untouched for years.
+- The custom DSL has a learning curve. Developers accustomed to "everything is just JavaScript" may find the `.wasp.ts` specification files unfamiliar, and debugging compiler errors requires understanding the framework's abstractions.
+- Currently locked to React + Express + Prisma. The team has discussed supporting other stacks in the future, but today you're committing to this specific combination. If you need GraphQL or a different ORM, Wasp isn't the right fit.
+- 837 open issues suggest the framework is still evolving rapidly. Some edge cases around complex auth flows or custom middleware require workarounds.
 
 ### Getting Started
 
 ```bash
-# Install Wasp on macOS, Linux, or WSL
-npm i -g @wasp.sh/wasp-cli@latest
+# Install Wasp (requires Node.js 18+)
+curl -sSL https://get.wasp.sh/installer.sh | sh
 
 # Create a new project
 wasp new my-app
 cd my-app
 
-# Start the development server (runs both frontend and backend)
+# Start the development server
 wasp start
 
-# Your app is now running at http://localhost:3000
-# Admin at http://localhost:3001 (if you have admin routes)
+# Your app is running at http://localhost:3000
+# The database is auto-configured with SQLite for development
 
-# Generate TypeScript types from your schema
-wasp db migrate-dev
+# Generate TypeScript types (optional, they auto-generate on build)
+wasp db migrate-dev   # Run database migrations
+wasp db studio        # Open Prisma Studio for database inspection
 
 # Deploy to Fly.io
-wasp deploy fly
+wasp deploy fly launch my-app mia
 ```
 
-The `wasp new` command scaffolds a project with auth, database, and a few example pages. From there, you add your React components in `src/` and your server logic in `src/server/`, then wire everything together in `main.wasp.ts`.
+A minimal Wasp app looks like this:
+
+```typescript
+// main.wasp.ts
+import { App } from "wasp-config";
+
+const app = new App("my-app");
+
+app.auth({
+  userEntity: "User",
+  methods: {
+    email: {},
+    google: {},
+  },
+});
+
+app.route("Home", { path: "/", to: "HomePage" });
+app.page("HomePage", { component: { import: "HomePage", from: "@src/pages/HomePage" } });
+
+app.query("getTasks", {
+  fn: { import: "getTasks", from: "@src/tasks/operations" },
+  entities: ["Task"],
+});
+```
 
 ### Alternatives
 
-**Next.js with tRPC and NextAuth** — The most popular React full-stack stack. More flexible, larger ecosystem, and better documented. But you're assembling the pieces yourself — tRPC for type-safe APIs, NextAuth for authentication, Prisma for database, and separate config for each. Choose Next.js when you need maximum control over your architecture or when your team already knows the stack.
+**Next.js** — The dominant React framework that handles routing, server components, and API routes. Next.js is more flexible and has a larger ecosystem, but it doesn't provide auth, background jobs, or database management out of the box. Choose Next.js when you need fine-grained control over your stack or when your team already has established patterns for the missing pieces.
 
-**Remix** — Another full-stack React framework that's closer to web standards. Remix uses loaders and actions instead of Wasp's spec files, which feels more familiar to developers who think in HTTP. Better choice if you want full-stack React without a custom DSL, but you'll still need to wire up auth, jobs, and email yourself.
+**Remix** — A full-stack React framework focused on web standards and progressive enhancement. Remix has excellent form handling and data loading patterns but, like Next.js, leaves auth and jobs to the developer. Choose Remix when you care deeply about web fundamentals and want to build your own infrastructure layer.
 
-**RedwoodJS** — The "Rails for JavaScript" that predates Wasp. Similar philosophy of opinionated full-stack development with GraphQL, Prisma, and React. Redwood's GraphQL-first approach is more mature but also more complex. Choose Redwood if you want GraphQL out of the box and don't mind the extra abstraction layer.
+**RedwoodJS** — Another Rails-inspired framework for React and GraphQL. RedwoodJS has a similar philosophy but uses GraphQL as its API layer and has a heavier opinion on project structure. It's more mature than Wasp but has seen slower development velocity recently. Choose RedwoodJS when GraphQL is a requirement and you want a more battle-tested solution.
 
 ### Verdict
 
-Wasp is the most interesting full-stack framework to come out of the JavaScript ecosystem in years. It's not trying to be everything — it's specifically designed for developers who want to build React + Node.js web apps without spending a week on plumbing. The declarative spec approach is genuinely novel, and the AI agent integration story is the strongest I've seen from any framework. At 18K+ stars with active development and a real community, it's past the "interesting experiment" phase and into "worth evaluating seriously" territory. The pre-1.0 status and breaking changes are real concerns for production use, but for new projects in mid-2026 where you want to move fast and use AI coding tools effectively, Wasp deserves a spot on your shortlist.
+Wasp is the most interesting full-stack JavaScript framework I've seen since Next.js redefined the category. The declarative DSL approach feels like the right abstraction for the AI era — it gives both developers and AI agents a structured, high-level view of the entire application instead of making them piece together context from scattered configuration files. The 18,400 stars and 115 contributors validate that the community sees the same potential. It's still beta software, and the custom DSL means you're betting on a framework that hasn't hit 1.0 yet. But for solo developers and small teams building new web apps in 2026, especially those using AI coding tools, Wasp offers a productivity advantage that's hard to replicate with a manually assembled Next.js stack. If you're starting a SaaS side project today, spend the 30 minutes learning Wasp's spec format — you'll save days of auth and infrastructure setup.
