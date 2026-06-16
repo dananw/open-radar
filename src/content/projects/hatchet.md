@@ -1,124 +1,137 @@
 ---
 name: hatchet
-description: "Hatchet is an open-source orchestration engine for background tasks, AI agents, and durable workflows — built in Go with Postgres-backed persistence and SDKs for TypeScript, Python, and Ruby."
+description: "Hatchet is a Go-based orchestration engine for background tasks, AI agents, and durable workflows with SDKs for TypeScript, Python, and Ruby."
 url: https://github.com/hatchet-dev/hatchet
-stars: 7349
-forks: 417
+stars: 7367
+forks: 420
 language: Go
-tags: ["workflow-engine", "background-tasks", "ai-agents", "durable-execution", "go"]
+tags: ["workflow-engine", "ai-agents", "background-tasks", "distributed-systems", "orchestration"]
 featured: false
-publishedAt: 2026-06-15
+publishedAt: 2026-06-17
 ---
 
 ## Hatchet
 
 ### Overview
 
-Hatchet is an orchestration engine for background tasks, AI agents, and durable workflows. It sits somewhere between a traditional task queue like Celery or BullMQ and a heavy-duty workflow platform like Temporal — and it threads that needle well. With 7,300 GitHub stars, active releases through June 2026 (v0.89.0 dropped on June 10), and SDKs for Go, TypeScript, Python, and Ruby, it's one of the more complete solutions in this space that you can actually self-host.
+Hatchet is an orchestration engine for background tasks, AI agents, and durable workflows. Written in Go with SDKs for TypeScript, Python, Ruby, and Go itself, it sits at the intersection of two problems every fullstack developer faces: running things reliably in the background and coordinating multi-step processes that can't afford to lose state. At 7,367 GitHub stars and climbing — with a v0.89.0 release just days ago — it's one of the fastest-growing infrastructure projects in the space.
 
-The project started in late 2023 and has been steadily gaining traction. What makes it stand out is the architecture decision to use Postgres as the durability layer for both task execution and observability. No Redis. No RabbitMQ. No separate message broker. If you already run Postgres — and let's be honest, most of us do — Hatchet adds minimal infrastructure overhead. That's a meaningful advantage for small teams who don't want to babysit a Redis cluster just to run background jobs.
+The project is built by Hatchet Dev, a team that's been iterating on the workflow orchestration problem since late 2023. Their approach is notable because they chose Postgres as the core durability layer for both the task runtime and the observability system. That's a deliberate architectural bet — rather than requiring Redis, RabbitMQ, or a separate message broker, Hatchet leans on a database most teams already run. The result is a system that's dramatically easier to self-host without sacrificing the guarantees that distributed task queues typically provide.
 
-The core problem Hatchet solves is the gap between "throw it on a queue and hope for the best" and "implement a full workflow orchestration platform." Most startups begin with something like BullMQ or Celery, then slowly accumulate custom retry logic, dead letter handling, monitoring dashboards, and ad-hoc durability patches. Hatchet gives you all of that out of the box — retries with exponential backoff, cron scheduling, event-driven triggering, DAG-based workflows, durable sleep, and a real-time web UI — without requiring you to stitch together five different tools.
+The core problem Hatchet solves is the gap between "throw it on a queue" and "use a full workflow orchestrator." If you've ever stitched together Celery with Redis, BullMQ with a cron service, or Temporal with its own SDK, you know the pain. Simple tasks need retries and scheduling. Complex tasks need DAGs, pause/resume, event-driven triggers, and observability. Most teams end up with something that handles one end well and punts on the other. Hatchet tries to cover both.
 
 ### Why it matters
 
-The background task and workflow orchestration space is heating up because AI agents need durable execution. When an agent makes an API call that takes 30 seconds, fails, and needs to retry with different parameters — that's a workflow problem, not a queue problem. Traditional task queues weren't designed for this. They fire, they forget, and if something goes wrong mid-execution, you're writing custom recovery code.
+The background task and workflow orchestration space has been fragmented for years. Celery dominates Python but has a well-documented maintenance problem. BullMQ is solid for Node.js but limited to Redis-backed patterns. Temporal is powerful but heavy — it requires its own server cluster and a new mental model around workflows and activities. Airflow is for data pipelines, not application-level tasks. Hatchet targets the middle ground that most fullstack teams actually inhabit.
 
-Hatchet positions itself at the intersection of three trends: the shift toward durable execution (pioneered by Temporal, now being adopted everywhere), the explosion of AI agent workflows that need multi-step orchestration, and the developer demand for simpler infrastructure. The Postgres-first architecture is smart — it means you get transactional guarantees, easy backups, and a single datastore to reason about. For teams running NestJS, Django, or Go backends, Hatchet integrates without requiring new infrastructure.
+The AI agent angle makes this especially relevant right now. As developers build more multi-step AI workflows — RAG pipelines, tool-calling loops, human-in-the-loop approval chains — they need durable execution that survives crashes, retries, and long-running pauses. Traditional task queues weren't designed for workflows that might pause for hours waiting for a human decision or an external API callback. Hatchet's durable tasks and event waits handle exactly this pattern.
 
-The project also competes directly with DBOS and Temporal's simpler use cases, but with a much lower barrier to entry. You can get Hatchet running locally with Docker in under a minute. Temporal, by contrast, requires understanding concepts like task queues, workers, workflows, and activities before you write your first line of code. Hatchet's developer experience is closer to "define a function, annotate it, done."
+The Postgres-as-durability-layer decision also matters more than it sounds. Self-hosting Temporal requires deploying its server, database, and matching versions across the stack. Self-hosting Hatchet requires Docker or a single binary, pointed at a Postgres instance. For teams that want workflow orchestration without a dedicated infrastructure team, that's a significant reduction in operational burden.
 
 ### Key Features
 
-**Postgres-Backed Durability.** Hatchet uses PostgreSQL as its persistence layer for both task state and observability data. This means no separate message broker (Redis, RabbitMQ, SQS) to manage. Task execution history is persisted up to a configurable retention period, enabling replay, debugging, and audit trails. For teams already running Postgres, this is a significant operational simplification.
+**Durable Task Execution.** Hatchet tasks survive process crashes, server restarts, and network failures. When a task starts, its state is persisted to Postgres. If the worker dies mid-execution, the task gets reassigned automatically. This isn't just retry logic — it's true durable execution where long-running operations can resume from their last checkpoint. For AI agent loops that might take minutes or hours, this is the difference between "it works in theory" and "it works in production."
 
-**Durable Tasks and DAG Workflows.** The durable tasks feature is a drop-in replacement for Temporal-style workflows. Tasks can survive process crashes, resume from intermediate state, and compose into DAGs (directed acyclic graphs) for multi-step data pipelines. You also get durable sleep and event-based waits, so a workflow can pause for external input and resume when that input arrives.
+**DAG Workflows.** Beyond simple tasks, Hatchet supports Directed Acyclic Graphs for multi-step workflows. Define dependencies between tasks, fan-out/fan-in patterns, and conditional branching — all with automatic state management. The DAG engine handles the complexity of tracking which steps succeeded, which need retry, and what can run in parallel. You define the graph, Hatchet manages the execution.
 
-**Multi-Language SDKs.** Hatchet provides official SDKs for Go, TypeScript, Python, and Ruby. The TypeScript SDK integrates naturally with NestJS and Express. The Python SDK works with FastAPI and Django. Tasks are defined as decorated functions — no YAML, no DSL, no config files. You write code, Hatchet handles the orchestration.
+**Event-Driven Triggers.** Tasks can be triggered by events published to Hatchet's event system, webhooks from external services, cron schedules, or direct API calls. The event listener pattern supports durable event waits — a workflow can pause, waiting for a specific event to arrive, and resume when it does. This is critical for building approval workflows, external API callbacks, or any process that needs to wait for something outside its control.
 
-**Built-in Rate Limiting and Fair Scheduling.** Rate limits can be static (e.g., 100 requests/minute to a third-party API) or dynamic (per-user limits calculated at runtime). Concurrency policies enforce fair scheduling using dynamic keys, so one tenant can't starve another. Worker slot control ensures workers don't accept more work than they can handle. These are features you'd normally build yourself after your first production incident.
+**Multi-Language SDKs.** Official SDKs for TypeScript (Node.js), Python, Go, and Ruby mean you can orchestrate tasks across your entire stack. A NestJS API can trigger a Python ML pipeline that calls back to a Go microservice, all coordinated through Hatchet. The TypeScript SDK is the most mature with NPM downloads tracking upward, but the Python SDK hit 1.33.9 last week and is actively maintained.
 
-**Event-Driven and Webhook Triggering.** Tasks can be triggered by events published to Hatchet's event system or by incoming webhooks from external services. This makes it straightforward to build event-driven architectures — a Stripe webhook fires, Hatchet processes the payment, sends a confirmation email, and updates the CRM, all as a durable workflow with automatic retries.
+**Built-in Observability.** Hatchet ships with a real-time web dashboard showing task status, execution history, logs, and error traces. It supports OpenTelemetry for exporting to external observability tools, plus Prometheus metrics for monitoring. You don't need to bolt on a separate monitoring solution — the dashboard gives you visibility out of the box, and the OTel integration connects to whatever you already run.
 
-**Real-Time Observability UI.** Hatchet ships with a web dashboard for monitoring task execution, viewing logs, setting up alerts, and debugging failures. It includes OpenTelemetry support and Prometheus metrics out of the box. Multi-tenancy is built in, so a single Hatchet instance can serve multiple teams with isolated views.
+**Rate Limiting and Priority Queues.** Per-task rate limits prevent your workers from hammering third-party APIs. Dynamic rate limits can enforce per-user or per-tenant quotas computed at runtime. Priority levels ensure critical tasks jump ahead of batch jobs. Concurrency controls with configurable keys prevent duplicate processing. These aren't afterthoughts — they're first-class primitives that most task queues either lack or charge extra for.
 
-**AI Agent Orchestration.** Hatchet's durability features map directly to AI agent workflows: long-running inference tasks, multi-step tool-use chains, human-in-the-loop approval gates, and retry-with-backoff for flaky API calls. The concurrency controls prevent agents from overwhelming downstream services, and the observability UI gives you visibility into what your agents are actually doing.
+**Self-Hostable with Postgres.** The entire stack runs on Postgres — no Redis, no RabbitMQ, no separate message broker. A single Docker Compose file gets you a production-ready deployment. This cuts operational complexity significantly compared to systems that require multiple backing services, and it means your workflow state lives in a database your team already knows how to manage, back up, and monitor.
 
 ### Use Cases
 
-- **Background job processing for web apps** — Offload email sending, image processing, report generation, and PDF rendering from your NestJS or Django request handlers. Hatchet handles retries, dead letters, and monitoring so you don't have to build that infrastructure yourself.
-
-- **AI agent workflow orchestration** — Chain multiple LLM calls, tool uses, and external API interactions into durable workflows that survive failures. When GPT-5 rate-limits you at step 3 of a 7-step agent chain, Hatchet retries from the failure point, not from scratch.
-
-- **Data pipeline DAGs** — Build ETL-style pipelines where task B depends on task A, task C depends on both A and B, and the whole graph retries intelligently on failure. Simpler than Airflow for application-embedded pipelines.
-
-- **Event-driven microservice coordination** — When service A publishes an event, Hatchet triggers workflows across services B, C, and D with proper sequencing, retries, and observability. Better than ad-hoc message queue consumers.
-
-- **Scheduled and cron-based automation** — Run reports at midnight, sync data every hour, clean up expired sessions daily. Hatchet's cron and scheduled run features handle the timing; the durability features handle the "what if it crashes at 2am" problem.
+- **AI agent orchestration** — Running multi-step LLM pipelines with tool calls, human-in-the-loop approvals, and automatic retries when API calls fail. Hatchet's durable execution handles the long-running, failure-prone nature of agent workflows.
+- **Background job processing** — Image resizing, email sending, PDF generation, report compilation. The kind of work that every SaaS app needs and every developer implements differently until they use a proper task queue.
+- **ETL and data pipelines** — Multi-step data processing with dependency graphs, parallel fan-out, and conditional branching. Hatchet's DAG support handles the orchestration while your Python or TypeScript code handles the transformation.
+- **Webhook processing and event-driven architectures** — Ingesting events from Stripe, GitHub, Shopify, or internal services and routing them through multi-step workflows with guaranteed delivery and retry semantics.
+- **Scheduled maintenance and batch operations** — Cron-triggered tasks for database cleanup, cache warming, report generation, and any recurring work that needs monitoring and automatic retry on failure.
 
 ### Pros and Cons
 
 Pros:
-- Postgres-first architecture eliminates the need for Redis or RabbitMQ as a message broker, reducing operational complexity and infrastructure costs for small to mid-size teams.
-- Multi-language SDKs with idiomatic APIs mean you can adopt Hatchet in an existing Go, TypeScript, or Python codebase without rewriting anything. The TypeScript SDK integrates cleanly with NestJS.
-- The durability model is genuinely useful — tasks survive crashes, resume from intermediate state, and compose into DAGs. This is real durable execution, not just "we put it in a database."
-- Active development with releases every 1-2 weeks and a responsive Discord community. The project isn't abandoned vaporware.
+- Postgres-only backend eliminates the Redis/RabbitMQ dependency that most task queues require, cutting infrastructure complexity roughly in half for self-hosted deployments.
+- SDK coverage across TypeScript, Python, Go, and Ruby means you can orchestrate polyglot stacks from a single control plane without writing glue code between different queue systems.
+- Durable execution with event waits solves the AI agent coordination problem that traditional fire-and-forget task queues simply can't handle — workflows survive crashes and resume correctly.
+- The web UI with built-in logging, OpenTelemetry, and Prometheus support means you get observability without bolting on Grafana, Datadog, or similar tools separately.
+- Active development with releases every few days (v0.89.0 on June 10, Python SDK 1.33.9 on June 15) signals a responsive team shipping real improvements, not a stalled project.
 
 Cons:
-- At 7,300 stars and v0.89, Hatchet is still pre-1.0. The API surface is stabilizing but expect some breaking changes. The 130 open issues suggest the product is still maturing.
-- Postgres as the durability layer is a double-edged sword. At very high throughput (10k+ tasks/second), Postgres becomes the bottleneck. Redis-backed queues can handle higher throughput with lower latency, though at the cost of durability.
-- The self-hosted version requires Docker, and the setup is non-trivial for production deployments. Hatchet Cloud exists but adds a dependency on a third-party service and a bill.
+- Postgres-as-everything means high-throughput scenarios (tens of thousands of tasks per second) may hit database bottlenecks before Redis-backed alternatives do. For most applications this isn't an issue, but at extreme scale it's worth benchmarking.
+- The Go runtime and Postgres dependency make local development slightly heavier than a Redis-backed queue — you need Docker or a Postgres instance running, which adds a step to the dev setup.
+- Version 0.89.0 signals the API is still stabilizing. Breaking changes between minor versions are possible, and the documentation sometimes lags behind the latest release. Production users should pin versions carefully.
 
 ### Getting Started
 
+The fastest way to try Hatchet locally:
+
 ```bash
-# Install the Hatchet CLI (macOS, Linux, WSL)
+# Install the Hatchet CLI (macOS/Linux/WSL, requires Docker)
 curl -fsSL https://install.hatchet.run/install.sh | bash
+hatchet --version
 
-# Start a local Hatchet server (requires Docker)
+# Start a local Hatchet server (uses Docker internally)
 hatchet server start
-
-# Install the TypeScript SDK
-npm install @hatchet-dev/typescript-sdk
-
-# Install the Python SDK
-pip install hatchet-sdk
-
-# Install the Go SDK
-go get github.com/hatchet-dev/hatchet
 ```
 
-Define a simple task in TypeScript:
+For a TypeScript/Node.js project:
+
+```bash
+npm install @hatchet-dev/typescript-sdk
+```
 
 ```typescript
-import Hatchet from "@hatchet-dev/typescript-sdk";
+import Hatchet from '@hatchet-dev/typescript-sdk';
 
 const hatchet = Hatchet.init();
 
-const simpleTask = hatchet.task({
-  name: "send-email",
+// Define a simple task
+const myTask = hatchet.task({
+  name: 'send-email',
   fn: async (input) => {
-    // Your email sending logic here
-    return { success: true };
+    // Your email logic here
+    return { status: 'sent', to: input.to };
   },
 });
 
-// Trigger it
-await simpleTask.run({ to: "user@example.com", subject: "Hello" });
+// Run the worker
+hatchet.run();
 ```
 
-Deploy to production with Docker Compose or use Hatchet Cloud for a managed experience.
+For Python:
+
+```bash
+pip install hatchet-sdk
+```
+
+```python
+from hatchet_sdk import Hatchet
+
+hatchet = Hatchet()
+
+@hatchet.task(name="process-data")
+def process_data(input):
+    # Your processing logic
+    return {"status": "done", "count": input["count"]}
+
+hatchet.run()
+```
+
+Deploy to production with Docker Compose or follow the self-hosting guide at [docs.hatchet.run](https://docs.hatchet.run).
 
 ### Alternatives
 
-**Temporal** — The heavyweight champion of durable execution. Temporal offers stronger durability guarantees, a more mature ecosystem, and support for extremely complex workflows. But it has a steep learning curve, requires running a Temporal server (plus dependencies), and the SDK surface area is massive. Choose Temporal when you need mission-critical workflows at enterprise scale and have the team to manage the infrastructure. Choose Hatchet when you want 80% of the durability with 20% of the complexity.
+**Temporal** — The heavyweight champion of workflow orchestration. Temporal offers stronger durability guarantees and a more mature ecosystem, but requires its own server cluster, a new SDK paradigm (workflows and activities), and a steeper learning curve. Choose Temporal when you need bulletproof durability at extreme scale and have a platform team to manage the infrastructure. Choose Hatchet when you want 80% of the functionality with 20% of the operational overhead.
 
-**BullMQ** — The most popular Node.js task queue, backed by Redis. BullMQ is simpler, faster for basic job processing, and has a huge community. But it lacks durable execution, DAG workflows, and built-in observability. Choose BullMQ when you just need a reliable queue for fire-and-forget jobs and you're already running Redis. Choose Hatchet when your jobs need retries with state, multi-step workflows, or you want observability without building it yourself.
+**BullMQ** — The go-to task queue for Node.js developers, backed by Redis. BullMQ is simpler, lighter, and well-suited for straightforward background job processing. But it lacks DAG support, durable execution, and polyglot SDK support. If your entire stack is TypeScript and your tasks are simple fire-and-forget with retries, BullMQ is probably enough. If you need workflows, multi-language coordination, or event-driven triggers, Hatchet is the better fit.
 
-**DBOS** — A newer durable execution platform that also uses Postgres as its backing store. DBOS takes a more code-centric approach with TypeScript decorators and focuses on making existing functions durable. It's lighter weight than Hatchet but has fewer features (no DAG workflows, no built-in UI, no multi-language SDKs). Choose DBOS when you want the simplest possible path to durable TypeScript functions. Choose Hatchet when you need a more complete orchestration platform.
+**Celery** — The Python ecosystem's workhorse for distributed task queues. Celery has a massive ecosystem and years of production hardening, but its development has slowed, its configuration is notoriously complex, and it requires Redis or RabbitMQ as a broker. For Python-only workloads with simple task patterns, Celery still works. For anything involving TypeScript, Go, durable workflows, or modern observability, Hatchet is the more forward-looking choice.
 
 ### Verdict
 
-Hatchet is the workflow engine I'd reach for if I were building a new fullstack app with background tasks or AI agent orchestration in 2026. The Postgres-first architecture is the right call for most teams — it eliminates an entire class of operational problems (Redis cluster management, message broker monitoring, data consistency between systems) that nobody wants to deal with. The multi-language SDKs mean it works whether your backend is NestJS, Django, or Go, and the developer experience is dramatically simpler than Temporal.
-
-Is it production-ready? For most workloads, yes. The 10k tasks/second ceiling is more than enough for 95% of applications. The observability features are genuinely useful, not just checkbox items. And the AI agent orchestration angle is timely — as more developers build multi-step agent workflows, they need durable execution that doesn't require a PhD in distributed systems. Hatchet fills that gap. If you're tired of fighting with Celery or BullMQ and you want something that actually handles the hard parts of background processing, give it a serious look.
+Hatchet is the workflow engine I'd reach for if I were building a fullstack application with background processing needs today. The Postgres-only architecture is its killer feature — it turns what's typically a multi-service infrastructure problem into something you can run with a single container. The AI agent orchestration story is compelling too; durable execution with event waits maps cleanly to the multi-step, failure-prone nature of LLM workflows. At 7,367 stars and v0.89.0, it's past the "interesting experiment" phase but not yet in the "enterprise bloat" territory. For fullstack developers building with React, NestJS, Django, or Go who need reliable background task processing — especially with AI workflows in the mix — Hatchet is worth serious evaluation. The fact that it ships with a real dashboard and OpenTelemetry support out of the box means you won't be flying blind in production either.
