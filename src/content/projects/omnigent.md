@@ -1,107 +1,123 @@
 ---
 name: omnigent
-description: "Omnigent is a meta-harness for AI coding agents — run Claude Code, Codex, and Pi together in unified sessions with real-time collaboration and governance policies."
+description: "Omnigent is a meta-harness for AI agents — orchestrate Claude Code, Codex, Pi, and custom agents in one session with policies, sandboxing, and real-time collaboration."
 url: https://github.com/omnigent-ai/omnigent
-stars: 498
-forks: 62
+stars: 2399
+forks: 288
 language: Python
-tags: ["ai-agents", "developer-tools", "collaboration", "cli", "orchestration"]
+tags: ["ai-agents", "orchestration", "developer-tools", "llm", "python"]
 featured: false
-publishedAt: 2026-06-14
+publishedAt: 2026-06-16
 ---
 
 ## Omnigent
 
 ### Overview
 
-Omnigent hit 500 GitHub stars in three days after its June 11 launch. That kind of velocity usually signals either a viral meme or something developers have been waiting for. In this case, it's the latter.
+Omnigent is a meta-harness for AI coding agents. It sits on top of Claude Code, OpenAI Codex, Cursor, Pi, and any custom agent you define in YAML, giving you a single interface to run, swap, combine, and govern them. Five days after its June 11, 2026 launch, it already had 2,400 GitHub stars and 288 forks — a signal that developers are tired of juggling disconnected agent CLIs.
 
-The project is a meta-harness for AI coding agents. If you've used Claude Code, OpenAI Codex, or Pi, you know the problem: each tool lives in its own terminal session, has its own configuration, and can't talk to the others. You end up with three terminal tabs open, context-switching between agents that each have partial knowledge of your codebase. Omnigent collapses that into a single interface where multiple agents work on the same session simultaneously.
+The project comes from the team behind what appears to be a serious infrastructure play in the AI developer tools space. The codebase is Apache 2.0 licensed, written in Python 3.12+, and ships with a macOS desktop app, a web UI, and a CLI. That breadth of delivery on day one suggests this wasn't built in a weekend.
 
-The maintainer, dbczumar (Corey Zumar), has 13 commits to the main branch and is the primary contributor so far. The project is Apache 2.0 licensed and explicitly alpha status — the README carries a bold orange "alpha" badge. It's Python 3.12+ and installs via `uv`, `pip`, or Homebrew. The web UI runs on React, and there's a macOS desktop app that wraps it with native notifications.
+The core problem Omnigent solves is fragmentation. In mid-2026, a typical developer might use Claude Code for complex refactors, Codex for quick tasks, Cursor for IDE-integrated work, and a custom agent for domain-specific jobs. Each has its own CLI, its own session model, its own configuration. There's no shared state, no unified policy layer, and no way to let agents collaborate. Omnigent collapses all of that into one server with a single session model.
 
 ### Why it matters
 
-The AI coding tool landscape in mid-2026 is fragmented. Claude Code excels at long-context reasoning and refactoring. Codex handles rapid iteration and test generation well. Pi has its own strengths around agentic workflows. Most developers use at least two of these regularly, but they use them in isolation. There's no shared context, no way to ask one agent to review another's work, and no unified governance layer.
+The AI coding agent space is exploding, but it's also splintering. Every major provider ships its own CLI and IDE integration, and developers are building custom agents for specific workflows at an accelerating pace. What's missing is the orchestration layer — the thing that lets you treat agents like composable tools rather than isolated silos.
 
-Omnigent addresses this by treating agent harnesses as interchangeable runtimes. You define your agent in YAML, specify which harness it should run on (Claude, Codex, Pi, OpenAI Agents, or a custom one), and Omnigent handles the session management. The real unlock is the collaboration model: sessions sync across devices in real time, teammates can co-attach to a running session, and you can fork conversations onto your own machine.
+Omnigent fills that gap with a design that feels inevitable in hindsight. It's not trying to replace Claude Code or Codex. It wraps them, preserves their native capabilities, and adds the governance and collaboration features that enterprise teams actually need. The policy system — where you can cap spend, require approval for shell commands, or limit tool access per agent — addresses the "agents doing scary things" concern that blocks adoption in regulated environments.
 
-For fullstack web developers specifically, this matters because our work spans multiple domains — frontend React code, backend NestJS or Django services, Go microservices, infrastructure configs. No single AI agent handles all of these well. Being able to route a React question to Claude Code and a Go optimization to Codex within the same session, with full context sharing, is a workflow improvement that compounds daily.
+The real-time collaboration angle is equally important. Sharing a live agent session with a teammate, co-driving from different machines, or forking a conversation to branch your investigation — these are workflows that don't exist anywhere else right now. For teams evaluating AI agents in production, this kind of visibility and control is table stakes.
 
 ### Key Features
 
-**Multi-Agent Orchestration.** Define agents in YAML and run multiple harnesses in the same session. The included "Polly" example is a tech-lead orchestrator: she plans work, delegates to Claude Code and Codex sub-agents running in parallel git worktrees, then routes each diff to a reviewer from a different vendor. You merge. This pattern — plan, delegate, cross-review — catches bugs that single-agent workflows miss.
+**Multi-Agent Orchestration.** Run Claude Code, Codex, Pi, and custom agents in the same session. Ask one agent to review another's work, or split a task across agents that are each good at different things. The included "Polly" example agent is a tech lead who plans, delegates coding work to sub-agents in parallel git worktrees, and routes diffs to reviewers from different vendors. This is agent collaboration, not just agent execution.
 
-**Cross-Device Session Sync.** Start a session on your laptop, continue on your phone, pick it up in the browser on another machine. Messages, sub-agents, terminals, and files stay in sync. The web UI at `localhost:6767` is built for mobile. On your local network, no deployment needed — just open your machine's LAN address on your phone.
+**YAML-Defined Custom Agents.** Define your own agents in a short YAML file — your prompt, your tools, and optional sub-agents. Agents can even build agents: describe what you want in any Omnigent chat and it writes the YAML for you. The executor field lets you swap the underlying harness (Claude SDK, Codex, Cursor, OpenAI Agents, Pi) without changing the agent definition.
 
-**Real-Time Collaboration.** Share a live session with a teammate who can watch your agent work and chat with it in real time. Co-drive mode lets a teammate attach to your running session and execute messages on your machine. Fork mode clones a conversation onto your own machine and continues independently. This is pair programming with AI agents, not just humans.
+**Policy and Governance Engine.** Policies check every agent action and either allow it, block it, or pause for human approval. They stack across three levels: server-wide (admin), per-agent (developer), and per-session (user), with stricter rules checked first. Built-in policies cover spend caps, tool call limits, and OS command approval. This is the feature that makes AI agents viable in enterprise settings.
 
-**Policy-Based Governance.** Create policies that check every agent action before it executes. Ask for approval before shell commands, cap API spend at a dollar amount, limit which tools an agent can reach. Policies stack across three levels: server-wide (admin), per-agent (developer), and per-session (user). The stricter rules win. Built-in policies include spend caps with soft warnings and OS tool approval gates.
+**Cross-Device Sessions.** Sessions follow you across devices. Start in your terminal, continue in the browser, pick it up on your phone. Messages, sub-agents, terminals, and files stay in sync. The web UI is built for mobile. Deploy the server with Docker and your sessions become reachable from anywhere.
 
-**Cloud Sandbox Execution.** Run agent sessions in disposable cloud sandboxes via Modal or Daytona. No laptop needs to stay online. The server provisions a sandbox per session (called "managed hosts"), so your agent can keep working while you close your laptop. More providers are planned.
+**Real-Time Team Collaboration.** Share a live session so teammates can watch your agent work and chat with it in real time. Co-drive: a teammate attaches to your running session and their messages execute on your machine. Fork: clone a conversation onto your own machine and continue independently. Multi-user accounts with invite-only signup and optional OIDC integration (Google, GitHub, Okta, Microsoft).
 
-**Universal Model Support.** Works with first-party API keys, Claude Pro/Max or ChatGPT subscriptions (via the official CLIs), any OpenAI- or Anthropic-compatible gateway (OpenRouter, LiteLLM, Ollama, vLLM, Azure), and Databricks workspace profiles. Defaults are per-agent, so your Claude default and Codex default coexist. Switch models mid-session with `/model`.
+**Cloud Sandbox Execution.** Run sessions in disposable cloud sandboxes via Modal, Daytona, or Islo — no laptop required. The server can provision a sandbox per session as "managed hosts," so your development machine doesn't have to stay online. Combined with the policy engine, this creates a controlled environment for agent execution.
 
-**Custom Agent Authoring.** Agents are YAML files: a prompt, tools (Python functions or sub-agents), and an executor harness. The schema auto-generates from Python function signatures. Agents can even build other agents — describe what you want in chat and the agent writes the YAML for you.
+**Flexible Model Backend.** Works with first-party API keys, Claude/ChatGPT subscriptions (via their CLIs), any OpenAI- or Anthropic-compatible gateway (OpenRouter, LiteLLM, Ollama, vLLM, Azure), and Databricks workspace profiles. Defaults are per agent, so Claude and Codex credentials coexist. Switch models mid-session with the `/model` command.
 
 ### Use Cases
 
-- **Multi-agent code review** — Have Claude Code write a feature, then automatically route the diff to Codex for review. The cross-vendor review catches assumptions that single-agent workflows miss.
-- **Fullstack task delegation** — Route React frontend work to Claude Code and Go backend optimization to Codex within the same session, with shared context about your project structure.
-- **Team standup with AI** — Share a live session so your whole team watches an agent investigate a production issue in real time, with anyone able to jump in and steer.
-- **Cost-controlled experimentation** — Set a $5 spend cap with a $3 soft warning, then let an agent explore a codebase freely. It pauses when it hits the threshold instead of burning through your budget.
-- **Mobile code review** — Start a refactoring session on your laptop, then review the agent's changes on your phone during your commute. The mobile web UI shows the same terminal, files, and chat.
-- **Onboarding new developers** — Create a custom agent YAML that knows your project's conventions and coding standards. New team members run it and get guidance that's specific to your codebase, not generic LLM advice.
+- **Multi-agent development workflows** — Use Claude Code for complex architecture decisions, Codex for implementation, and a custom agent for code review, all orchestrated in one session with shared context.
+- **Enterprise AI governance** — Enforce spend caps, require approval for risky operations, and limit tool access per agent or per session. Essential for teams deploying agents in regulated environments.
+- **Remote team pair programming** — Share a live agent session with a teammate across the world. Co-drive, fork, and watch each other's agents work in real time without screen sharing.
+- **Agent experimentation and comparison** — Run the same task through different agents (Claude vs Codex vs custom) and compare results side by side. The "Debby" example agent does exactly this with two LLM heads debating each other.
+- **Headless agent execution** — Deploy the server, connect cloud sandboxes, and run agent sessions without any developer machine online. Useful for CI/CD pipelines, scheduled tasks, or background research agents.
 
 ### Pros and Cons
 
 Pros:
-- Solves a real problem: multi-agent coordination without context loss. Most developers use 2+ AI coding tools daily and waste time switching between them.
-- The YAML agent definition is simple and composable. Sub-agents, tools, and policies are all declarative, making it easy to version-control your AI workflow alongside your code.
-- Apache 2.0 licensed with a clear separation between open-source core and cloud features. No bait-and-switch licensing.
-- The collaboration model (co-drive, fork, share) is genuinely useful for teams, not just a checkbox feature.
+
+- Solves a real, immediate problem: agent fragmentation. Every team using multiple AI coding tools today would benefit from this unification layer.
+- The policy engine is genuinely useful, not just a checkbox feature. Three-level policy stacking with spend caps and tool approval addresses the primary blocker for enterprise agent adoption.
+- Apache 2.0 license and active development (118 open issues in 5 days suggests rapid iteration and community engagement).
+- The YAML agent definition is elegant — swap harnesses without rewriting agents, and let agents build agents for you.
 
 Cons:
-- Alpha status is real. The API surface is still settling, and you should expect breaking changes in the coming weeks. Don't build critical infrastructure on it yet.
-- Python 3.12+ requirement means you need a recent Python install. The `uv` installer handles this, but teams stuck on older Python versions will have friction.
-- The project is early-stage with 7 contributors total and a primary maintainer doing most of the work. Long-term sustainability depends on community growth.
-- No Windows support yet — the tmux requirement and macOS desktop app suggest Unix-first development. Windows users would need WSL.
+
+- Alpha status means the API surface is unstable. Five days old with 118 open issues means breaking changes are coming.
+- Requires Python 3.12+, tmux, and bubblewrap (on Linux). The dependency chain is non-trivial compared to running Claude Code or Codex directly.
+- The "meta-harness" abstraction adds a layer of indirection. Debugging issues that span Omnigent and the underlying agent CLI can be painful when things go wrong.
+- Cloud sandbox providers (Modal, Daytona, Islo) are additional services to manage and pay for. The self-hosted story requires Docker and real infrastructure.
 
 ### Getting Started
 
 ```bash
-# Install Omnigent (one command, handles dependencies)
+# Install Omnigent (Python 3.12+ required)
 curl -fsSL https://raw.githubusercontent.com/omnigent-ai/omnigent/main/scripts/install_oss.sh | sh
 
-# Or install with uv/pip manually
+# Or install with uv/pip
 uv tool install omnigent
+# pip install "omnigent"
 
-# Set up your model credentials
+# Or with Homebrew on macOS
+brew install omnigent-ai/tap/omnigent
+
+# Set up credentials
 omnigent setup
 
-# Start a session (launches terminal + web UI at localhost:6767)
+# Start a session (launches CLI + web UI at localhost:6767)
 omnigent
 
-# Or launch a specific agent
-omnigent claude                      # Claude Code in a shareable session
-omnigent codex                       # Codex in a shareable session
+# Run a specific agent
+omnigent claude                    # Claude Code in a shareable session
+omnigent codex                     # Codex
+omnigent run examples/polly/       # Multi-agent orchestrator
+omnigent run examples/debby/       # Two-headed brainstorming agent
 
-# Try the built-in multi-agent orchestrator
-omnigent run examples/polly/
+# Run your own custom agent
+omnigent run path/to/agent.yaml
+```
 
-# Deploy a server for team access
-omnigent server start
-omnigent host                        # register this machine as a host
+Define a custom agent in YAML:
+
+```yaml
+name: my_reviewer
+prompt: You are a senior code reviewer. Be thorough but constructive.
+executor:
+  harness: claude-sdk
+tools:
+  researcher:
+    type: agent
+    prompt: Search for relevant patterns and summarize.
 ```
 
 ### Alternatives
 
-**Aider** — A terminal-based AI coding assistant that supports multiple LLM backends. Aider is more mature and focused on single-agent workflows with great git integration. Choose Aider if you want one excellent agent with deep git awareness rather than coordinating multiple agents.
+**Aider** — A terminal-based AI coding assistant that works with multiple LLMs (GPT-4, Claude, local models) and focuses on pair programming in your git repo. Aider is more mature and simpler to set up, but it's a single-agent tool with no orchestration, policy layer, or multi-user collaboration. Choose Aider if you want one AI pair programmer, not an agent platform.
 
-**Continue** — An open-source AI code assistant that integrates directly into VS Code and JetBrains IDEs. Continue is better if you prefer working inside your editor rather than a terminal/web interface, and it has broader model support through its config system. It lacks Omnigent's multi-agent orchestration but wins on IDE integration.
+**CrewAI** — A Python framework for building multi-agent systems where agents have roles, goals, and can delegate to each other. CrewAI focuses on agent-to-agent workflows and has a larger ecosystem of integrations. But it's a framework you code against, not a runtime you operate. Choose CrewAI if you're building agent pipelines in Python, not if you want to orchestrate existing agent CLIs with governance and collaboration.
 
-**Cline** — A VS Code extension for AI-assisted coding with a strong emphasis on autonomous agent workflows. Cline excels at single-agent task completion with file editing and terminal access. Choose Cline if you want a focused, editor-integrated agent experience without the overhead of multi-agent coordination.
+**OpenHands (formerly OpenDevin)** — An open-source AI software engineering agent with a web UI, sandboxed execution, and support for multiple LLM backends. OpenHands is a more complete standalone agent, while Omnigent is an orchestration layer over existing agents. Choose OpenHands if you want one capable agent with a UI; choose Omnigent if you already use multiple agents and need to unify them.
 
 ### Verdict
 
-Omnigent is the first tool I've seen that takes multi-agent AI coding seriously as a workflow problem rather than a model problem. The insight is correct: no single LLM will dominate every coding task, so the orchestration layer matters more than any individual model. The YAML agent definitions, policy system, and real-time collaboration are practical features that solve real friction points in daily development work. At 500 stars in three days with active development, the community signal is strong. It's alpha software with rough edges — don't bet your production pipeline on it — but if you're a developer who switches between Claude Code and Codex regularly, Omnigent is worth trying today. The time you save on context-switching alone pays for the setup.
+Omnigent is the most interesting AI developer tool I've seen this month. The agent orchestration problem is real — I personally juggle Claude Code, Codex, and custom agents daily with zero shared state — and Omnigent's approach of wrapping rather than replacing is the right architectural bet. The policy engine alone makes it worth evaluating for any team deploying agents beyond the individual developer level. At five days old and alpha quality, it's not production-ready, and the 118 open issues confirm that. But the 2,400 stars in under a week tell the same story: developers have been waiting for this layer. If you're building with multiple AI agents in 2026, Omnigent deserves a spot on your radar.
