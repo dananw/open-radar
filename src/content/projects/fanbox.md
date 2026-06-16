@@ -1,82 +1,78 @@
 ---
 name: fanbox
-description: "FanBox is an Electron-based vibe coding cockpit for macOS — file browser, embedded terminal, and live diff view for AI coding agents like Claude Code and Codex."
+description: "FanBox is an Electron desktop cockpit for AI coding agents — file browser, embedded terminal, live change tracking, and session replay for Claude Code and Codex."
 url: https://github.com/alchaincyf/fanbox
-stars: 461
-forks: 60
+stars: 592
+forks: 84
 language: JavaScript
-tags: ["developer-tools", "electron", "ai-agents", "macos", "vibe-coding"]
+tags: ["developer-tools", "ai-agents", "electron", "terminal", "vibe-coding"]
 featured: false
-publishedAt: 2026-06-14
+publishedAt: 2026-06-16
 ---
 
 ## FanBox
 
 ### Overview
 
-FanBox is a macOS desktop app that solves a problem every developer running AI coding agents has experienced: window chaos. It puts a file browser on the left, a real embedded terminal on the right, and live file previews in the middle — all in one Electron window. Created on June 10, 2026, it racked up 461 GitHub stars in four days, which tracks with how many developers are drowning in the "vibe coding" workflow right now.
+FanBox is a desktop application that solves a problem every developer running AI coding agents has experienced: you let Claude Code or Codex loose on a project, it makes dozens of changes across dozens of files, and then you have no idea what just happened. The repo hit 592 GitHub stars in six days after its June 10 launch, which tracks — this is a pain point that resonates.
 
-The project is built by alchaincyf, a developer whose GitHub profile shows a focus on developer tooling and UI design. The UI work was done in collaboration with huashu-design, and it shows — FanBox ships with three distinct skins (Volt, Archive, Index) that aren't just color swaps but complete visual systems with matching typography, icons, code highlighting, and terminal ANSI themes. That level of design polish is rare in developer tools.
+The project is built by Huashu (花叔), an indie developer known for Cat Light, which hit the App Store paid chart Top 1 in China. He's an "AI Native Coder" who clearly lives in the workflow he's building tools for. The UI design was done with his own huashu-design tool, and the development process itself used five independent AI subagents playing different reviewer roles — a heavy vibe coder, a native-taste designer, a zero-docs newcomer, a ten-year terminal veteran, and a destructive QA officer. Every feature had to score 90+ across all five before shipping.
 
-The core problem FanBox addresses is the fragmentation of AI-assisted development. When you spin up Claude Code or Codex to build something, you end up juggling Finder to locate files, a terminal emulator to run the agent, a browser to preview results, and an editor to make tweaks. FanBox collapses that into a single window. Every time the agent writes a file, the corresponding card in the file browser lights up with a ripple animation. You can see at a glance which files changed, preview them in place, and resume agent sessions with one click.
+The core idea is simple: instead of bouncing between Finder, your terminal, and your browser to manage AI-generated code, FanBox puts everything in one window. File browser on the left, real embedded terminal on the right or bottom, live preview in the middle. When an agent writes a file, its card lights up with a ripple animation and glows based on change frequency. You can see exactly where the agent is working in real time, then take over whenever you want.
 
 ### Why it matters
 
-The "vibe coding" trend — where developers describe what they want and let AI agents write the code — has exploded in 2026. Anthropic's Claude Code, OpenAI's Codex CLI, and Google's Gemini CLI are all fighting for developer mindshare. But the tooling around these agents is still primitive. You're running them in iTerm or Warp, switching between windows constantly, losing track of which files the agent touched. FanBox is the first tool I've seen that treats the AI agent as a first-class citizen in the UI, not just another shell command.
+The "vibe coding" workflow — letting AI agents write most of your code while you direct and review — has gone mainstream in 2026. Claude Code, Codex, Cursor, and a dozen other tools are all competing for the "write code with AI" slot. But the management layer is missing. These agents generate code fast, but developers still use the same tools they've used for a decade to navigate the results: a terminal, a file manager, and an editor, all in separate windows.
 
-This connects to a broader shift in how developers work. The traditional IDE model — where you write code line by line — is being supplemented by an agent-first model where you orchestrate, review, and course-correct. FanBox's design reflects that: the terminal is front and center, file changes are visualized in real time, and the workflow is built around "find → preview → light edit → command the agent." It's not trying to replace VS Code or Cursor. It's a cockpit for a different kind of development.
+FanBox doesn't try to replace your editor or your terminal. It fills the gap between them — the "what just happened?" layer. The session replay feature alone is worth paying attention to: drag a timeline like scrubbing a video to see which files the agent touched, step by step. The change inbox aggregates all modified files across multiple projects when you're running agents in parallel. These aren't features VS Code or iTerm are going to add anytime soon.
+
+The timing connects to a broader shift. As AI agents handle more of the mechanical coding work, the developer's job is increasingly about oversight, review, and course correction. Tools designed for writing code from scratch don't fully serve that supervisory role. FanBox is one of the first tools built specifically for the "direct and review" part of the AI coding loop.
 
 ### Key Features
 
-**Live Change Dashboard.** When an AI agent writes files, FanBox's file cards ripple and glow based on change frequency. The light follows the agent's activity in real time, so you never lose track of what's being modified. This visual feedback loop is something no terminal emulator provides.
+**Live Change Visualization.** Every file the agent writes triggers a ripple animation on its card, with the glow intensity tied to change frequency. It's not just eye candy — you can glance at a project and immediately see where the agent has been spending its time. The follow mode tracks the agent's current file in real time, scrolling code with freshly written lines flashing and HTML rendering as a live web page with double-buffered updates for zero white flash.
 
-**Follow Mode.** One click activates tracking — the file view and preview automatically follow whichever file the agent is currently editing. Code scrolls with freshly written lines flashing. HTML renders live as it's being written, using double-buffered rendering to eliminate white flashes. Markdown renders in real time. Any manual browsing instantly returns control to you.
+**Session Replay.** Think of it as a DVR for your coding agent. Drag the timeline to scrub through a session and see which files the agent touched at each step. For debugging unexpected behavior or understanding what an agent did during a long unsupervised run, this is more useful than reading a wall of terminal output.
 
-**Session Replay.** Drag a timeline slider to scrub through your agent's work history, like rewinding a video. See exactly which files were touched, in what order, and what changed. This is invaluable for understanding what a long-running agent session actually did.
+**Real Embedded Terminal.** Built on node-pty and xterm.js with WebGL rendering, the terminal handles Claude Code, vim, htop, and CJK wide characters without garbling. You can drag files from the file browser directly into the terminal to insert their paths as agent context. Terminal output file paths are clickable — they open in FanBox, and the path parser handles macOS screenshot names with spaces and Chinese filenames by verifying boundaries with filesystem stat calls.
 
-**Project Memory.** Open any project folder and see a complete history of AI interactions: past sessions (titled with your first message), files modified per session, and skills triggered. The "Resume" button reconnects context via `claude --resume` or `codex resume` directly in the embedded terminal. No more losing context between sessions.
+**Project Memory.** Open any project folder and see every AI session that's happened there: your first message used as a session title, which files each session changed, which skills the agent triggered. Hit "Resume" and it reconnects via `claude --resume` or `codex resume` in the embedded terminal, picking up the exact context where you left off.
 
-**Real Embedded Terminal.** Built on node-pty and xterm.js with WebGL rendering. Claude Code, vim, and htop render correctly without screen artifacts. CJK wide characters work properly. Drag files from the browser into the terminal to insert their paths as agent context. Clickable file paths in terminal output open directly in FanBox — even paths with spaces or Chinese filenames are recognized correctly.
+**Change Inbox.** When you're running agents across multiple projects simultaneously — which happens more than people admit — the change inbox aggregates all modified files into one view. No more checking five different terminal tabs to figure out what changed where.
 
-**Screenshot Express.** Take a system screenshot and a card pops up in the corner: feed it to the terminal agent as visual context, file it into the project's assets folder, or annotate it before sending. This closes the loop between visual feedback and agent instruction.
+**Three Complete Skins.** These aren't color theme swaps. Volt (neon green on charcoal, industrial instrument feel), Archive (cream paper and terracotta, warm serif typography), and Index (black and white with signal colors, editorial layout) each change the palette, fonts, icons, code highlighting, and terminal ANSI themes together. The design quality is noticeably above typical Electron apps.
 
-**Agent Usage Tracking.** Displays Claude Code's official 5-hour window and weekly quota (same data source as the `/usage` command), plus local token statistics. For Codex, it shows window snapshots with reset detection. Know your budget before you start a session.
+**Screenshot Express.** Take a system screenshot and a card pops up in the corner. Feed it directly to the terminal agent as visual context, file it into the project's assets folder, or annotate it first. It sounds small, but this closes a real friction point when you're iterating on UI with an AI agent.
 
 ### Use Cases
 
-- **Fullstack developers running Claude Code or Codex** — If you're using AI agents to build features across React frontends and NestJS or Django backends, FanBox lets you see file changes across the entire stack in one view without switching contexts.
-
-- **Rapid prototyping and vibe coding sessions** — When you're spinning up multiple experimental projects in an afternoon, FanBox's project badges (node / web / py / rs / go) and change dashboard help you keep track of what each agent session produced.
-
-- **Code review of AI-generated changes** — The session replay and Monaco-based git diff view (HEAD vs working tree) let you audit exactly what an agent changed before committing. Essential for developers who don't blindly trust AI output.
-
-- **Multi-project parallel agent runs** — The change inbox aggregates all modified files across multiple projects running agents simultaneously. Run Claude Code on your frontend and Codex on your backend and see everything in one place.
-
-- **Teaching and demonstration** — The session replay feature makes it easy to show someone how an AI agent approached a problem, step by step.
+- **Vibe coding sessions** where you're directing Claude Code or Codex across a large codebase and need to see what changed without reading a git diff after every step
+- **Multi-project parallel agent runs** where you have three or four terminal tabs running agents simultaneously and need a unified view of all changes
+- **Code review for AI-generated changes** using the Monaco-powered git diff view (HEAD vs working tree) to see exactly what lines the agent wrote
+- **Onboarding to an AI-heavy project** where you need to understand what an agent did in previous sessions before picking up work
+- **Quick file browsing and previewing** for projects that AI spun up — the fuzzy search (Cmd+K) and project badges (node/web/py/rs/go) help you find things fast when you have dozens of agent-generated projects
 
 ### Pros and Cons
 
 Pros:
-- Solves a real, daily pain point for developers using AI coding agents. The window-switching problem FanBox addresses is something every vibe coder experiences within their first hour.
-- The design quality is exceptional for a four-day-old project. Three complete visual skins with matching terminal themes, plus thoughtful touches like the change ripple animations and the "it's your turn" breathing indicator.
-- Local-first, zero runtime dependencies, zero configuration. No cloud, no accounts, no telemetry. Clone and run.
-- MIT licensed with an active web version (`node server.js`) for quick evaluation without installing Electron.
+- The "cockpit" metaphor works. File browser, terminal, and preview in one window with live change tracking is genuinely more productive than three separate apps when working with coding agents.
+- Session replay and project memory are features no other tool offers. Being able to scrub through an agent's history or resume a past session with full context is powerful for long-running projects.
+- Truly local-first and offline-capable. All frontend dependencies are vendored, the backend listens on loopback only, and the only outbound calls are optional (Claude usage API and GitHub update check). Data never leaves your machine.
+- The three skins are polished to a degree unusual for open-source Electron apps, and the zero-dependency Node backend keeps the footprint small.
 
 Cons:
-- macOS only (Apple Silicon). No Windows or Linux support yet, which excludes a significant portion of the developer market. The Electron foundation should make cross-platform builds feasible, but they're not available today.
-- Electron overhead is real. At 30 KB bundle size for the web version the lightweight claims are accurate for that mode, but the desktop app carries Electron's memory footprint, which matters when you're already running an AI agent consuming significant RAM.
-- The project is four days old. The 461 stars reflect hype and genuine interest, but the API surface, feature set, and stability are unproven at scale. Early adopters should expect rough edges.
-- No Windows/Linux means teams with mixed development environments can't standardize on it.
+- macOS only with Apple Silicon arm64. No Windows or Linux builds yet, which excludes a significant portion of developers. The web version exists but only covers file browsing — the terminal and editors require Electron.
+- Electron overhead is real. Even with zero runtime dependencies and vendored assets, you're running a full Chromium instance for what is essentially a file manager with a terminal. Memory usage will be higher than native alternatives.
+- The project is six days old. The feature list is ambitious, and the 592-star velocity suggests rapid community adoption, but there's no track record of stability or maintenance cadence yet. Early adopters should expect rough edges.
 
 ### Getting Started
 
 ```bash
-# Download the macOS desktop app (recommended)
+# Download the latest .dmg from Releases (macOS Apple Silicon only)
 # https://github.com/alchaincyf/fanbox/releases/latest
-# Download the .dmg, drag to Applications
-# Right-click → Open on first launch if macOS warns about unverified developer
+# Drag into Applications, right-click → Open on first launch
 
-# Or run the web version (zero dependencies, zero build)
+# Or run the web version (browsing/preview only, no terminal)
 git clone https://github.com/alchaincyf/fanbox.git
 cd fanbox
 node server.js
@@ -84,18 +80,20 @@ node server.js
 
 # Development mode
 npm install
-npm run app          # Launch full Electron desktop app
+npm run app          # Full desktop app with Electron
 npm run dist         # Build and sign .dmg (output in dist/)
 ```
 
+Keyboard shortcuts to know: `Cmd+K` for global fuzzy search, `Cmd+B` to toggle the sidebar, `Cmd+Enter` to open a project in your editor, and `/` to filter the current folder.
+
 ### Alternatives
 
-**Warp** — A modern terminal with AI features built in. Warp has a better terminal experience overall (block-based output, AI command suggestions, shared sessions) but doesn't include a file browser or live preview. If you just need a better terminal for running agents, Warp is the stronger choice. FanBox is better when you need the integrated file management and change visualization.
+**VS Code with Claude Code extension** — If you're already deep in VS Code, the integrated terminal and file explorer cover similar ground. But VS Code wasn't designed for the "see what the agent changed" workflow. There's no session replay, no change inbox, and no live visualization of agent activity across files. Choose VS Code if you want one tool for everything and don't mind the oversight gap.
 
-**Cursor** — An AI-native IDE built on VS Code with deep agent integration. Cursor is a full editor where FanBox is a cockpit — they serve different workflows. Cursor is better when you're actively writing and refactoring code with AI assistance. FanBox is better when you're orchestrating agents that run autonomously and you need to monitor and review their output.
+**Warp Terminal** — Warp's AI-native terminal has agent-aware features like command sharing and notebook-style blocks. It's a better terminal than FanBox's embedded one. But it doesn't have the file browser, preview, or change tracking layers. Choose Warp if terminal ergonomics matter more than the unified cockpit experience.
 
-**iTerm2 + Finder + VS Code** — The traditional multi-window setup that most developers use today. It works, and each tool is more capable in its domain than FanBox. But the constant context switching between three windows is exactly the problem FanBox solves. If you find yourself losing track of which files your agent changed, FanBox consolidates that workflow.
+**Cursor** — Cursor is an IDE built around AI coding with inline diffs and agent mode. It's more capable as a code editor and handles the "write code with AI" loop well. But it's an editor, not a project management tool — there's no session replay, no multi-project change inbox, and no file browsing with project memory. Choose Cursor if you want AI assistance inside your editor rather than a supervisory cockpit around your agents.
 
 ### Verdict
 
-FanBox is the right tool at the right time. The vibe coding workflow — running AI agents that write code autonomously — has outgrown the terminal emulator. Developers need a cockpit, not just a shell, and FanBox delivers that with surprising polish for a project that's less than a week old. The 461 stars in four days and the Gigazine coverage suggest this is hitting a real nerve. It's macOS-only and Electron-based, which limits its audience, and it's too early to call it production-stable. But if you're a Mac developer running Claude Code or Codex daily and you're tired of juggling windows, download the .dmg today. This is the kind of tool that makes you wonder how you worked without it.
+FanBox is the first tool I've seen that treats AI coding agents as something you manage rather than something you use. The distinction matters. Claude Code and Codex are tools — you give them instructions and get code back. FanBox is a control room — you see what's happening across your projects, review what changed, replay sessions, and take over when needed. That's a different mental model, and it's the right one for 2026's reality where developers are running multiple agents in parallel. The 592 stars in six days and the polished design quality suggest this isn't just another Electron toy. The macOS-only limitation is real, but if you're on a Mac and running AI agents regularly, FanBox fills a gap that nothing else does right now.
