@@ -1,118 +1,126 @@
 ---
 name: 9drive
-description: "9Drive is an open-source full-stack TypeScript storage gateway that unifies multiple Google Drive accounts into one dashboard with smart upload routing and quota tracking."
+description: "Open-source storage gateway that unifies multiple Google Drive and S3 accounts into one dashboard with smart upload routing, virtual folders, and API access."
 url: https://github.com/zenhosta/9drive
-stars: 291
-forks: 110
+stars: 550
+forks: 177
 language: TypeScript
-tags: ["fullstack", "react", "express", "prisma", "google-drive", "storage"]
+tags: ["storage", "google-drive", "s3", "typescript", "react", "self-hosted"]
 featured: false
-publishedAt: 2026-06-07
+publishedAt: 2026-06-17
 ---
 
 ## 9Drive
 
 ### Overview
 
-9Drive hit 291 stars in three days after its June 4, 2026 launch. That kind of velocity for a storage management tool tells you something — developers are tired of juggling multiple Google Drive accounts and want a clean, self-hosted alternative to manually switching between them.
+9Drive is an open-source storage gateway that connects multiple Google Drive accounts and S3-compatible storage into a single web dashboard. It hit 550 GitHub stars in under two weeks after its June 4, 2026 launch, which is a strong signal for a utility tool in a crowded space. The core idea is simple: most developers and small teams accumulate storage across multiple Google accounts and cloud providers, and managing them individually is a pain nobody signed up for.
 
-The project is built by zenhosta, and the architecture is straightforward: a React + Vite frontend talks to an Express + TypeScript backend backed by MySQL via Prisma. Files never touch your server — uploads stream directly from the client through the backend to Google Drive. The backend's only job is metadata, auth, and routing uploads to whichever connected Drive account has the most free space.
+The project is built by a solo developer (Adytm404) who clearly works with this stack daily. The codebase is clean — Express + TypeScript backend with Prisma ORM, React + Vite frontend, MySQL database, and Docker support out of the box. It's the kind of project where you can tell the author actually uses it, not just demo-ware built for a blog post. 77 commits in 12 days shows active, focused development.
 
-The core problem 9Drive solves is deceptively simple. If you have three Google accounts (personal, work, side projects), you're constantly switching contexts. Each account has its own 15GB free tier. 9Drive treats them as one pool. Connect all three and you get a unified dashboard showing 45GB of combined quota, with the backend automatically routing new uploads to whichever account has room.
+The real problem 9Drive solves is storage fragmentation. You've got files scattered across your personal Gmail's 15GB, your work account, maybe a couple of project-specific drives, and possibly an S3 bucket or two. Every one of those has its own interface, its own quota management, its own upload rules. 9Drive collapses all of that into one view with a smart upload router that automatically sends files to whichever account has the most free space.
 
 ### Why it matters
 
-Most "Google Drive alternatives" are either full-blown self-hosted file servers (Nextcloud, Filebrowser) or thin wrappers around the Drive API that don't actually solve the multi-account problem. 9Drive sits in a practical middle ground — it's not trying to replace Google Drive, it's trying to make Google Drive usable for people with multiple accounts.
+Self-hosted storage management tools are surprisingly rare. The options are basically: use each provider's native UI, pay for a multi-cloud management SaaS, or cobble together rclone scripts. None of those give you a clean web interface with upload routing, quota tracking, and an API for programmatic access.
 
-The tech stack choices are worth noting. React + Vite for the frontend is standard, but the Express + Prisma + MySQL backend is a deliberate simplification. No microservices, no message queues, no Kubernetes. Just a REST API with Prisma migrations and bearer token auth. For developers building internal tools or learning full-stack TypeScript, this is a useful reference architecture. The Google OAuth integration alone — with encrypted credential storage, automatic Drive connection on sign-in, and multi-account management — is worth studying.
+The timing is relevant because storage costs and fragmentation are getting worse, not better. Google's free tier hasn't changed in years while file sizes keep growing. Teams using multiple Google Workspace accounts for different projects hit quota limits constantly. And the rise of S3-compatible providers (Cloudflare R2, Backblaze B2, Wasabi) means even small teams often have storage spread across 3-4 backends.
+
+9Drive's approach — route uploads to the account with the most available space — is the kind of pragmatic solution that makes you wonder why it doesn't already exist everywhere. Combined with the external upload API and API key management, it positions itself as infrastructure that other tools can build on, not just a dashboard.
 
 ### Key Features
 
-**Smart Upload Routing.** When you upload a file, 9Drive checks the quota across all connected Google Drive accounts and routes the upload to the one with the most available space. Files stream directly from the browser through the backend to Google Drive — nothing is stored on the server. This means your VPS stays lightweight and you don't need to worry about disk space.
+**Smart Upload Routing.** When you upload a file, 9Drive doesn't just dump it wherever you point. It evaluates available quota across all connected accounts and routes the upload based on configurable policies: most-available (pick the account with the most free space), round-robin (distribute evenly), or priority-order (always try accounts in a specific sequence). This turns multiple 15GB free-tier accounts into what feels like one large storage pool.
 
-**Multi-Account Quota Tracking.** The Quota Tracker page shows a combined view of storage usage across all connected accounts. Each account displays its individual usage and remaining space. This is the kind of operational visibility that Google's own dashboard doesn't provide when you have multiple accounts.
+**Direct Stream Architecture.** Files never touch your server. Uploads stream directly from the client to Google Drive or S3 through the backend as a passthrough proxy. This means your server doesn't need significant disk space, and you're not doubling your bandwidth costs. The backend handles authentication, routing logic, and metadata — the actual bytes go straight to the storage provider.
 
-**Virtual Folders.** 9Drive implements virtual folders that exist only in the MySQL database — they don't create actual folders in Google Drive. This lets you organize files across multiple Drive accounts into a single logical hierarchy without moving files around in Drive itself. You can nest folders, rename them, and reorganize without touching the underlying Drive structure.
+**S3-Compatible Storage Support.** Beyond Google Drive, 9Drive connects to any S3-compatible provider — MinIO, Cloudflare R2, Wasabi, Backblaze B2, AWS S3, or any custom endpoint. You can mix Google Drive accounts and S3 buckets in the same dashboard, which is the real multi-cloud story. Upload routing works across both storage types.
 
-**Direct Streaming Uploads.** The backend never stores uploaded files on disk. Uploads arrive as multipart form data, get validated, and stream directly to the target Google Drive account under a dedicated `9drive` root folder. The upload progress panel in the bottom-right corner shows real-time status. This architecture keeps the server stateless and eliminates the need for local storage management.
+**External Upload API.** There's a documented REST API at `POST /api/v1/uploads` with API key authentication. You get one-time secret display on creation, hashed key storage, last-used tracking, and revocation. This means other tools, scripts, or CI pipelines can upload to your 9Drive instance programmatically. The in-app API docs include cURL and JavaScript examples.
 
-**Google OAuth with Auto-Connect.** When a user signs in with Google, the first Drive account is connected automatically — no additional OAuth flow needed. Additional accounts can be added from the Settings page. Google OAuth credentials are stored encrypted in MySQL, and the seed script handles the initial configuration. The whole flow is designed so developers can get the OAuth setup right on the first try.
+**Virtual Folders.** Files live in their respective storage backends, but you organize them with virtual folders in the 9Drive interface. This decouples your organizational structure from the physical storage layout. Rename, move, preview, and manage files across all accounts from one tree view without caring which account actually holds the data.
 
-**Docker-Ready Deployment.** The repository includes docker-compose.yml, Dockerfiles for both frontend and backend, and an nginx config for the frontend container. The backend runs Prisma migrations automatically on startup. Copy the example env file, set your secrets, run `docker compose up`, and you have a working instance. The production notes cover HTTPS, reverse proxy setup, and Google OAuth domain configuration.
+**Google OAuth with Auto-Connect.** Sign in with Google and your first Drive account connects automatically during authentication. No manual OAuth dance for the first account. Additional accounts connect through a standard OAuth flow. Email/password auth is also supported with optional reCAPTCHA on registration.
 
-**File Management Actions.** Files support preview, download, rename, move to folder, and delete operations. There's also a sync feature that pulls changes from the Google Drive `9drive` folder back into MySQL, so files added directly through Google's interface appear in 9Drive's dashboard.
+**Quota Dashboard.** See aggregate and per-account storage usage at a glance. The quota tracker shows how much space each connected account has used and remaining, so you can make informed decisions about where to store new files — or let the automatic routing handle it.
 
 ### Use Cases
 
-- **Developers with multiple Google accounts** who need a unified view of their storage across personal, work, and project-specific drives. The quota tracker alone saves the hassle of checking each account individually.
-
-- **Small teams sharing storage** across organizational Google accounts. Instead of buying more Google Workspace storage, connect multiple free-tier accounts and let 9Drive route uploads intelligently.
-
-- **Full-stack TypeScript learners** looking for a complete, well-documented reference project. The React + Express + Prisma stack with Google OAuth, file streaming, and Docker deployment covers most patterns you'd encounter in production apps.
-
-- **Internal tool builders** who need a starting point for file management dashboards. The API is clean REST, the auth is bearer tokens, and the Prisma schema is easy to extend.
+- **Freelancers and small teams** who accumulate files across personal and project-specific Google accounts and need a unified view without paying for a multi-cloud SaaS platform.
+- **Developers building file upload workflows** who need a self-hosted backend that handles storage routing — point your app's uploads at the 9Drive API and let it figure out where to put them.
+- **Organizations running hybrid storage** with Google Workspace for some teams and S3-compatible storage (R2, B2, MinIO) for others, wanting a single interface for all of it.
+- **Side projects and startups** that want to maximize free-tier storage by pooling multiple Google accounts into one logical volume with smart routing.
+- **Self-hosting enthusiasts** looking for a Docker-deployable storage gateway that doesn't require Kubernetes or complex infrastructure.
 
 ### Pros and Cons
 
 Pros:
-- Clean, minimal architecture with no unnecessary complexity. React + Express + Prisma is a proven stack that's easy to understand and modify. The entire backend fits in a single Express app with clear route separation.
-- Files never touch the server — direct streaming to Google Drive means zero local storage requirements and no file cleanup headaches. This is the right architecture for a storage gateway.
-- Multi-account quota aggregation solves a real pain point that Google's own interface doesn't address. The smart routing to the account with the most free space is a practical feature that just works.
-- Docker deployment with automatic Prisma migrations makes it easy to self-host. The .env.docker.example file covers all the configuration you need.
+- Direct streaming architecture means your server is a lightweight proxy, not a storage bottleneck. No disk space requirements, no double bandwidth costs.
+- The S3-compatible support alongside Google Drive makes this genuinely multi-cloud, not just "multi-Google-account."
+- External API with proper key management (hashed storage, last-used tracking, revocation) makes this usable as infrastructure, not just a dashboard.
+- Docker Compose support and clear setup documentation mean you can have it running in under 15 minutes.
+- Active solo development with 77 commits and meaningful feature additions (S3 support, routing policies, API keys) all landed in the first 12 days.
 
 Cons:
-- No license file means the code is technically all rights reserved. For a project that's gaining traction, this could slow adoption from teams that need explicit licensing terms before using or modifying the code.
-- MySQL with Prisma is a fine choice, but the virtual folder implementation means folder operations don't sync back to Google Drive. If someone organizes files in 9Drive, that organization only exists in the database — not in Drive itself.
-- The project is three days old. There are no open issues yet, which means the edge cases haven't been discovered. Production use should wait until the API surface stabilizes and security has been reviewed.
+- Solo-developer project with no PRs from other contributors yet. Long-term maintenance depends on one person's availability and motivation.
+- No license file in the repo as of mid-June 2026. This is a real concern for anyone wanting to use it in production or contribute — technically, you don't have permission to do either without a license.
+- MySQL-only with Prisma. No PostgreSQL option, which limits some deployment scenarios. Not a dealbreaker, but worth noting.
+- The frontend `.env` file is committed to the repo, which suggests the security hygiene could be tighter for a tool that handles OAuth tokens and API keys.
 
 ### Getting Started
 
 ```bash
 # Clone the repo
-git clone git@github.com:zenhosta/9drive.git
+git clone https://github.com/zenhosta/9drive.git
 cd 9drive
 
 # Install backend dependencies
-cd backend && npm install
+cd backend
+npm install
 
 # Install frontend dependencies
-cd ../frontend && npm install
+cd ../frontend
+npm install
 
 # Create the MySQL database
 mysql -u root -e "CREATE DATABASE IF NOT EXISTS 9drive;"
 
-# Run Prisma migrations
-cd backend && npm run prisma:migrate
+# Configure backend environment
+cp .env.example .env  # Edit with your Google OAuth credentials and secrets
 
-# Seed Google OAuth config (after setting up Google Cloud Console)
+# Run Prisma migrations
+cd backend
+npm run prisma:migrate
+
+# Seed Google OAuth config (after setting credentials in .env)
 npm run seed:google-config
 
-# Start backend (port 4000)
+# Start the backend
 npm run dev
 
-# In another terminal, start frontend (port 5173)
-cd frontend && npm run dev
+# In another terminal, start the frontend
+cd frontend
+npm run dev
 ```
 
-Open http://localhost:5173, register with email/password or sign in with Google, and connect your first Drive account.
+Open http://localhost:5173 and register. If you used Google sign-in, your first Drive account connects automatically.
 
 For Docker deployment:
 
 ```bash
-cp .env.docker.example .env
-# Edit .env with your secrets and Google OAuth credentials
-docker compose up -d --build
-docker compose exec backend npm run seed:google-config
+docker compose up -d
 ```
 
 ### Alternatives
 
-**Nextcloud** — The heavyweight self-hosted file management platform. Nextcloud is far more feature-complete (calendar, contacts, office suite, hundreds of apps) but that's also its weakness — it's a full groupware suite, not a focused storage gateway. Choose Nextcloud if you want a Google Workspace replacement. Choose 9Drive if you just want to unify multiple Drive accounts.
+**rclone** — The Swiss army knife of cloud storage CLI tools. rclone supports 40+ storage providers and has mount, sync, copy, and serve commands. It's vastly more mature and feature-rich, but it's a CLI tool with no web UI and no smart upload routing. Choose rclone when you need scripted automation or provider coverage that 9Drive doesn't support.
 
-**Filebrowser** — A lightweight self-hosted file manager with a clean web UI. Filebrowser manages local files on your server, which is a different use case entirely. It doesn't integrate with Google Drive or handle multi-account management. Choose Filebrowser if you need a web UI for local server files.
+**Filebrowser** — A self-hosted web file manager with a clean UI, user management, and file editing. Filebrowser is more mature (8+ years, 25K+ stars) and works with local filesystems and S3, but it doesn't connect to Google Drive natively and doesn't do multi-account routing. Choose Filebrowser when you need a general-purpose file manager for local or single-provider storage.
 
-**rclone** — The command-line Swiss Army knife for cloud storage. rclone supports dozens of cloud providers including Google Drive and can mount drives as filesystems. It's incredibly powerful but has no web UI and no multi-account quota aggregation. Choose rclone if you're comfortable with CLI tools and need provider-agnostic cloud storage access.
+**MultCloud** — A SaaS multi-cloud management platform that connects Google Drive, Dropbox, OneDrive, S3, and 30+ others. MultCloud handles file transfer between providers and has a web UI, but it's a paid service ($10+/month) and your files flow through their servers. Choose MultCloud when you want zero self-hosting overhead and don't mind the cost or the third-party data path.
 
 ### Verdict
 
-9Drive is a focused, well-architected solution to a problem most developers with multiple Google accounts have accepted as unsolvable. The React + Express + Prisma stack is familiar territory, the streaming upload architecture is the right design choice, and the Docker deployment story is solid. At 291 stars in three days, the developer community is clearly interested. The missing license and young age are real concerns for production use, but as a reference project for full-stack TypeScript development — and as a practical tool for personal multi-account management — 9Drive is worth watching. If you've ever caught yourself switching between Google accounts to find a file, this project speaks to you.
+9Drive is a focused, well-executed utility that solves a real annoyance for anyone juggling multiple storage accounts. The smart upload routing and direct streaming architecture are the right design decisions — this isn't a glorified file browser bolted onto rclone. The Express + React + Prisma stack is standard enough that any fullstack developer can contribute or customize it. At 550 stars in 12 days with active development, the community interest is there.
+
+The missing license is the biggest red flag. Until that's resolved, production use and contributions are legally ambiguous. The solo developer risk is real but mitigated by the clean, standard codebase that any TypeScript developer could fork and maintain. If you're drowning in Google Drive accounts and want a self-hosted solution that doesn't require a PhD in rclone flags, 9Drive is worth running locally this weekend to see if it fits your workflow.
