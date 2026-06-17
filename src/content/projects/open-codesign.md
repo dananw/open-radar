@@ -1,80 +1,70 @@
 ---
 name: open-codesign
-description: "Open-source Claude Design alternative — local-first desktop app that turns prompts into prototypes, slides, and PDFs with any AI model. 6.8K stars, MIT."
+description: "Open CoDesign is an open-source desktop app that turns prompts into prototypes, slide decks, and PDFs — a local-first alternative to Claude Design, v0, and Lovable."
 url: https://github.com/OpenCoworkAI/open-codesign
-stars: 6802
-forks: 720
+stars: 6860
+forks: 723
 language: TypeScript
-tags: ["design-tools", "ai-prototyping", "local-first", "typescript", "electron"]
+tags: ["design-tools", "ai", "prototyping", "electron", "local-first"]
 featured: false
-publishedAt: 2026-06-12
+publishedAt: 2026-06-17
 ---
 
 ## Open CoDesign
 
 ### Overview
 
-Open CoDesign is an open-source, local-first desktop app that turns text prompts into polished prototypes, slide decks, landing pages, and marketing assets. It hit 6,800 GitHub stars within two months of its April 2026 launch, with 720 forks — numbers that tell you developers were hungry for a Claude Design alternative that doesn't lock you into a single vendor.
+Open CoDesign is an MIT-licensed desktop app that turns text prompts into polished prototypes, slide decks, landing pages, and marketing assets. It hit 6,800 GitHub stars within two months of its April 2026 launch, which tracks — developers have been waiting for a local-first alternative to the wave of cloud-locked AI design tools that dominated late 2025.
 
-The project comes from OpenCoworkAI, the same team behind Open Cowork (an open-source AI agent desktop app). They clearly have a thesis: AI design tools are useful, but the current generation — Claude Design, v0 by Vercel, Lovable, Bolt.new — all share the same limitation. They're cloud-only, single-model, and subscription-gated. Open CoDesign is their answer: an MIT-licensed Electron app that runs on your laptop, works with whatever model you already pay for, and exports real files you can actually use.
+The project comes from OpenCoworkAI, a team that previously released Open Cowork, an open-source AI agent desktop app. That prior work shows in the architecture: Open CoDesign is built on Electron + React 19 + Vite 6 + Tailwind v4, with a sophisticated agent loop powered by `@mariozechner/pi-ai` and `pi-coding-agent` primitives. It's not a thin wrapper around an API — it's a real desktop application with local file management, session history, and a permissioned agent system.
 
-The core problem it solves is the gap between "I have a design idea" and "I have something I can hand to a developer or ship myself." Traditional workflows involve Figma mockups, design reviews, and front-end implementation cycles. AI design tools compress that to seconds, but they do it by keeping your work in their cloud and routing everything through their API. Open CoDesign keeps the generation speed while removing the cloud dependency.
+The core problem it solves: tools like Claude Design, v0 by Vercel, Lovable, and Bolt.new are useful but they lock you into a single model provider, run entirely in the cloud, and charge subscription fees on top of your API costs. Open CoDesign flips that model. You bring your own key (or use a local Ollama instance), the app runs on your machine, and you export real files — HTML, PDF, PPTX, ZIP, Markdown — without anything touching a third-party server unless your chosen model route requires it.
 
 ### Why it matters
 
-The AI design tool space is exploding. Claude Design launched in early 2026 as Anthropic's entry into prompt-to-UI generation. Vercel's v0 has been around since 2023. Lovable and Bolt.new raised significant rounds. But every one of these tools shares the same business model: cloud-hosted, single-provider, subscription-based. If you're a developer who already has an Anthropic API key, an OpenAI key, or a local Ollama setup, you're paying twice — once for the model access and again for the design tool wrapper.
+The AI design tool space exploded in 2025. Vercel's v0, Lovable, and Bolt.new proved that prompt-to-prototype workflows save real development time, especially for early-stage UI work, client presentations, and quick iteration. But every one of those tools is cloud-only, subscription-based, and tied to specific model providers. For teams that care about data privacy, cost control, or model flexibility, that's a non-starter.
 
-Open CoDesign flips that model. It's a BYOK (bring your own key) desktop app that supports 20+ model providers including Claude, GPT, Gemini, DeepSeek, Kimi, GLM, Ollama, and any OpenAI-compatible endpoint. You can even sign in with your existing ChatGPT Plus subscription to use Codex models. One-click import of Claude Code or Codex provider configs means you're generating designs within 90 seconds of installing the app.
+Open CoDesign fills that gap with a desktop-native approach that respects the developer workflow. You already have API keys for Claude, GPT, or Gemini. You already run Ollama locally for some tasks. Why pay another subscription just to generate a landing page mockup? The app imports your existing Claude Code or Codex provider configs in one click, or you sign in with your ChatGPT subscription for Codex models. Setup takes under 90 seconds.
 
-For fullstack web developers specifically, this fills a real gap. You're building React components, NestJS backends, Django admin panels — you know the code, but you might not have a designer on call. Open CoDesign lets you prototype a landing page, a dashboard, or a pitch deck from a text description, then export the HTML/CSS/JS directly into your project. The "Decompose to UI Kit" feature goes further: it generates a structured component folder with TypeScript components, CSS tokens, and a manifest file ready for coding-agent handoff.
+The timing connects to a broader shift in how developers think about tooling. The "bring your own key" model is becoming standard — Cursor, Continue, and now Open CoDesign all accept that developers want to choose their models, not be locked into someone else's infrastructure. Combined with local-first data storage (designs live in `~/.config/open-codesign/`, nothing leaves your machine by default), this represents the direction serious developer tools are heading.
 
 ### Key Features
 
-**Multi-Model BYOK Architecture.** Open CoDesign supports Anthropic, OpenAI, Google Gemini, DeepSeek, OpenRouter, SiliconFlow, local Ollama, and any OpenAI-compatible relay. You're not locked into one provider's pricing or rate limits. If Claude is expensive today, switch to DeepSeek. If you want local inference, point it at Ollama. The dynamic model picker shows each provider's real catalogue, not a hardcoded shortlist.
+**Multi-Model BYOK Architecture.** Open CoDesign supports over 20 model providers — Anthropic, OpenAI, Gemini, DeepSeek, OpenRouter, SiliconFlow, local Ollama, and any OpenAI-compatible endpoint. You can sign in with your ChatGPT subscription for Codex models without pasting an API key, or bring your existing Claude Code / Codex provider configs in one click. The dynamic model picker shows each provider's real catalogue, not a hardcoded shortlist. This is the most flexible provider setup I've seen in any AI design tool.
 
-**Sandboxed Iframe Preview.** Generated prototypes render in a sandboxed iframe with vendored React 18 and Babel running on-device. The preview supports phone, tablet, and desktop frames with one-click switching. What you see is what you get — the HTML/CSS/JS in the preview is the same code you export.
+**Twelve Built-in Design Skill Modules.** Before the model writes a line of CSS, it selects the skills that fit the brief — slide decks, dashboards, landing pages, SVG charts, glassmorphism, editorial typography, heroes, pricing, footers, chat UIs, data tables, and calendars. Each skill steers the model toward considered typography, purposeful whitespace, and meaningful color. You can add a `SKILL.md` to any project to teach the model your own taste. This built-in taste layer is what separates usable output from generic AI slop.
 
-**Comment Mode with Pin-Based Editing.** Click any element in the preview, drop a pin, leave a note, and the model rewrites only that region. This is dramatically more efficient than re-prompting the entire design when you want to change a button color or adjust spacing. The AI-generated sliders surface the parameters worth tweaking — color, spacing, typography — so you can refine without another full prompt.
+**Comment Mode and AI-Tuned Sliders.** Click any element in the preview, drop a pin, leave a note, and the model rewrites only that region. The AI-generated sliders surface the parameters worth tweaking — color, spacing, font size — so you can refine without writing another full prompt. This iterative workflow feels natural for designers who are used to tools like Figma, where you select and modify rather than regenerate from scratch.
 
-**Decompose to UI Kit.** One click emits a `ui_kits/<slug>/` folder containing `index.html`, `components/*.tsx`, `tokens.css`, `manifest.json`, and `README.md` — structured for coding-agent handoff. Built-in deterministic and vision verifiers self-check visual parity using a 12-question boolean rubric, then re-iterate on gaps. This bridges the design-to-code gap that most AI design tools ignore.
+**Decompose to UI Kit.** One click emits a `ui_kits/<slug>/` folder with `index.html`, `components/*.tsx`, `tokens.css`, `manifest.json`, and `README.md` — shaped for coding-agent handoff. Built-in deterministic and vision verifiers self-check parity using a 12-question boolean rubric and re-iterate on gaps. This bridges the design-to-code gap that most AI design tools ignore entirely. You generate a design, decompose it into a component kit, and hand it to your development workflow.
 
-**Twelve Built-in Design Skill Modules.** Slide decks, dashboards, landing pages, SVG charts, glassmorphism, editorial typography, heroes, pricing, footers, chat UIs, data tables, and calendars. Every skill is available in every generation. Before the model writes CSS, it selects relevant skills and reasons through layout intent and design-system coherence. You can add your own `SKILL.md` to teach the model your taste.
+**Five Export Formats.** HTML with inlined CSS, PDF (rendered locally via Chrome), PPTX, ZIP, and Markdown. No cloud rendering, no export limits, no "upgrade to Pro to unlock PDF" nonsense. The files are real, editable, and yours. For teams that need to drop prototypes into pitch decks or client presentations, the PPTX export alone justifies the tool.
 
-**Five Export Formats.** HTML with inlined CSS, PDF (rendered locally via Chrome), PPTX, ZIP archive, and Markdown. No cloud rendering, no export limits, no "upgrade to Pro to download" gates. The files land on your local filesystem immediately.
+**Agentic Design Sessions (v0.2).** Every design is a session with JSONL history and a workspace folder on disk. The permissioned agent loop has access to read, write, edit, bash, grep, find, and ls, gated by Open CoDesign's permission UI. Design tools include `ask`, `scaffold`, `skill`, `preview`, `gen_image`, `tweaks`, `todos`, and `done`. Brand tokens and design-system decisions live in a `DESIGN.md` file — editable, version-controlled, shared memory rather than opaque model state.
 
-**One-Click Provider Import.** Already using Claude Code or Codex? Your API-key provider configs import in one click. ChatGPT Plus subscribers can sign in directly from Settings without pasting any key. This removes the biggest friction point with BYOK tools — the setup time.
+**Phone, Tablet, and Desktop Preview.** True responsive frames with one-click switching. The last five designs keep their preview iframes alive, so navigation between designs stays zero-delay. A connection diagnostic panel provides one-click provider testing with actionable errors, and a per-generation token counter shows exactly how much each run cost.
 
 ### Use Cases
 
-- **Rapid UI prototyping** — Describe a landing page, dashboard, or mobile app screen in plain English and get a working HTML/JSX prototype in seconds. Perfect for sprint planning, client pitches, or validating design direction before committing engineering time.
-
-- **Presentation and pitch deck creation** — Generate polished slide decks from text briefs. Export to PPTX for team meetings or PDF for investor pitches. The twelve design skill modules handle typography, layout, and color without manual tweaking.
-
-- **Design-to-code handoff** — Use the Decompose to UI Kit feature to turn a screenshot or prompt into structured React components with CSS tokens. Hand the output directly to Claude Code, Cursor, or your coding agent for integration into your project.
-
-- **Component library prototyping** — Generate variations of a UI component (button states, card layouts, form patterns) and export the HTML/CSS for review before implementing in your design system.
-
-- **Client-facing mockups for freelancers** — Produce professional-looking mockups without Figma or a design team. Export as PDF or HTML to share with clients for feedback before writing production code.
+- **Rapid UI prototyping** — Generate a landing page, dashboard, or mobile app mockup from a text description in seconds. Iterate with comment mode and sliders rather than rewriting prompts.
+- **Client presentations and pitch decks** — Export polished PPTX slides or PDF assets generated from brief descriptions. No design team required for early-stage client work.
+- **Design-to-code handoff** — Use the Decompose to UI Kit feature to turn a design reference into a structured component bundle with tokens, ready for your React or Next.js codebase.
+- **Local-first design workflows** — Teams in regulated industries (finance, healthcare, government) that need AI-assisted design without sending data to third-party cloud services.
+- **Multi-model experimentation** — Compare output quality across Claude, GPT, Gemini, and local Ollama models for the same design brief, using your existing API keys.
 
 ### Pros and Cons
 
 Pros:
-
-- Truly local-first — your designs, API keys, and generation history stay on your machine. No mandatory cloud workspace, no data harvesting. Credentials stored in `~/.config/open-codesign/config.toml`.
-
-- Multi-model flexibility is unmatched among AI design tools. The 20+ provider support means you're never locked into one company's pricing changes or availability issues.
-
-- The Decompose to UI Kit feature with its deterministic parity checker is a genuinely useful bridge between design and engineering. Most competitors stop at "here's a screenshot."
-
-- MIT license means you can fork it, modify it, and ship it commercially. The SBOM attached to every release is a nice touch for enterprise compliance.
+- True local-first architecture with BYOK means no subscription costs beyond your existing API usage. Design files stay on your machine unless you explicitly export them.
+- The multi-model support is genuinely broad — not just "we support OpenAI and Anthropic" but 20+ providers including local Ollama. Switching models mid-project is frictionless.
+- The built-in design skill modules produce noticeably better output than raw model generation. The taste layer addresses the biggest complaint about AI-generated designs: they look generic.
+- Active development pace — v0.1 to v0.2 shipped in three weeks, with meaningful feature additions like agentic sessions and workspace-backed design history.
 
 Cons:
-
-- Electron app means a non-trivial memory footprint. If you're already running VS Code, a browser, and Slack, adding another Electron process matters on machines with 8GB RAM.
-
-- The installer is not code-signed yet (planned for v0.5). On macOS Sequoia 15+, you need to run `xattr -cr` to bypass Gatekeeper, which is a friction point for less technical users.
-
-- Quality depends heavily on the model you choose. With a cheap local Ollama model, the designs are functional but generic. The best results require Claude Opus or GPT-4o, which cost real money per generation.
+- Electron-based desktop app means higher memory usage than a web-only tool. On older machines, running the app alongside a browser and your actual development environment can feel heavy.
+- The project is two months old. The API surface is still settling, and some features (code-signing, Figma export, auto-update) are on the roadmap for v0.5 and post-1.0.
+- Unsigned installers require manual trust decisions on macOS Sequoia 15+ and Windows SmartScreen. This will improve with code-signing in v0.5, but right now it's a friction point for less technical users.
+- The community is primarily Chinese-speaking (launched on LINUX DO), which means English documentation and support are still maturing.
 
 ### Getting Started
 
@@ -86,39 +76,29 @@ brew install --cask opencoworkai/tap/open-codesign
 scoop bucket add opencoworkai https://github.com/OpenCoworkAI/scoop-bucket
 scoop install opencoworkai/open-codesign
 
-# Linux — AppImage or .deb from GitHub Releases
+# Or download directly from GitHub Releases:
 # https://github.com/OpenCoworkAI/open-codesign/releases/tag/v0.2.0
-
-# Or clone and build from source
-git clone https://github.com/OpenCoworkAI/open-codesign.git
-cd open-codesign
-pnpm install
-pnpm build
-pnpm start
+# Available for macOS (ARM64/x64), Windows (x64/ARM64), Linux (AppImage/deb/rpm)
 ```
 
-On first launch, the Settings page opens automatically. Add a provider (API key, ChatGPT sign-in, or local Ollama), then pick one of fifteen built-in demos or type your own prompt. A sandboxed prototype appears in seconds.
+After installation, launch the app and configure a provider:
 
-To use the Decompose to UI Kit feature:
+1. **ChatGPT subscription** — sign in directly for Codex models, no API key needed
+2. **API key** — paste your Anthropic, OpenAI, Gemini, or OpenRouter key
+3. **Local** — connect to a running Ollama instance for fully offline generation
 
-```bash
-# After generating a design, click "Decompose" in the chat sidebar
-# Output lands in ui_kits/<slug>/ with:
-#   index.html
-#   components/*.tsx
-#   tokens.css
-#   manifest.json
-#   README.md
-```
+Pick one of fifteen built-in demos or type your own prompt. A sandboxed prototype appears in seconds.
 
 ### Alternatives
 
-**Claude Design by Anthropic** — The proprietary cloud-only tool that Open CoDesign directly targets. Claude Design produces excellent results using Claude's native capabilities, but it's locked to Anthropic's models and requires a subscription. Choose Claude Design if you want zero setup and don't mind the vendor lock-in.
+**v0 by Vercel** — The original prompt-to-prototype tool that popularized the category. v0 produces excellent React/Next.js components and integrates tightly with the Vercel ecosystem. It's cloud-only, GPT-4o-powered, and requires a Vercel subscription. Choose v0 if you're already deep in the Vercel ecosystem and want the tightest Next.js integration available.
 
-**v0 by Vercel** — The OG AI UI generator, focused on React/Next.js component generation. v0 has a larger community and more refined output for React-specific use cases, but it's GPT-4o-only, cloud-hosted, and subscription-gated. Choose v0 if you're deep in the Vercel ecosystem and want React components specifically.
+**Lovable** — A multi-LLM AI design tool with a polished web interface and built-in deployment. Lovable offers more guardrails for non-technical users and a smoother onboarding experience. It's cloud-based with limited BYOK support. Choose Lovable if your team includes non-technical stakeholders who need to generate and iterate on designs without touching a terminal.
 
-**Lovable** — An AI app builder that goes beyond UI generation to include backend logic, database setup, and deployment. Lovable is more opinionated and full-stack, but heavier and more expensive. Choose Lovable if you want a complete app scaffold, not just a design prototype.
+**Bolt.new** — StackBlitz's in-browser AI development environment that generates full-stack applications from prompts. Bolt is more code-generation-focused than design-focused, producing deployable applications rather than static prototypes. Choose Bolt if you need working code, not just visual mockups, and you're comfortable with the StackBlitz cloud runtime.
 
 ### Verdict
 
-Open CoDesign is the most practical open-source alternative to the AI design tools that launched in 2025-2026. It's not trying to be a full app builder like Lovable or a component generator like v0 — it's focused on the "prompt to polished artifact" workflow, and it does that well. The multi-model BYOK approach is the right call for developers who already have API keys and don't want to pay a design-tool tax on top. The Decompose to UI Kit feature with its deterministic parity checker is the standout — it's the first tool I've seen that actually tries to bridge the design-to-code gap with measurable quality metrics. If you're a fullstack developer who occasionally needs to prototype UIs without waiting for a designer, this is worth the three-minute install. Just bring a good model key — the output quality scales directly with the model you choose.
+Open CoDesign is the most pragmatic AI design tool to emerge in 2026. It doesn't try to reinvent the design workflow — it takes the prompt-to-prototype pattern that v0 and Lovable proved works and strips away the cloud dependency, subscription model, and provider lock-in. The 6,800 stars in two months, primarily driven by the Chinese developer community on LINUX DO, suggest there's real demand for this approach.
+
+The tool has rough edges. It's two months old, the installers are unsigned, and the English documentation trails the Chinese community support. But the core architecture is sound — local-first storage, BYOK multi-model support, and real file exports address the three biggest complaints about existing AI design tools. If you're a developer who already has API keys and wants a fast way to generate UI prototypes, slide decks, or design assets without adding another subscription, Open CoDesign is worth installing today. The Decompose to UI Kit feature alone, which bridges AI-generated designs into structured component bundles, makes it relevant for any React or Next.js team doing rapid prototyping.
