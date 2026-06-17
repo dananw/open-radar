@@ -1,72 +1,72 @@
 ---
 name: kage
-description: "Kage is a Go CLI that clones websites into script-free offline mirrors using headless Chrome, with ZIM archive and self-contained binary export."
+description: "Kage is a Go CLI that clones any website into offline-viewable, script-free mirrors using headless Chrome — 1,800 GitHub stars in 3 days."
 url: https://github.com/tamnd/kage
-stars: 318
-forks: 4
+stars: 1795
+forks: 52
 language: Go
-tags: ["go", "cli", "web-archiving", "offline", "developer-tools"]
+tags: ["go", "offline", "web-archiving", "cli", "developer-tools"]
 featured: false
-publishedAt: 2026-06-15
+publishedAt: 2026-06-17
 ---
 
 ## Kage
 
 ### Overview
 
-Kage (影, Japanese for "shadow") is a Go CLI tool that clones entire websites into clean, script-free offline mirrors. It launched on June 14, 2026, and hit 318 stars within its first day — a velocity that suggests developers have been waiting for exactly this kind of tool.
+Kage (影, "shadow") is a Go command-line tool that clones websites into browsable, script-free offline mirrors. Created on June 14, 2026, it hit 1,795 GitHub stars in just three days — a signal that developers have been waiting for something like this.
 
-The project is built by tamnd, a developer whose GitHub profile shows a consistent track record of Go tooling. What makes kage stand out from the dozens of website downloaders that already exist is its approach: instead of parsing raw HTML and hoping for the best, it drives real headless Chrome, waits for each page to fully render, snapshots the final DOM, and then strips every script tag, inline event handler, and `javascript:` URL from the output. The result is a static mirror that looks exactly like the live site but runs zero code.
+The project is built by tamnd, a Go developer who clearly understands the pain of web archiving. The name is Japanese for "shadow," which is exactly what it does: it follows a site like a shadow, copies what a human would see, and leaves all the JavaScript behind.
 
-The core problem kage solves is deceptively simple. You save a webpage for later, and six months down the line you open it to find a blank screen, a spinner that never resolves, or a copy that still phones home to analytics servers that no longer exist. Modern websites are thin clients for someone else's JavaScript. Kage takes the opposite approach — render everything, capture the result, remove the runtime dependency entirely.
+The core problem kage solves is deceptively simple but practically annoying. You save a webpage for later, open it six months down the road, and get a blank screen, an infinite spinner, or a page that still tries to phone home to an analytics server that no longer exists. The page was never really yours — it was a thin client for someone else's JavaScript. Kage takes the opposite approach: drive a real browser, let the page finish rendering, snapshot the final DOM, then strip every script out. What lands on disk is a clean, self-contained set of HTML files that run with zero network dependency.
 
 ### Why it matters
 
-Web archiving has been a niche concern for years, but the problem is getting worse. According to the Internet Archive, the average webpage lifespan is now under 100 days before significant changes or disappearance. Documentation sites restructure, blogs go offline, companies pivot and wipe their marketing pages. For developers who rely on reference material, API docs, and technical blog posts, this is a real productivity drain.
+Web archiving has been a solved problem in theory and a mess in practice. Tools like wget and HTTrack do static fetching, which breaks on any site that relies on JavaScript to render content — which is most modern sites. Headless browser tools like Puppeteer can render pages, but wiring them into a complete archiving pipeline with asset localization, link rewriting, and resume support is significant work. Kage wraps all of that into a single binary you install with `go install`.
 
-Existing tools like wget, HTTrack, and SingleFile have limitations that kage addresses directly. wget doesn't execute JavaScript, so it misses any content rendered client-side. HTTrack has similar issues with modern SPAs. SingleFile captures a single page well but doesn't handle multi-page crawling with proper link rewriting. Kage combines headless browser rendering with intelligent crawling, deterministic URL-to-path mapping, and proper asset localization — the CSS `url()` references get rewritten to local paths, images download to a predictable location, and everything stays browsable without a network connection.
+For fullstack developers, kage fills a gap that no mainstream tool has addressed cleanly. You're building React apps, NestJS backends, Django sites, Go services — and at some point you need to preserve documentation, reference implementations, or design inspiration that lives on the open web. Kage doesn't just save pages; it produces mirrors that look like the live site and run completely offline. The ZIM archive support means you can share these mirrors across platforms, including mobile, using the Kiwix ecosystem.
 
-The ZIM archive export is particularly clever. ZIM is the format behind Kiwix, the project that carries Wikipedia onto boats, into classrooms with no internet, and onto phones for long flights. By writing to this open, documented standard, kage ensures your archived content remains accessible through the entire Kiwix ecosystem — desktop apps, mobile apps, and self-hosted servers — years after you create it.
+The timing matters too. The web is getting more JavaScript-heavy, not less. SPAs, dynamic rendering, lazy loading — all of these make traditional saving tools useless. Kage is purpose-built for the web developers actually deal with in 2026.
 
 ### Key Features
 
-**Headless Chrome rendering.** Kage spawns real Chrome or Chromium instances to render pages, waiting for the DOM to stabilize before snapshotting. This means client-side rendered React, Vue, Angular, and Svelte apps all get captured correctly. Lazy-loaded images are handled with an optional `--scroll` flag that scrolls each page to trigger deferred loading before capture.
+**Real Browser Rendering.** Kage drives actual headless Chrome to render pages, so it handles SPAs, dynamic content, lazy-loaded images, and any site that needs JavaScript to display properly. The `--scroll` flag auto-scrolls pages to trigger lazy loading. This isn't a curl wrapper — it sees exactly what a human would see.
 
-**Deterministic URL-to-path mapping.** Every URL is mapped to a local file path using a consistent algorithm. The same essay reached via HTTP and HTTPS, with or without a trailing slash, gets fetched and written exactly once. This makes mirrors idempotent — running the same clone twice produces identical output, and interrupted crawls resume cleanly from where they stopped.
+**Complete Script Stripping.** After rendering, kage removes every script tag, inline event handler, and `javascript:` URL from the DOM. The output runs zero code. No tracking pixels, no analytics calls, no service workers trying to cache things you don't want. The sanitized HTML is genuinely clean.
 
-**ZIM archive packing.** The `kage pack` command collapses an entire mirror folder into a single ZIM file with zstd-compressed text and raw media. The archive is deterministic (same content produces byte-identical output), and the UUID is derived from the content rather than randomized. This makes ZIM files safe to checksum, cache, and distribute.
+**Deterministic URL-to-Path Mapping.** Every URL maps to a local file path using a consistent algorithm. The same essay reached over HTTP and HTTPS, with or without a trailing slash, gets fetched exactly once. Links are rewritten to mirror-relative paths before the assets they point at finish downloading. This makes the output idempotent and resumable.
 
-**Self-contained binary export.** With `--format binary`, kage appends the ZIM archive to a copy of itself, producing a single executable that serves the archived site offline when run. The recipient needs nothing installed — no kage, no ZIM reader, no browser extension. Cross-platform viewers can be built by pointing `--base` at a kage binary compiled for the target OS.
+**Self-Contained Pack Formats.** The `kage pack` command collapses a mirror into a single ZIM archive (the open format behind Kiwix/Wikipedia offline), a self-contained executable that serves the site when run, or a double-click desktop app with the site's favicon as the icon. A `--format binary` packed mirror needs nothing installed on the recipient's machine.
 
-**Respectful crawling.** The crawler reads `robots.txt`, seeds itself from `sitemap.xml` when available, and stays on the seed host by default. It supports `--scope-prefix` for limiting to specific path sections, `--subdomains` for including related hosts, and `--exclude` for skipping paths. Four concurrent workers render pages by default, configurable with `--workers`.
+**Polite, Resumable Crawling.** Kage reads `robots.txt`, seeds from `sitemap.xml`, and stays on the seed host by default. It saves its place on Ctrl-C and picks up where it stopped on the next run. `--refresh` re-renders in place to catch new content without starting over. Concurrency is configurable with `--workers`.
 
-**Native window viewer.** When built with the `webview` build tag, kage can open archived sites in a native OS window (WKWebView on macOS, WebView2 on Windows, WebKitGTK on Linux) instead of the system browser. This gives archived content the feel of a standalone desktop application.
+**Cross-Platform Native Viewer.** Built with the `webview` tag, kage opens packed sites in their own native window using the OS WebView (WKWebView on macOS, WebView2 on Windows, WebKitGTK on Linux). No browser tab, no address bar — just the content in a clean window that looks and feels like a standalone app.
 
-**Shell completion and Docker support.** Tab completion ships for bash, zsh, fish, and PowerShell. The Docker image bundles Chromium so you don't need to install a browser separately. Prebuilt binaries are available for every major platform through GoReleaser, including `.deb`, `.rpm`, and `.apk` packages.
+**Container-Ready Distribution.** The official Docker image bundles Chromium, so you can run `docker run --rm -v "$PWD/out:/out" ghcr.io/tamnd/kage clone example.com` without installing Chrome on the host. GitHub Actions releases include `.deb`, `.rpm`, `.apk` packages, checksums, SBOMs, and cosign signatures.
 
 ### Use Cases
 
-- **Documentation archiving** — Clone API docs, framework guides, or library references before major version changes break old links. Useful for teams maintaining legacy systems that depend on specific documentation versions.
-
-- **Offline reference material** — Create script-free mirrors of technical blogs, Paul Graham's essays, or Stack Overflow threads for reading on planes, in areas with poor connectivity, or in environments where network access is restricted.
-
-- **Content migration auditing** — Before a website redesign, clone the current version and compare it against the new one. The static output makes it easy to diff content without JavaScript noise.
-
-- **Security research** — Capture a website's rendered output with all scripts removed for analysis. Useful for examining what a page actually displays versus what its source code suggests.
-
-- **Self-contained demos** — Package a web application's output into a single binary that anyone can run without setup. Share interactive prototypes, portfolio pieces, or client demos as standalone executables.
+- **Offline documentation snapshots** — Clone framework docs (React, Next.js, Go stdlib) for reference during flights, in low-connectivity environments, or in CI pipelines that can't reach the internet
+- **Design and UI inspiration archiving** — Preserve landing pages, portfolio sites, and design systems as they looked at a specific point in time, without worrying about the site going down or redesigning
+- **Content preservation for research** — Archive articles, blog posts, and essays (like Paul Graham's site, which the README uses as its primary demo) in a format that will still open in any ZIM reader years from now
+- **Sharing site snapshots with teammates** — Pack a competitor's pricing page, a partner's API docs, or a reference implementation into a single file and send it via Slack or email
+- **Generating offline-capable test fixtures** — Create script-free mirrors of production pages for testing, comparison, or regression checking without network dependencies
 
 ### Pros and Cons
 
 Pros:
-- **Real browser rendering means real results.** Unlike wget-based tools, kage handles SPAs, lazy loading, and dynamic content correctly because it uses actual Chrome to render pages.
-- **ZIM format ensures long-term accessibility.** Your archives aren't locked into kage's ecosystem. They work with Kiwix on every platform, including mobile, and the format is documented and stable.
-- **Self-contained binaries are genuinely useful.** The ability to produce a single executable that serves an entire website offline is a feature I haven't seen done this well in any other tool.
+
+- Solves a real, underserved problem. Web archiving tools haven't kept up with JavaScript-heavy sites, and kage bridges that gap cleanly with a single Go binary.
+- The ZIM format support is smart — you're not locked into kage's ecosystem. Your archives work with Kiwix on desktop, Android, and iOS, which means long-term portability.
+- The self-contained binary output is genuinely useful. `kage pack paulgraham.com --format binary` produces a 13 MiB executable that anyone can double-click to read the site offline. No dependencies, no setup.
+- Resumable crawling with deterministic URL mapping means you can clone large sites incrementally without duplication. The `--refresh` flag for re-rendering is a thoughtful touch.
 
 Cons:
-- **Chrome/Chromium dependency is heavy.** Kage requires a real browser installation, which adds significant weight compared to pure-HTTP tools. The Docker image mitigates this but the resource usage is still notable.
-- **No image or multimodal input support.** Like similar tools, kage captures rendered HTML but doesn't handle complex interactive content like WebGL canvases, video players with DRM, or authenticated content behind login walls.
-- **Young project with limited ecosystem.** At one day old, kage lacks the community tooling, plugins, and battle-testing that established archiving tools have. Edge cases in complex sites will likely surface over time.
+
+- Requires Chrome or Chromium on the host machine. This is a hard dependency — kage drives real browser tabs, not a lightweight HTTP fetcher. The Docker image bundles Chromium, but local installs need Chrome available.
+- No built-in full-text search in packed ZIM files. Browsing and clicking work, but searching within a kage-generated ZIM is limited compared to Kiwix's own packs that include search indexes.
+- Large sites can consume significant disk space and Chrome memory. The `--max-pages` and `--max-depth` flags exist for this reason, but users need to be intentional about scope.
+- Very new project (3 days old). The API surface, flag names, and pack format details are likely to change. Not production-ready for critical archiving workflows yet.
 
 ### Getting Started
 
@@ -74,38 +74,37 @@ Cons:
 # Install via Go
 go install github.com/tamnd/kage/cmd/kage@latest
 
-# Or use Docker (bundles Chromium)
+# Or use the Docker image (bundles Chromium)
 docker run --rm -v "$PWD/out:/out" ghcr.io/tamnd/kage clone paulgraham.com
 
 # Clone a site
 kage clone paulgraham.com
 
-# Serve the mirror locally
+# Browse it offline
 kage serve $HOME/data/kage/paulgraham.com
-# Open http://127.0.0.1:8800
+# open http://127.0.0.1:8800
 
 # Pack into a single ZIM file
 kage pack paulgraham.com
 
-# Pack into a self-contained binary
+# Pack into a self-contained executable
 kage pack paulgraham.com --format binary -o paulgraham
-./paulgraham  # Opens in browser, serves the site offline
+./paulgraham  # serves itself, needs nothing installed
 
 # Clone with limits
-kage clone go.dev --scope-prefix /doc --max-pages 50 --max-depth 2
-
-# Refresh an existing mirror
-kage clone paulgraham.com --refresh
+kage clone go.dev --max-pages 50 --max-depth 2 --scope-prefix /doc
 ```
 
 ### Alternatives
 
-**wget** — The classic recursive website downloader. It's fast, universally available, and doesn't need a browser, but it doesn't execute JavaScript. For static HTML sites (like old-school blogs), wget is lighter and sufficient. For anything built with a modern framework, kage produces dramatically better results.
+**wget (with `--mirror`)** — The classic CLI tool for downloading websites. wget is fast and handles static sites well, but it doesn't execute JavaScript, so any SPA or dynamically rendered page comes back broken. Choose wget when you're archiving simple, server-rendered HTML sites and don't need browser rendering.
 
-**SingleFile** — A browser extension that saves a single page as one self-contained HTML file. Excellent for individual pages — better than kage for one-off saves since it's a right-click away. But it doesn't crawl multiple pages, rewrite cross-page links, or produce distributable archives. Use SingleFile for single pages, kage for entire sites.
+**HTTrack** — A long-established website copier with a GUI and recursive crawling. HTTrack has more configuration options than kage and supports incremental updates, but like wget, it doesn't run JavaScript. It's a better fit for archiving old-school sites with static content and complex directory structures.
 
-**HTTrack** — A mature website copier with decades of development. It handles basic mirroring well and has extensive configuration options. However, its rendering engine doesn't support modern JavaScript frameworks, and its output format is less portable than kage's ZIM export. HTTrack is the safer choice for simple static sites where you need maximum control over crawl behavior.
+**SingleFile (browser extension)** — Saves a complete page as one self-contained HTML file, with all assets inlined. SingleFile produces cleaner single-page saves than kage, but it requires manual operation per page and doesn't do recursive crawling. Better for saving individual pages than cloning entire sites.
 
 ### Verdict
 
-Kage is the most thoughtfully designed website archiver I've seen in years. The decision to use headless Chrome for rendering, strip scripts from the output, and export to the open ZIM format shows a developer who understands both the technical problem and the long-term preservation angle. At one day old with 318 stars, it's clearly resonating with developers who've been burned by broken "Save As" copies and link rot. The self-contained binary export is a killer feature — being able to hand someone a single executable that serves an entire website offline is genuinely useful for documentation distribution, client demos, and portfolio sharing. If you work with web content that matters enough to keep, kage is worth installing now.
+Kage is three days old and already has 1,800 stars. That kind of velocity doesn't happen by accident — it means the tool scratches an itch that developers have had for years without a good solution. The Go implementation is fast, the CLI is well-designed, and the decision to support ZIM archives shows the author is thinking about long-term portability, not just building a shiny demo.
+
+Is it production-ready? No. Three-day-old projects with 10 open issues and an API that hasn't settled are not what you bet your archival pipeline on. But for developer workflows — cloning docs before a flight, preserving a reference site, sharing a snapshot with a teammate — kage works today and works well. The `go install` one-liner, the Docker image, and the self-contained binary output mean the barrier to trying it is essentially zero. If you're a fullstack developer who has ever hit "Save As" and gotten a broken page, give kage five minutes. You'll probably keep it around.
