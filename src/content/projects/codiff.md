@@ -1,68 +1,66 @@
 ---
 name: codiff
-description: "Fast, beautiful local diff viewer with LLM-powered walkthroughs for reviewing Git changes before committing. Built for developers who code with AI agents."
+description: "Codiff is a beautiful, minimal local diff viewer for Git with LLM-powered walkthroughs and inline PR/MR review comments. Built in TypeScript."
 url: https://github.com/nkzw-tech/codiff
-stars: 630
-forks: 36
+stars: 894
+forks: 54
 language: TypeScript
-tags: ["git", "diff-viewer", "code-review", "developer-tools", "ai-agents"]
+tags: ["git", "diff-viewer", "code-review", "developer-tools", "typescript"]
 featured: false
-publishedAt: 2026-06-07
+publishedAt: 2026-06-17
 ---
 
 ## Codiff
 
 ### Overview
 
-Codiff is a minimal, native diff viewer for reviewing staged and unstaged Git changes before you commit. It launched mid-May 2026 and crossed 600 GitHub stars within three weeks — a pace that suggests developers have been waiting for something like this.
+Codiff is a local diff viewer for Git that does something most diff tools don't: it treats code review as a first-class workflow, not an afterthought. Launched in May 2026 by NKZW Tech, it hit nearly 900 GitHub stars within its first month, which is notable for a developer tool that competes in a space where most developers have settled for `git diff` in the terminal or the built-in views in VS Code and JetBrains.
 
-The project comes from NKZW Tech, a small engineering team that builds developer tooling. Their other work includes Nitro Modules for React Native and various TypeScript libraries. The team clearly cares about local-first, fast tooling — Codiff is a native desktop app, not an Electron wrapper, and it shows in the performance.
+The project comes from NKZW Tech, a team that previously built Vento, a fast JavaScript template engine, and Vento Pack (vp), a monorepo build tool. That background shows in Codiff's design — it's fast, opinionated about what matters, and doesn't try to be everything. The tool is built on Electron but feels native, with a command bar, keyboard-driven navigation, and split/unified diff views that render without the lag you'd expect from a web-based desktop app.
 
-The core problem Codiff solves: reviewing code changes in the terminal is painful, especially when AI agents generate large diffs across multiple files. Traditional `git diff` output is wall-of-text that's hard to parse visually. GitHub's PR interface is better but requires pushing code first. Codiff gives you a fast, local, visual review experience that works before you commit — and it can ask an LLM to suggest a review order so you're not lost in a 30-file changeset.
+The core problem Codiff solves is the gap between "seeing what changed" and "understanding what changed." Traditional diff tools show you red and green lines. Codiff adds an LLM-generated narrative walkthrough that explains the intent behind changes, supports inline review comments on GitHub pull requests and GitLab merge requests, and lets you commit directly from the review interface. It's the difference between reading a raw git log and having someone walk you through the change.
 
 ### Why it matters
 
-We're in an era where AI coding agents (Claude Code, Codex, Cursor) generate significant chunks of our code. The bottleneck has shifted from writing code to reviewing it. A 2025 GitHub survey found that developers spend 30-40% of their time on code review. When an agent rewrites 15 files across your codebase, that review time compounds fast.
+Code review is one of the highest-leverage activities in software development, yet the tools for it are surprisingly primitive. GitHub's PR interface is fine for small changes, but anything over 500 lines becomes a scroll-fest. Most local diff viewers haven't evolved much beyond what WinMerge offered in 2004. Codiff represents a shift: what if your diff tool understood the code, not just the text?
 
-Codiff addresses this directly with its LLM walkthrough feature. Run `codiff -w` and the tool asks Codex or Claude Code to analyze the changeset and suggest a logical review order — which files to look at first, what the key changes are, and how they connect. This is a practical use of AI in the development workflow, not a gimmick.
+The LLM walkthrough feature is the headline, but the real value is in the workflow. You run `codiff` from any repo, get a clean interface showing exactly what changed, optionally generate an AI walkthrough that explains the change in plain language, add inline review comments, and push — all without leaving the app. For teams doing trunk-based development with frequent small PRs, this eliminates the context-switching cost of bouncing between terminal, browser, and IDE.
 
-The timing matters too. Git's built-in diff tools haven't evolved much in a decade. VS Code's diff view is decent but tied to the editor. Tools like Delta and Diff2Html improve terminal diffs but don't offer integrated AI assistance or inline review comments. Codiff fills a gap that's gotten wider as AI-generated code becomes the norm.
+The timing connects to a broader trend of AI-assisted developer workflows. Tools like Cursor, Claude Code, and Copilot are changing how code gets written. Codiff addresses the other side: how code gets reviewed. As AI agents write more code, the review step becomes more important, not less. A tool that makes review faster and more thorough has a real place in the modern stack.
 
 ### Key Features
 
-**LLM-Powered Walkthroughs.** Run `codiff -w` to get an AI-generated review order and context for your changes. It supports both OpenAI Codex and Claude Code as backends, configured via `settings.agentBackend`. The agent analyzes the full changeset, identifies dependencies between files, and suggests a logical reading order. This alone saves 10-15 minutes on medium-to-large changesets.
+**LLM-Powered Walkthroughs.** Run `codiff -w` and get an AI-generated narrative that explains what the diff does and why. It supports both OpenAI Codex and Claude Code as backends, selected via config or the `--agent` flag. The walkthrough isn't just a summary — it's structured with hunk IDs and review-order constraints, so it guides you through the change in a logical sequence rather than dumping a wall of text.
 
-**Native Performance.** Codiff is a native desktop application, not Electron. It launches fast and handles large repositories without the memory bloat you'd get from a web-based wrapper. Multiple repositories open in separate native windows, each maintaining independent state.
+**Inline Review Comments.** Comment directly on GitHub pull requests and GitLab merge requests from within Codiff. No need to open a browser. You can also copy review comments as Markdown for follow-ups in Slack, Notion, or wherever your team tracks work. Comments are anchored to specific lines, just like in GitHub's web UI.
 
-**Inline Review Comments.** Click on any changed line to add a review comment directly in the diff view. When you're done, copy all comments as Markdown with one action — paste them into a PR description, a Slack message, or a follow-up task. This bridges the gap between local review and team collaboration.
+**GitHub PR and GitLab MR Support.** Review a pull request with `codiff pr 75` or a merge request with `codiff mr 23`. Codiff derives the host and project path from your Git remote, so there's no instance-specific configuration needed. It works with GitHub, GitLab, and any GitLab self-hosted instance — you pass the full URL or just the number.
 
-**Command Bar.** Press `Cmd+Shift+P` (or `Ctrl+Shift+P` on Linux/Windows) to open a command palette with filtered actions: focus file filter, find in diffs, show file tree, toggle viewed status, copy review comments, open file in editor. It's the same interaction pattern developers already know from VS Code.
+**Command Bar Navigation.** Press Cmd+Shift+P (or Ctrl+Shift+P on Linux/Windows) to open a command bar that lets you filter files, find in diffs, toggle viewed status, switch diff layout, and open files in your editor. It's the same command palette pattern that VS Code popularized, applied to code review.
 
-**Split and Unified Diff Layouts.** Switch between side-by-side and unified diff views from the command bar or configuration. The `settings.diffStyle` config option lets you set your default, and word wrap is configurable for long lines. Small details, but they matter when you're reviewing code for an hour.
+**Native Performance on Electron.** Codiff is built with TypeScript on Electron but uses Vento Pack for its build pipeline, which keeps the bundle tight. The app launches fast, renders diffs without jank, and handles large repositories without choking. Multiple repos open in separate windows, each isolated.
 
-**Commit and File History.** Review specific commits with `codiff a1b2c3d`, not just staged changes. This makes it useful for post-commit review, investigating what changed in a particular revision, or walking through a branch's history before merging.
-
-**Configurable Editor Integration.** Set `settings.editorCommand` to open files directly in your preferred editor from the diff view. Use `{file}` and `{repo}` placeholders for the file path and repository root. Works with VS Code, Sublime, Vim, or whatever you actually use.
+**Agent Skill Integration.** Install Codiff's skill into Claude Code, Codex, Pi, or OpenCode, and your AI agent can invoke Codiff directly. The `$codiff` command writes a narrative walkthrough and opens it in Codiff, preserving the conversation context. This turns Codiff into the visual layer for AI-assisted code review.
 
 ### Use Cases
 
-- **Reviewing AI-generated code** — When Claude Code or Codex generates changes across 10+ files, use `codiff -w` to get an intelligent review order instead of reading diffs file-by-file alphabetically.
-- **Pre-commit quality checks** — Launch Codiff from any Git repository to visually inspect staged changes before committing. Catch unintended modifications, debug leftovers, or formatting issues.
-- **Commit archaeology** — Pass a commit hash to review what changed in a specific revision. Useful for understanding why a particular change was made or investigating when a bug was introduced.
-- **Team code review prep** — Add inline comments on changed lines, copy them as Markdown, and paste into your PR description or team channel before requesting formal review.
-- **Multi-repo workflows** — Working on a microservices architecture? Open multiple repositories simultaneously in separate native windows, each with its own diff state.
+- **Daily PR reviews** — Pull up any GitHub PR or GitLab MR from the terminal, read the AI walkthrough, add inline comments, and submit your review without touching a browser.
+- **Pre-commit review** — Run `codiff` in any repo to see exactly what you're about to commit. The staged and unstaged changes are shown side by side, with file-level navigation.
+- **Onboarding to a new codebase** — Use walkthroughs to understand what recent changes do. Instead of reading raw diffs, get an AI explanation that connects the dots between related changes.
+- **AI agent code review workflow** — When Claude Code or Codex generates a change, use Codiff to review it visually. The agent skill integration means the AI can open its own work in Codiff for human review.
+- **Commit archaeology** — Run `codiff a1b2c3d` to review a specific commit with full context, or `codiff main` to see everything your branch changes compared to the target.
 
 ### Pros and Cons
 
 Pros:
-- LLM walkthrough feature is genuinely useful for large changesets — not a toy demo, but a practical workflow improvement for developers who use AI coding agents daily.
-- Native app performance is noticeably faster than Electron-based alternatives. Launches in under a second, handles large diffs without lag.
-- Inline review comments with Markdown export bridge the gap between local review and team collaboration workflows.
+- The LLM walkthrough feature is genuinely useful, not gimmicky. It uses structured output with hunk IDs and review ordering, so the explanation maps directly to the diff view. Most AI code tools just summarize — Codiff guides.
+- First-class GitLab support is rare in this space. Most diff tools assume GitHub; Codiff handles GitLab self-hosted instances without extra configuration.
+- The command bar and keyboard shortcuts make it fast to navigate large diffs. The "toggle viewed" feature alone saves significant time on PRs with 30+ files.
 
 Cons:
-- macOS-focused at launch, with Homebrew as the primary install method. Linux and Windows support exists but the experience may be less polished.
-- LLM walkthroughs require a working Codex or Claude Code CLI installation and valid API credentials — adds setup friction if you're not already using these tools.
-- 600 stars and 5 open issues suggest active but early-stage development. Expect breaking changes in configuration format or CLI behavior.
+- Electron-based, so it carries the usual memory overhead (~150-200MB baseline). If you're on a machine with 8GB RAM and multiple Electron apps already running, you'll feel it.
+- The LLM walkthrough feature requires a running Codex or Claude Code CLI with valid credentials. There's no built-in AI — it shells out to external tools. This adds setup friction and means walkthrough quality depends on your backend choice.
+- macOS-first development. Linux and Windows are supported but the experience is less polished — the terminal helper install flow, for example, is documented only for macOS.
 
 ### Getting Started
 
@@ -70,38 +68,31 @@ Cons:
 # Install via Homebrew (macOS)
 brew install --cask nkzw-tech/tap/codiff
 
-# Or download from GitHub Releases
+# Or download from GitHub Releases for your platform
 # https://github.com/nkzw-tech/codiff/releases
 
-# After installing the app, install the terminal helper
-# Open: Codiff > Install Terminal Helper
+# Install the terminal helper (macOS: Codiff > Install Terminal Helper)
+# Then use from any Git repository:
+codiff                          # review working tree changes
+codiff main                     # review branch vs main
+codiff a1b2c3d                  # review a specific commit
+codiff pr 75                    # review a GitHub PR
+codiff -w                       # generate LLM walkthrough (requires Codex or Claude CLI)
 
-# Review staged changes in current repository
-codiff
-
-# Review a specific repository
-codiff /path/to/repository
-
-# Review a specific commit
-codiff a1b2c3d
-
-# Start with LLM-generated walkthrough (requires Codex or Claude Code CLI)
-codiff -w
-codiff -w a1b2c3d
-
-# Configure Codiff
-# Open: Codiff > Open Config File...
-# Or edit ~/.codiff/codiff.jsonc
+# Configure walkthroughs
+# Open Codiff > Open Config File... and set:
+# "agentBackend": "codex" or "claude"
+# "claudeModel": "claude-sonnet-4-6"
 ```
 
 ### Alternatives
 
-**Delta** — A syntax-highlighting pager for git diff, git log, and git show output in the terminal. Delta improves the terminal diff experience significantly with syntax highlighting, line numbers, and side-by-side view. It's the right choice if you want better terminal diffs without leaving the command line. Codiff is better when you want a full GUI review experience with AI assistance and inline comments.
+**GitHub Desktop** — The default choice for developers who want a GUI for Git. It's simpler, more widely used, and has better staging/unstaging UX. But it lacks AI walkthroughs, inline PR review comments, and keyboard-driven navigation. Choose GitHub Desktop if you just need a visual Git client and don't care about code review workflows.
 
-**VS Code Diff View** — Built into VS Code, supports inline comments via GitHub Pull Requests extension, and handles most diff review needs. It's already installed for most developers. Codiff is better when you want a dedicated, fast review experience that's separate from your editor — especially useful when reviewing AI agent output before it touches your working files.
+**VS Code's Built-in Diff View** — Good enough for quick comparisons, and it has the advantage of being in your editor. But it doesn't support PR review, doesn't generate walkthroughs, and the side-by-side view gets cramped on smaller screens. Choose VS Code diffs for quick inline checks, Codiff for dedicated review sessions.
 
-**GitKraken / Sublime Merge** — Full-featured Git GUIs with visual diff viewers, merge conflict resolution, and commit history browsers. Both are polished commercial products with more Git features than Codiff. Codiff is better when your primary need is fast diff review with AI walkthrough support, not full Git management.
+**Reviewable** — A web-based code review tool that's more feature-complete for large-team workflows (assignable reviewers, per-line discussions, review status tracking). But it's SaaS, not local, and doesn't integrate with AI walkthroughs. Choose Reviewable if you need enterprise review workflows; choose Codiff if you want a fast local tool with AI assistance.
 
 ### Verdict
 
-Codiff is the diff viewer I didn't know I needed until I started using AI coding agents heavily. The LLM walkthrough feature alone justifies the install — when Claude Code touches 15 files in my codebase, I need a review order, not a wall of green and red. The native performance is a real advantage over Electron tools, and the inline comment workflow with Markdown export fits naturally into how teams actually review code. It's early-stage software with rough edges (the config schema is still settling, platform support is uneven), but 630 stars in three weeks tells me the developer community sees the same gap I do. If you're using Claude Code, Codex, or any AI agent that generates multi-file changesets, Codiff should be in your toolchain.
+Codiff fills a gap I didn't realize was so wide until I used it. Every developer reviews code daily, and the tools for it have barely changed in a decade. The LLM walkthrough feature alone makes it worth trying — it's the difference between staring at a 500-line diff and having someone explain it to you in 30 seconds. The GitLab support is a genuine differentiator; most competitors pretend GitLab doesn't exist. At 894 stars in its first month with active development from the NKZW team, this has the momentum to become a standard part of the developer toolkit. If you review more than a few PRs a week, install it and run `codiff -w` on your next review. You'll see the value immediately.
