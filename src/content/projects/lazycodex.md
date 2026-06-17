@@ -1,98 +1,105 @@
 ---
 name: lazycodex
-description: "LazyCodex is a Codex agent harness for complex codebases — project memory, planning, execution, and verified completion with multi-model routing."
+description: "LazyCodex is an agent harness for OpenAI Codex that adds project memory, planning, and verified completion — like LazyVim but for AI coding agents."
 url: https://github.com/code-yeongyu/lazycodex
-stars: 433
-forks: 22
+stars: 1159
+forks: 63
 language: TypeScript
-tags: ["ai-agents", "codex", "developer-tools", "orchestration", "typescript"]
+tags: ["ai-agents", "developer-tools", "codex", "orchestration", "typescript"]
 featured: false
-publishedAt: 2026-06-04
+publishedAt: 2026-06-18
 ---
 
 ## LazyCodex
 
 ### Overview
 
-LazyCodex packages [OmO (oh-my-openagent)](https://github.com/code-yeongyu/oh-my-openagent) as a Codex agent harness for complex codebases. It hit 433 GitHub stars within 10 days of its late-May 2026 launch, pulled along by the momentum of its parent project OmO, which crossed 60,000 stars and made enough noise in the AI coding community to get third-party Anthropic clients blocked. That's either a mark of quality or a cautionary tale, depending on your perspective. Either way, people are paying attention.
+LazyCodex is an agent harness for OpenAI Codex, and the comparison it draws to LazyVim is the right way to understand it. Just as LazyVim made Neovim's raw power accessible through sensible defaults and a plugin ecosystem, LazyCodex wraps the OmO (oh-my-openagent) engine into a distribution that makes Codex actually work for complex codebases. It crossed 1,100 stars within three weeks of its late May 2026 launch, which tracks with the broader explosion of AI coding agent tooling this year.
 
-The project is maintained by Jobdori, an AI assistant that builds and ships OmO in real-time under Sisyphus Labs. The naming is deliberate — LazyCodex is to Codex what LazyVim is to Neovim: a pre-configured distribution that makes a powerful but configuration-heavy tool usable without the setup ceremony. If you've ever spent an afternoon tweaking agent prompts and still felt like your coding assistant was guessing, LazyCodex tries to solve that with structured project memory, disciplined multi-agent orchestration, and verified completion loops.
+The project comes from Sisyphus Labs, and the underlying engine — OmO — has its own star count north of 60,000. That's a significant community signal. OmO's reputation is built on being the "quality-obsessed" agent harness that enforces discipline on AI agents rather than letting them wander. LazyCodex takes that same philosophy and packages it specifically for Codex users, with a one-line installer and zero required configuration.
 
-The core problem it addresses is this: AI coding agents work well on small, self-contained tasks but fall apart on real codebases. They lose context, repeat mistakes, can't verify their own work, and burn through expensive model tokens on routine edits. LazyCodex treats this as an engineering problem, not a prompting problem. It gives agents project memory through hierarchical `AGENTS.md` files, routes tasks to appropriate models based on complexity, and runs verification loops until the work is actually done — not until the agent says it's done.
+The core problem LazyCodex solves is that raw Codex sessions tend to produce inconsistent results on real-world codebases. Agents forget context between runs, make changes without verifying they actually work, and burn expensive model quota on routine tasks that a cheaper model could handle. LazyCodex addresses all three issues: hierarchical project memory so agents understand your codebase, verified completion loops that keep working until evidence confirms the task is done, and multi-model routing that sends simple edits to fast models while reserving frontier reasoning for complex logic.
 
 ### Why it matters
 
-The AI coding agent space in mid-2026 is crowded. Claude Code, Cursor, Copilot, Codex, Gemini CLI — every major player has an agent. But the gap between "impressive demo" and "reliable on a 200-file monorepo" is still enormous. Most agents treat every task the same way: dump context into a prompt, generate code, hope for the best. LazyCodex takes a different approach by introducing discipline agents — Sisyphus orchestrates Hephaestus (the builder), Oracle (the verifier), and Librarian (the context manager) — each with specific roles and verification steps.
+The AI coding agent space in mid-2026 is fragmented. You've got Claude Code, Codex, Cursor, Windsurf, and a dozen others, each with their own plugin formats and extension points. The tools that will matter are the ones that make these agents reliably produce production-quality code, not just impressive demos. LazyCodex is betting that orchestration and discipline are the missing layers.
 
-This matters for fullstack developers because real projects span multiple languages, frameworks, and architectural layers. Your React frontend, NestJS API, Django admin, and Go microservices don't live in isolation. An agent that can maintain project memory across these boundaries, plan work in milestones, and verify completion with evidence is significantly more useful than one that just autocompletes your current file.
+What's interesting is the architecture choice. Rather than building yet another standalone agent, LazyCodex is a distribution layer — a thin wrapper that configures and extends an existing platform. This mirrors how the best developer tools have always worked: Homebrew didn't replace macOS, it made it usable. LazyVim didn't replace Neovim, it made it accessible. LazyCodex applies the same pattern to Codex, and the OmO engine's 60K-star community suggests the underlying approach has real traction.
 
-The multi-model routing is the feature that most developers will notice first. LazyCodex doesn't burn your GPT-5.2 quota on fixing a typo. It routes quick edits to faster models, reserves high-reasoning models for architectural decisions, and uses Codex-tuned models for agentic coding tasks. That's quota discipline that translates directly to cost savings.
+For fullstack developers working across React frontends and NestJS or Go backends, the practical value is in the project memory system and the verified completion loops. An agent that understands your monorepo's structure and won't declare "done" until it has evidence the code compiles and tests pass is fundamentally more useful than one that writes code and hopes for the best.
 
 ### Key Features
 
-**Discipline Agent Architecture.** LazyCodex runs a multi-agent system where Sisyphus acts as the orchestrator, delegating work to specialized agents. Hephaestus handles implementation, Oracle verifies results with evidence, and Librarian manages project context. This isn't just role-playing — each agent has distinct system prompts, verification criteria, and escalation paths. The orchestrator can reject work that doesn't meet the bar.
+**Hierarchical Project Memory.** The `$init-deep` command generates structured `AGENTS.md` context files distributed across your repository. It scores directories by complexity, writes local guidance near the code that needs it, and gives future agent sessions landmarks before they start editing. Run it again when the shape of your codebase changes.
 
-**Hierarchical Project Memory.** The `/init-deep` command generates hierarchical `AGENTS.md` context files that score complex directories, write local guidance near the code that needs it, and give future agents landmarks before they edit. Run it when the codebase changes shape. This solves the "agent forgets everything between sessions" problem that plagues most coding assistants.
+**Strategic Planning Before Code.** The `$ulw-plan` command writes a decision-complete plan to `plans/<slug>.md` before any product code gets touched. This forces the agent to think through architecture, dependencies, and edge cases upfront. It never writes product code itself — it only plans.
 
-**Three Command Pillars.** `$ulw-plan` writes decision-complete plans to `plans/<slug>.md` without touching product code. `$start-work` executes those plans with durable Boulder progress tracking, stopping only when every checkbox is done. `$ulw-loop` runs self-referential verification loops capped at 500 iterations in ultrawork mode, continuing until Oracle confirms completion with actual evidence.
+**Durable Plan Execution.** `$start-work` takes a plan and executes it checklist-style, tracking progress with what the project calls "Boulder" progress persistence. It stops only when every checkbox in the plan is verified complete. If the session dies, the next run picks up where it left off.
 
-**Benchmark-Driven Model Routing.** Instead of using one model for everything, LazyCodex routes tasks based on complexity. Quick edits go to `gpt-5.4-mini`, hard logic gets `gpt-5.2` with `xhigh` reasoning, and agentic coding uses Codex-tuned models. The routing is defined in source code with explicit category mappings and fallback chains, not left to the agent's discretion.
+**Verified Completion Loops.** The `$ulw-loop` command runs a self-referential loop that continues until an Oracle sub-agent verifies the result with actual evidence. No more "I think it's done" — the agent produces proof. Caps at 500 iterations in ultrawork mode, 100 in normal mode.
 
-**Extensible Skills System.** The skill layer adds specialist judgment for specific work types: `frontend-ui-ux` for polished UI surfaces, `programming` for strict TypeScript/Rust/Python/Go discipline, `LSP` for diagnostics and symbol operations, `AST-grep` for structural code search and rewrite, and `remove-ai-slops` for behavior-preserving cleanup of AI-generated code. Skills are composable and project-specific.
+**Multi-Model Routing.** LazyCodex doesn't burn your best model on every subtask. Quick edits route to fast models like GPT-5.4 mini. Complex reasoning tasks use frontier models like GPT-5.2 with xhigh effort. Agentic coding paths use Codex-tuned models. This is quota discipline driven by task categorization, not random model churn.
 
-**Verified Completion Loops.** Most agents report success based on whether they ran all the steps. LazyCodex's Oracle agent verifies completion with actual evidence — test results, build output, type checks, or whatever criteria the plan specifies. The `$ulw-loop` command keeps running until Oracle is satisfied, not until the agent gets tired of trying.
+**Sub-Agent Orchestration.** The system installs selectable agent roles — explorer, librarian, plan, momus, metis, and reviewer — into Codex's native multi-agent system. Spawn them with `spawn_agent` for specialized subtasks. Each role has its own model preferences and instructions tuned for that function.
+
+**AI Slops Cleanup.** A dedicated `remove-ai-slops` skill performs behavior-preserving cleanup of code that looks obviously AI-generated. It strips the telltale patterns while keeping the logic intact. This is a practical feature that addresses a real quality problem with AI-written code.
 
 ### Use Cases
 
-- **Large monorepo maintenance** — Teams working across React, NestJS, Django, and Go services can use `/init-deep` to build project memory, then let agents navigate the codebase without losing context between tasks.
-- **Refactoring campaigns** — Use `$ulw-plan` to break a large refactoring into milestones and slices, then `$start-work` to execute with verified completion at each step. No more "I think it's done" — Oracle checks.
-- **Multi-model cost optimization** — Teams burning through API credits on coding agents can use LazyCodex's routing to send routine edits to cheaper models while reserving frontier models for architectural decisions.
-- **Code review and cleanup** — The `remove-ai-slops` skill and `review-work` command provide multi-angle post-implementation review that catches the telltale patterns of AI-generated code.
-- **Agent-driven feature development** — For greenfield features, the full `$ulw-plan` → `$start-work` → `$ulw-loop` pipeline gives agents enough structure to ship working code without constant human supervision.
+- **Large monorepo development** — When your codebase spans frontend, backend, shared libraries, and infrastructure, `$init-deep` gives agents the structural context they need to make changes without breaking distant parts of the system.
+- **Complex feature implementation** — Use `$ulw-plan` to decompose a feature into a verified plan, then `$start-work` to execute it with progress tracking. Better than letting the agent wing it.
+- **Codebase refactoring** — The verified completion loops are ideal for refactors where you need confidence that behavior is preserved. The Oracle sub-agent checks evidence, not vibes.
+- **AI code quality enforcement** — The `remove-ai-slops` and `review-work` skills catch the patterns that make AI code look sloppy, from excessive comments to unnecessary abstraction layers.
+- **Cost optimization for agent workflows** — Teams burning through API credits on routine edits benefit from multi-model routing that sends simple tasks to cheaper, faster models.
 
 ### Pros and Cons
 
 Pros:
-- Multi-agent discipline architecture is a genuine improvement over single-agent approaches. The orchestrator-specialist split with verified completion produces more reliable results than "one agent does everything."
-- The LazyVim analogy is apt — sensible defaults that work out of the box, with override paths for teams that need customization. Installation is one `npx` command.
-- Multi-model routing is pragmatic and cost-effective. The category-based routing with explicit fallback chains is more thoughtful than most agent frameworks bother with.
+- Built on OmO's 60K-star engine with a proven track record in the AI agent community, not a from-scratch experiment. The core orchestration patterns have been battle-tested by a large user base.
+- One-line install with zero required configuration. Sensible defaults work immediately, and you override only when you want to. The `doctor` command diagnoses installation health.
+- The verified completion approach is genuinely different from how most agent tools work. Evidence-based verification produces more reliable results than status-update-driven workflows.
 
 Cons:
-- Tightly coupled to OpenAI's Codex ecosystem. If you're using Claude Code, Cursor, or Gemini CLI as your primary agent, LazyCodex doesn't apply directly. The underlying OmO framework supports other platforms, but the Codex distribution is what's packaged here.
-- The 500-iteration cap on ultrawork loops sounds impressive but also sounds expensive. Running GPT-5.2 with `xhigh` reasoning for hundreds of iterations will burn through credits fast, even with routing.
-- The "maintained by an AI assistant" angle is novel but raises questions about long-term human oversight. The project is young enough that this hasn't been tested yet.
+- Tightly coupled to OpenAI Codex. If you're using Claude Code, Cursor, or another platform, LazyCodex doesn't help — you'd need the parent OmO project directly, which has a different setup story.
+- Multi-model routing assumes access to multiple OpenAI model tiers, which means your API costs depend on how the routing logic categorizes your tasks. The routing decisions are opaque unless you read the source.
+- The agent roles and skill system add complexity that can be confusing when things go wrong. Debugging why a sub-agent made a particular decision requires understanding the orchestration layer, not just Codex itself.
 
 ### Getting Started
 
 ```bash
-# Install LazyCodex (uses npx, no global install needed)
+# Install LazyCodex with interactive TUI
 npx lazycodex-ai install
 
-# For fully autonomous setup without TUI
+# Or fully autonomous setup (no TUI, autonomous Codex mode)
 npx lazycodex-ai install --no-tui --codex-autonomous
 
-# Generate project memory for your codebase
-# (run inside Codex after installation)
-/init-deep
+# Verify installation health
+npx lazycodex-ai doctor
 
-# Plan a feature
-$ulw-plan "implement rate limiting for the API gateway"
+# Inside Codex, initialize project memory
+$init-deep
+
+# Plan a feature before coding
+$ulw-plan "Add user authentication with JWT and refresh tokens"
 
 # Execute the plan
-$start-work rate-limiting-api-gateway
+$start-work user-auth
 
-# Run a verified completion loop on an open-ended task
-$ulw-loop "fix all TypeScript strict mode errors in src/api/"
+# Run a verified completion loop for an open-ended task
+$ulw-loop "Fix all TypeScript errors in the payments module"
+
+# Uninstall if needed
+npx lazycodex-ai uninstall
 ```
 
 ### Alternatives
 
-**GSD Pi** — OpenGSD's local-first coding agent for planning, implementing, and verifying project work. GSD Pi is more provider-agnostic (supports multiple model providers out of the box) and has a built-in TUI and web UI. It's a better choice if you want a standalone agent that isn't tied to OpenAI's Codex. The tradeoff is that GSD Pi's agent orchestration is less opinionated than LazyCodex's discipline agent architecture.
+**Claude Code with custom skills** — If you're already in the Anthropic ecosystem, Claude Code's native skill system and hooks give you similar extensibility without a third-party wrapper. The tradeoff is that you build the orchestration yourself. Better choice if your team is already standardized on Claude and you want full control over agent behavior.
 
-**Claude Code with custom skills** — Anthropic's Claude Code supports a skills system that can replicate some of LazyCodex's functionality. You can write custom `SKILL.md` files for project memory, planning, and verification. The advantage is full access to Claude's reasoning capabilities without the OpenAI dependency. The disadvantage is you're building the orchestration yourself instead of getting a pre-configured distribution.
+**Aider** — The original terminal-based AI coding assistant that works with multiple LLMs. Aider is model-agnostic and has a simpler mental model — it edits files in your git repo with clear change tracking. Better choice if you want a lightweight, provider-independent tool without the orchestration overhead. Less structured than LazyCodex but more flexible in model choice.
 
-**Aider** — The veteran open-source AI coding assistant that works with multiple LLM providers. Aider is more mature and supports a wider range of models, but lacks LazyCodex's structured planning, verified completion loops, and multi-agent architecture. Better choice for developers who want a simple, reliable pair programmer without the orchestration overhead.
+**Cursor with custom rules** — Cursor's agent mode with `.cursorrules` files and its own multi-file editing gives you a GUI-first experience with agent capabilities. Better choice if your team prefers an IDE experience over terminal-based workflows and doesn't need the sub-agent orchestration or verified completion patterns.
 
 ### Verdict
 
-LazyCodex is the most structured approach to AI coding agent orchestration I've seen packaged as a single install command. The discipline agent architecture — where an orchestrator delegates to specialists and verifies completion with evidence — addresses the real failure mode of current coding agents: they're confident but unreliable. The multi-model routing is practical cost engineering, not just a feature checkbox. If you're locked into OpenAI's Codex and working on codebases complex enough that single-agent approaches fall apart, LazyCodex is worth the 10 minutes to install and try. The 433 stars in 10 days and the OmO parent project's 60K star momentum suggest this isn't going away. That said, if you're not in the Codex ecosystem, the underlying OmO framework is the more interesting project to watch — LazyCodex is just the Codex-flavored distribution of it.
+LazyCodex is the most practical agent harness I've seen for Codex users working on real codebases. The LazyVim analogy is apt — it takes a powerful but raw platform and makes it usable through sensible defaults, a skill ecosystem, and opinionated workflows. The verified completion loops and multi-model routing address the two biggest practical problems with AI coding agents: unreliable results and runaway costs. It's not for everyone — Claude Code users and IDE-first developers have better options — but if you're committed to Codex and working on anything more complex than a toy project, LazyCodex is worth the one-line install. The OmO engine's 60K-star community backing and the rapid 1,100-star growth in three weeks suggest this approach has real momentum.
