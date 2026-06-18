@@ -1,105 +1,114 @@
 ---
 name: testsprite-cli
-description: "AI-powered testing CLI that verifies AI-generated code works correctly by opening your live app and testing it like a real user"
+description: "AI-powered testing CLI that verifies AI-generated code by testing live apps like a real user — the missing verification layer for agentic coding workflows."
 url: https://github.com/TestSprite/testsprite-cli
-stars: 422
-forks: 15
+stars: 476
+forks: 16
 language: TypeScript
-tags: ["testing", "ai-agents", "e2e-testing", "playwright", "developer-tools", "automation"]
+tags: ["testing", "ai-agents", "cli", "e2e-testing", "playwright", "developer-tools"]
 featured: false
-publishedAt: 2026-06-18
+publishedAt: 2026-06-19
 ---
 
 ## TestSprite CLI
 
 ### Overview
 
-TestSprite CLI is the open-source command-line interface for the TestSprite AI testing platform, used by over 100,000 teams. It solves a problem that every developer working with AI coding agents has encountered: the agent writes code fast, but how do you know it actually works? TestSprite opens your live application, interacts with it like a real user — clicking buttons, filling forms, navigating pages — and feeds the results back to your coding agent so it can fix its own mistakes before you ever see them.
+TestSprite CLI is the open-source command-line interface for the TestSprite AI testing platform, and it solves one of the most uncomfortable problems in modern software development: who verifies the code your AI agent just wrote? The repo launched on June 11, 2026, and pulled in nearly 500 GitHub stars in its first week. That kind of velocity usually signals a tool that scratched a real itch.
 
-The project was created by TestSprite, a company that built its reputation on cloud-based automated testing. This CLI brings that testing infrastructure directly into the agent workflow. Instead of manually checking whether Claude, Cursor, or Codex generated correct code, you let TestSprite verify every behavior automatically. The results come back as a single, self-contained failure bundle that any agent can understand and act on — no dashboard scraping, no manual interpretation.
+The platform behind the CLI already serves over 100,000 teams for end-to-end software testing — frontend and backend, running against live products in the cloud, not mocks. This repo takes that testing infrastructure and puts it directly into the hands of coding agents like Claude Code, Codex, Cursor, Cline, and Antigravity. The agent writes code, then immediately verifies it by running tests against a real browser or API. Failures come back as a single self-consistent bundle — screenshots, DOM snapshots, a root-cause hypothesis, and a recommended fix — so the agent can correct its own work before a human ever sees a bug.
 
-What makes this genuinely interesting is the data behind it. On an open leaderboard (codercup.ai), the cheapest coding model scored 89% correctness when paired with TestSprite's verification loop — outperforming the most expensive model without it. That's a compelling argument: verification might matter more than model size.
+The core insight is that AI coding agents are fast at producing code but terrible at verifying it. They ship in minutes, but testing still takes hours. TestSprite closes that gap by creating a verification loop: create test → run → read failure → fix → rerun. Every successful pass gets banked into a durable test suite that compounds over time. The CoderCup leaderboard — an open, public benchmark where frontier agents build the same app under the same rules — showed that with TestSprite as the referee, the cheapest model in the field shipped the most correct app at 89% accuracy, at half the cost of the most expensive one. That's not a theoretical claim; it's a published result.
 
 ### Why it matters
 
-The AI coding agent space is exploding. Claude Code, Cursor, Codex, Cline, and dozens of other tools can generate entire features in minutes. But there's a dirty secret: the code often doesn't work. Not because the models are bad, but because there's no feedback loop. The agent writes code, you run it, you find bugs, you describe them in English, the agent tries again. It's slow, error-prone, and defeats the purpose of automation.
+The agentic coding revolution has a verification gap. Tools like Claude Code, Codex, and Cursor can generate entire features in minutes, but the testing story is still mostly "run it locally and hope for the best." Traditional testing tools were built for human-driven workflows — you write a test, run it in CI, read the report. None of that maps cleanly to an agent that needs programmatic, deterministic feedback it can act on without human interpretation.
 
-TestSprite closes that loop. It acts as the missing verification layer between "code generated" and "code shipped." This matters now because AI-generated code is becoming the norm, not the exception. If you're building with React, NestJS, Django, or Go and using any AI assistant, you need a way to verify that the output actually works — not just that it compiles.
-
-The broader trend here is the shift from "AI writes code" to "AI writes, tests, and ships code." TestSprite is one of the first tools to tackle the verification piece with real infrastructure (cloud browsers, actual user simulation) rather than just another LLM checking another LLM's output.
+TestSprite fills that gap. It's the first tool I've seen that treats the coding agent as a first-class user of the testing system. The CLI returns structured JSON, predictable exit codes, and failure bundles that are self-contained — no dashboard scraping, no screenshot interpretation, no ambiguity. This matters because the alternative is agents shipping code that "looks right" but breaks under real-world conditions. Every fullstack developer using AI agents for React frontends, NestJS APIs, or Go microservices has hit this: the agent generates clean code that passes local checks but fails in integration. TestSprite runs against the live product, the way a QA engineer would, and gives the agent exactly what it needs to fix things.
 
 ### Key Features
 
-**Agent-Shaped Output.** The `test failure get` command returns a single, self-contained bundle: the failing step, its neighboring steps, screenshots, DOM snapshots, and the test source. No dashboard scraping. No parsing HTML. Your coding agent reads the bundle, understands what broke, and fixes it. This is the kind of developer experience that makes agent workflows actually practical.
+**Agent-shaped failure bundles.** When a test fails, `testsprite test failure get` returns one self-consistent package: the failing step, neighboring steps, screenshots, DOM snapshots, the test source code, a root-cause hypothesis, and a recommended fix target. Everything shares a single `snapshotId`. The CLI explicitly refuses to stitch data from two different runs, which prevents agents from reasoning over contradictory context — a subtle but critical design decision.
 
-**Real Browser Testing.** Tests run against a live browser in the cloud — real clicks, real navigation, real assertions. Not mocks, not simulated environments. When TestSprite says your checkout flow works, it means a real browser actually completed the checkout flow. For fullstack developers, this means your React frontend and your backend API are both being exercised end-to-end.
+**Cloud-native test execution.** Tests run against real browsers and real APIs in the cloud, not mocks or local simulators. Your agent describes intent and reads results. It never needs to know how the test was driven — only what a real user experienced. This means your React components get tested with actual rendering, your API endpoints get hit with real HTTP requests, and your integration flows get exercised end-to-end.
 
-**Multi-Agent Support.** Works with Claude Code, Cursor, Codex, Cline, Antigravity, and any agent that supports the Agent Skills format. The `agent install` command configures the verification loop for your specific tool. This isn't locked to one ecosystem — it's designed to be the universal testing layer for the entire agent landscape.
+**One-command agent onboarding.** Running `testsprite agent install claude` (or `cursor`, `codex`, `cline`, etc.) drops a ready-made skill file into your repo. From that point forward, your coding agent knows how to drive the verification loop on its own. No manual configuration, no YAML files to maintain, no CI pipeline to set up — the agent installs its own testing capability.
 
-**Plan-Based Test Creation.** You can describe test scenarios in a plan file (JSON), and TestSprite generates the test steps automatically. Run `test create --plan-from ./checkout-flow.plan.json` and it builds a test from your specification. This bridges the gap between "I know what I want to test" and "the test exists and runs."
+**Durable test suite that compounds.** Every test that passes gets banked into a persistent suite. Over time, this suite becomes a living specification of every behavior your application has ever gotten right. It's bigger than any context window, and it catches regressions that slip through when agents modify code that "shouldn't" affect other features.
 
-**Failure Replay Loop.** When a test fails, your agent fixes the code, then runs `test rerun` to replay the exact same test. No re-creating the test, no re-configuring. The test lives in your durable suite and can be re-run anytime. This makes iterative development with agents practical — fix, verify, repeat.
+**Deterministic scripting surface.** The CLI exposes stable `--output json` contracts, predictable exit codes (documented in the repo), and a `--dry-run` flag that exercises the full code path offline with canned data. This makes it usable in CI pipelines, onboarding scripts, and automated workflows — not just interactive agent sessions.
 
-**CI/CD Integration.** The CLI works in non-interactive mode with environment variables: `TESTSPRITE_API_KEY=*** testsprite init --from-env --yes --agent claude`. This means you can wire it into your GitHub Actions, GitLab CI, or any pipeline. Tests run automatically on every push, and failures are reported in a format your agent can act on.
+**Multi-agent compatibility.** Works with Claude Code, Codex, Cursor, Cline, Antigravity, Kimi, Trae, and other coding agents. The skill file is agent-agnostic — install it once, and any agent in your workflow can drive the verification loop. This matters for teams where different developers use different tools.
 
-**Exit Code Contract.** Commands exit 0 on success, 1 on failure, 2 on partial. This makes scripting reliable — your CI pipeline knows exactly what happened without parsing JSON output. Simple, but surprisingly rare in testing tools.
+**Frontend and backend coverage.** The `--type frontend` and `--type backend` flags let you test UI interactions (clicks, navigation, form submissions) and API behavior (endpoints, data flows, error handling) from the same CLI. Backend tests support dependency metadata via `--produces` and `--needs` flags, so the runner knows which tests to replay when upstream data changes.
 
 ### Use Cases
 
-- **AI-generated feature verification** — You asked Claude Code to build a user registration flow. TestSprite creates a test plan, runs it against the live app, and reports back that the email validation is broken. The agent fixes it, replays the test, and it passes. You never touched the code manually.
-- **Regression testing in CI** — Every pull request triggers TestSprite's test suite. If a change breaks the checkout flow, the failure bundle goes straight to the PR comments with screenshots and DOM snapshots. No more "works on my machine."
-- **Fullstack E2E testing** — Your React frontend talks to a NestJS backend. TestSprite tests the entire stack: UI interactions, API calls, database state. It catches integration bugs that unit tests miss.
-- **Agent benchmarking** — Run the same test suite against different models or agents. Measure which one produces working code most often. The codercup.ai leaderboard already does this publicly.
-- **Rapid prototyping with confidence** — You're building a proof-of-concept with an AI agent. Instead of manually testing every iteration, TestSprite verifies each one automatically. You iterate faster because you trust the feedback loop.
+- **AI-assisted feature development** — When Claude Code generates a new React component or NestJS endpoint, immediately verify it works against the live app before committing. The agent creates a test, runs it, reads the failure bundle if anything breaks, fixes the code, and reruns — all without human intervention.
+
+- **Regression detection in agent-driven refactors** — Your coding agent refactors a Go microservice. The durable test suite automatically replays all previously passing tests to confirm nothing broke. If the refactor introduced a subtle API contract change, the failure bundle pinpoints exactly which endpoint and which assertion failed.
+
+- **CI/CD integration for agent-authored code** — Add `testsprite test run --all --project <id> --wait` to your CI pipeline. Every PR that an agent touches gets full end-to-end coverage before merge. Exit codes map directly to CI pass/fail gates.
+
+- **Rapid prototyping with confidence** — Solo developers and small teams using AI agents to build MVPs can ship faster because verification is automated. Instead of manually testing every feature the agent generates, the test suite catches issues automatically.
+
+- **Cross-browser compatibility checks** — Since tests run in cloud browsers, you get real rendering behavior for your React or Vue frontends — not just the one browser you happen to have open locally.
 
 ### Pros and Cons
 
 Pros:
-- Closes the verification gap in AI coding workflows — the first tool to do this with real browser testing instead of another LLM
-- Open-source CLI (Apache 2.0) with a generous free tier on the cloud platform, making it accessible for individual developers
-- Agent-agnostic design means you're not locked into one AI tool — works with Claude, Cursor, Codex, and others
-- Self-contained failure bundles are genuinely well-designed for machine consumption, not just human-readable reports
+- Solves a real, immediate problem for anyone using AI coding agents professionally. The verification gap is not theoretical — every team using Claude Code or Codex has shipped bugs that a human QA would have caught.
+- The CoderCup leaderboard result (89% correctness with the cheapest model) is a compelling proof point. It suggests that verification infrastructure matters more than model capability for shipping correct code.
+- Apache-2.0 license, TypeScript codebase, active development with CI passing. The onboarding experience is polished — `testsprite init` handles everything from API key setup to agent skill installation.
 
 Cons:
-- Requires a TestSprite cloud account and API key — the CLI is open-source but the testing infrastructure is proprietary
-- Cloud-only testing means you need internet access and can't run tests entirely locally (no air-gapped environments)
-- At 422 stars and one week old, the community is still small — expect rough edges and limited documentation beyond the basics
-- The plan-based test creation works well for known flows but may struggle with highly dynamic or stateful applications
+- Requires a TestSprite API key and cloud account. The free tier exists, but serious usage will hit limits. This is a SaaS-adjacent open-source tool — the CLI is open, but the testing infrastructure runs on their cloud.
+- Very early stage (version 0.1.1, repo created June 11). The command surface is still evolving. Expect breaking changes in the CLI interface before a 1.0 release.
+- The failure bundle format and agent integration are opinionated. If your workflow doesn't fit the create → run → failure get → fix → rerun loop, adapting the tool requires work.
 
 ### Getting Started
 
 ```bash
-# Install globally
+# Install the CLI globally
 npm install -g @testsprite/testsprite-cli
 
 # Or use without installing
 npx @testsprite/testsprite-cli
 
-# Initialize — walks you through API key setup and agent configuration
+# Initialize — sets up API key and installs agent skill
 testsprite init
 
-# For CI environments (non-interactive)
-TESTSPRITE_API_KEY=your_key testsprite init --from-env --yes --agent claude
+# Non-interactive setup for CI or scripting
+TESTSPRITE_API_KEY=your-key testsprite init --from-env --yes --agent claude
 
 # Create and run a frontend test
-testsprite test create --project proj_abc123 --type frontend \
-  --plan-from ./my-test-plan.json --run --wait --output json
+testsprite test create --project your-project-id --type frontend \
+  --plan-from ./test-plan.json --run --wait --output json
 
-# When a test fails, get the failure bundle for your agent
-testsprite test failure get test_xyz789 --out ./.testsprite/failure
+# When a test fails, get the failure bundle
+testsprite test failure get test-id-here --out ./.testsprite/failure
 
 # After fixing, replay the test
-testsprite test rerun test_xyz789 --wait --output json
+testsprite test rerun test-id-here --wait --output json
+
+# Run all tests in a project
+testsprite test run --all --project your-project-id --wait
+
+# Install the agent skill for a specific coding agent
+testsprite agent install claude
+# or: cursor, codex, cline, antigravity
 ```
 
 ### Alternatives
 
-**Playwright Test** — Microsoft's Playwright is the gold standard for E2E testing and the engine TestSprite uses under the hood. But Playwright requires you to write and maintain test code yourself. If you want full control and don't mind the maintenance burden, Playwright is the better choice. TestSprite is for teams that want AI to generate and manage the tests.
+**Playwright** — Microsoft's browser automation framework is the industry standard for E2E testing. It's more mature, has a larger ecosystem, and gives you full control over test authoring. Choose Playwright when you need to write custom test logic, handle complex multi-step scenarios, or when your team writes tests manually. TestSprite is better when your primary workflow is agent-driven and you want the agent to create and manage tests automatically.
 
-**Cypress** — Another excellent E2E testing framework with a great developer experience and time-travel debugging. Cypress runs locally in a real browser, which gives you more control over the test environment. Choose Cypress if you prefer local testing and don't need agent integration. TestSprite wins when you want cloud-scale testing that feeds directly into AI agent workflows.
+**Cypress** — The go-to for frontend developers who want fast, reliable E2E tests with excellent developer experience and time-travel debugging. Cypress is stronger for teams with dedicated QA engineers who write and maintain test suites by hand. TestSprite wins when the "test author" is an AI agent that needs programmatic, structured feedback rather than a visual test runner.
 
-**Vitest / Jest** — Unit and integration testing frameworks that are fast and well-established. They test individual functions and components in isolation. If your testing needs are mostly unit-level, these are the right tools. TestSprite addresses the gap between "my unit tests pass" and "my app actually works end-to-end."
+**Browserbase / Stagehand** — Cloud browser infrastructure for AI agents that focuses on browser automation and interaction. These tools are more general-purpose — they let agents navigate websites, fill forms, and extract data. TestSprite is narrower but deeper: it's specifically about verifying that your application works correctly, with a structured loop designed for coding agents to self-correct.
 
 ### Verdict
 
-TestSprite CLI is the most practical tool I've seen for the "AI writes code but doesn't verify it" problem. The concept is simple — test the app like a user, feed results back to the agent — but the execution is solid. The failure bundle format is genuinely well-thought-out, the multi-agent support means you're not betting on one tool, and the 89% correctness stat on the codercup.ai leaderboard is real evidence that verification matters more than model size. The main caveat is the cloud dependency: you're using an open-source CLI against proprietary infrastructure. But for most teams, that's a reasonable trade-off. If you're building with AI agents and tired of manually verifying every feature they ship, TestSprite is worth the 5-minute setup. It won't replace your unit tests, but it fills a gap that nothing else does right now.
+TestSprite CLI addresses the most obvious blind spot in the agentic coding stack. Everyone is optimizing for code generation speed — bigger context windows, faster models, better prompts — but almost nobody is building the verification infrastructure that determines whether the generated code actually works. The CoderCup result is hard to argue with: a cheap model with TestSprite verification outperformed expensive models without it. That tells you where the real bottleneck is.
+
+If you're a fullstack developer using Claude Code, Codex, or Cursor to build React frontends, NestJS APIs, or Go services, this tool belongs in your workflow. It's early (0.1.1), the SaaS dependency is a real consideration, and the command surface will change. But the core idea — agent-shaped failure bundles, a durable test suite that compounds, and a verification loop that agents can drive autonomously — is exactly right. This is the kind of infrastructure that makes AI-generated code production-ready instead of demo-ready.
